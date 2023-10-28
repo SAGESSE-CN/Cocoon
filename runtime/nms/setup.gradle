@@ -1,0 +1,28 @@
+
+apply plugin: "java"
+
+group = rootProject.group
+version = rootProject.plugin_version
+
+buildDir = "${rootProject.buildDir}/core-${project.name}/"
+archivesBaseName = "${rootProject.archivesBaseName}-core"
+
+if (project.spigot_version.contains("remapped-mojang")) {
+    apply plugin: "me.tagavari.nmsremap"
+    jar.finalizedBy("remap")
+}
+
+repositories {
+    mavenCentral()
+    maven { url = "https://repo.codemc.org/repository/nms/" }
+    maven { url = "https://libraries.minecraft.net" }
+}
+
+dependencies {
+    implementation project(":core")
+
+    compileOnly "org.jetbrains:annotations:23.0.0"
+    compileOnly "org.spigotmc:spigot:${project.spigot_version}"
+    compileOnly "com.mojang:authlib:1.5.21"
+}
+
