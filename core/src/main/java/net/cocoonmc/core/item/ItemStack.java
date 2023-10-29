@@ -5,22 +5,28 @@ import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.Tag;
 import net.cocoonmc.core.utils.BukkitUtils;
+import net.cocoonmc.core.utils.SimpleAssociatedStorage;
+import net.cocoonmc.runtime.IAssociatedContainer;
+import net.cocoonmc.runtime.IAssociatedContainerProvider;
 import net.cocoonmc.runtime.impl.Constants;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class ItemStack {
+public class ItemStack implements IAssociatedContainerProvider {
 
     public static final ItemStack EMPTY = new ItemStack(Items.AIR, 0);
 
-    protected final Item item;
+    protected int count;
 
     @Nullable
     protected CompoundTag tag;
 
-    protected int count;
+    protected final Item item;
+
+    private ItemStack delegate;
+    private final SimpleAssociatedStorage storage = new SimpleAssociatedStorage();
 
     public ItemStack(Item item) {
         this(item, 1, null);
@@ -94,6 +100,9 @@ public class ItemStack {
 
     public void setTag(@Nullable CompoundTag tag) {
         this.tag = tag;
+        if (this.delegate != null) {
+            this.delegate.setTag(tag);
+        }
     }
 
     @Nullable
@@ -135,7 +144,7 @@ public class ItemStack {
         if (tag != null && tag.contains(string)) {
             tag.remove(string);
             if (tag.isEmpty()) {
-                tag = null;
+                setTag(null);
             }
         }
     }
@@ -150,7 +159,6 @@ public class ItemStack {
             return EMPTY;
         }
         ItemStack itemStack = new ItemStack(getItem(), getCount());
-//        itemStack.setPopTime(this.getPopTime());
         CompoundTag tag = getTag();
         if (tag != null) {
             itemStack.tag = tag.copy();
@@ -168,7 +176,7 @@ public class ItemStack {
     }
 
     public ItemStack split(int i) {
-        int j = Math.min(i, count);
+        int j = Math.min(i, getCount());
         ItemStack itemStack = copy();
         itemStack.setCount(j);
         shrink(j);
@@ -178,6 +186,9 @@ public class ItemStack {
 
     public void setCount(int count) {
         this.count = count;
+        if (this.delegate != null) {
+            this.delegate.setCount(count);
+        }
     }
 
     public int getCount() {
@@ -185,7 +196,7 @@ public class ItemStack {
     }
 
     public void grow(int i) {
-        this.setCount(this.count + i);
+        this.setCount(count + i);
     }
 
     public void shrink(int i) {
@@ -203,6 +214,20 @@ public class ItemStack {
     public boolean isDamageableItem() {
         return false;
     }
+
+    public void setDelegate(ItemStack delegate) {
+        this.delegate = delegate;
+    }
+
+    public ItemStack getDelegate() {
+        return delegate;
+    }
+
+    @Override
+    public IAssociatedContainer getAssociatedContainer() {
+        return storage;
+    }
+
 
     /**
      * Should this item, when held, allow sneak-clicks to pass through to the

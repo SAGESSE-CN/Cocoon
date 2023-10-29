@@ -4,12 +4,15 @@ import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.network.Component;
 import net.cocoonmc.core.network.FriendlyByteBuf;
+import net.cocoonmc.core.utils.SimpleAssociatedStorage;
+import net.cocoonmc.runtime.IAssociatedContainer;
+import net.cocoonmc.runtime.IAssociatedContainerProvider;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
 import java.util.ArrayList;
 
-public abstract class Menu {
+public abstract class Menu implements IAssociatedContainerProvider {
 
     protected final Component title;
     protected final MenuType<?> menuType;
@@ -18,11 +21,13 @@ public abstract class Menu {
     protected final Player player;
     protected final MenuImpl impl;
 
+    private final SimpleAssociatedStorage storage = new SimpleAssociatedStorage();
+
     public Menu(MenuType<?> menuType, Component title, Player player) {
         this.title = title;
         this.menuType = menuType;
         this.player = player;
-        this.impl = Cocoon.API.MENU.create(this, player, null, title);
+        this.impl = Cocoon.API.MENU.create(this, player, title);
     }
 
     public void openMenu() {
@@ -81,13 +86,14 @@ public abstract class Menu {
         return menuType;
     }
 
-    public Inventory getInventory() {
-        return impl.super$getInventory();
+    @Override
+    public IAssociatedContainer getAssociatedContainer() {
+        return storage;
     }
+
+    public abstract Inventory getInventory();
 
     public abstract void serialize(FriendlyByteBuf buffer);
 
     public abstract boolean stillValid(Player player);
-
-    public abstract int getSlotSize();
 }

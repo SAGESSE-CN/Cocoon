@@ -12,14 +12,13 @@ def allVersions = [:]
 
 // build fat jar only in command line.
 if (gradle.startParameter.taskNames.contains("buildRuntime")) {
-    def targets = ["1.16", "1.18", "1.19"]
+    def targets = project.file("versions").listFiles().findAll { it.isDirectory() }.collect { it.name }
     allVersions = targets.collectEntries {
         def (major, minor, patch) = it.tokenize('-')[0].tokenize('.')
         return [it, "${major}${minor.padLeft(2, '0')}${(patch ?: '').padLeft(2, '0')}"]
     }
     allMixinConfigs = allVersions.values().collect { "v${it}/${archivesBaseName}.mixin.json" }
 }
-
 
 loom {
     // use this if you are using the official mojang mappings

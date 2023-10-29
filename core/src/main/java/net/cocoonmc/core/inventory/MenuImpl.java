@@ -21,6 +21,4 @@ public interface MenuImpl {
     void super$sendOpenWindowPacket(int windowId);
 
     void super$sendCloseWindowPacket(int windowId);
-
-    Inventory super$getInventory();
 }

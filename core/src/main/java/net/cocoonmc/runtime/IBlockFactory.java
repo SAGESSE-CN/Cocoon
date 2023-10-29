@@ -1,5 +1,6 @@
 package net.cocoonmc.runtime;
 
+import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.block.Block;
 import net.cocoonmc.core.block.BlockEntity;
@@ -7,7 +8,7 @@ import net.cocoonmc.core.block.BlockState;
 import net.cocoonmc.core.block.Blocks;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.NbtIO;
-import net.cocoonmc.runtime.impl.Caches;
+import net.cocoonmc.runtime.impl.CacheKeys;
 import net.cocoonmc.runtime.impl.Constants;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -34,7 +35,7 @@ public interface IBlockFactory {
         if (skull.getOwningPlayer() == null || skull.getOwningPlayer().getName() != null) {
             return null;
         }
-        return Caches.STATE_TO_BLOCK_ENTITY.computeIfAbsent(skull, it -> {
+        return Cocoon.API.CACHE.computeIfAbsent(skull, CacheKeys.BLOCK_ENTITY_KEY, it -> {
             String texture = getSkullTexture(skull);
             return getBlockEntityFromTexture(world, pos, texture);
         });

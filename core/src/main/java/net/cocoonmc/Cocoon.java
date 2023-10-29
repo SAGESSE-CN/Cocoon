@@ -2,11 +2,13 @@ package net.cocoonmc;
 
 import net.cocoonmc.core.item.Items;
 import net.cocoonmc.runtime.IBlockFactory;
+import net.cocoonmc.runtime.ICacheFactory;
 import net.cocoonmc.runtime.IItemFactory;
 import net.cocoonmc.runtime.IMenuFactory;
 import net.cocoonmc.runtime.IRuntime;
 import net.cocoonmc.runtime.IRuntimeLoader;
 import net.cocoonmc.runtime.ITagFactory;
+import net.cocoonmc.runtime.impl.CacheFactory;
 import net.cocoonmc.runtime.impl.ItemEventHandler;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -49,5 +51,7 @@ public class Cocoon {
         public static final IItemFactory ITEM = RUNTIME.getItem();
         public static final IBlockFactory BLOCK = RUNTIME.getBlock();
         public static final IMenuFactory MENU = RUNTIME.getMenu();
+        public static final ICacheFactory CACHE = new CacheFactory();
+
     }
 }

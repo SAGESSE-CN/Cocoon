@@ -3,9 +3,12 @@ package net.cocoonmc.core.item;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.item.context.UseOnContext;
 import net.cocoonmc.core.resources.ResourceLocation;
+import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.InteractionResultHolder;
+import net.cocoonmc.runtime.IAssociatedContainer;
+import net.cocoonmc.runtime.IAssociatedContainerProvider;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -15,11 +18,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class Item {
+public class Item implements IAssociatedContainerProvider {
 
     private ResourceLocation key;
 
     private final Properties properties;
+    private final SimpleAssociatedStorage storage = new SimpleAssociatedStorage();
 
     public Item(Properties properties) {
         this.properties = properties;
@@ -83,6 +87,11 @@ public class Item {
 
     public ResourceLocation getKey() {
         return key;
+    }
+
+    @Override
+    public IAssociatedContainer getAssociatedContainer() {
+        return storage;
     }
 
     @Nullable

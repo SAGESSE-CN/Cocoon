@@ -1,5 +1,6 @@
 package net.cocoonmc.runtime;
 
+import net.cocoonmc.core.inventory.Container;
 import net.cocoonmc.core.inventory.Menu;
 import net.cocoonmc.core.inventory.MenuImpl;
 import net.cocoonmc.core.inventory.Slot;
@@ -11,11 +12,13 @@ import org.bukkit.inventory.InventoryHolder;
 
 public interface IMenuFactory {
 
+    MenuImpl create(Menu impl, Player player, Component title);
+
     SlotImpl create(Slot impl, Inventory inventory, int index, int x, int y);
 
-    MenuImpl create(Menu impl, Player player, InventoryHolder holder, Component title);
+    Inventory create(InventoryHolder owner, int size, String title);
 
-
+    Inventory create(Container container);
 }
 
 

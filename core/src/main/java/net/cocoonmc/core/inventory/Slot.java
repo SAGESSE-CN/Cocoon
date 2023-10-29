@@ -2,17 +2,22 @@ package net.cocoonmc.core.inventory;
 
 import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.item.ItemStack;
+import net.cocoonmc.core.utils.SimpleAssociatedStorage;
+import net.cocoonmc.runtime.IAssociatedContainer;
+import net.cocoonmc.runtime.IAssociatedContainerProvider;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
 
-public class Slot {
+public class Slot implements IAssociatedContainerProvider {
 
     public int index;
 
     protected final Inventory inventory;
     protected final int slot;
     protected final SlotImpl impl;
+
+    private final SimpleAssociatedStorage storage = new SimpleAssociatedStorage();
 
     public Slot(Inventory inventory, int index, int x, int y) {
         this.inventory = inventory;
@@ -58,5 +63,10 @@ public class Slot {
 
     public int getSlot() {
         return slot;
+    }
+
+    @Override
+    public IAssociatedContainer getAssociatedContainer() {
+        return storage;
     }
 }

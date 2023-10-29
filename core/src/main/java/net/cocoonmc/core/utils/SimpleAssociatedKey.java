@@ -1,0 +1,58 @@
+package net.cocoonmc.core.utils;
+
+import net.cocoonmc.runtime.IAssociatedContainerKey;
+
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+
+public class SimpleAssociatedKey<T> implements IAssociatedContainerKey<T> {
+
+    private static final AtomicInteger GENERATOR = new AtomicInteger();
+
+    private final int id;
+    private final String name;
+    private final Class<T> type;
+    private final Supplier<T> defaultValue;
+
+
+    public SimpleAssociatedKey(String name, Class<T> type, Supplier<T> defaultValue) {
+        this.id = GENERATOR.getAndIncrement();
+        this.name = name;
+        this.type = type;
+        this.defaultValue = defaultValue;
+    }
+
+    public static <T> SimpleAssociatedKey<T> of(String name, Class<T> type) {
+        return new SimpleAssociatedKey<>(name, type, null);
+    }
+
+    public static <T> SimpleAssociatedKey<T> of(String name, Class<T> type, Supplier<T> provider) {
+        return new SimpleAssociatedKey<>(name, type, provider);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SimpleAssociatedKey)) return false;
+        SimpleAssociatedKey<?> that = (SimpleAssociatedKey<?>) o;
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
+    }
+
+    @Override
+    public Class<T> getType() {
+        return type;
+    }
+
+    @Override
+    public T getDefaultValue() {
+        if (defaultValue != null) {
+            return defaultValue.get();
+        }
+        return null;
+    }
+}

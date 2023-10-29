@@ -5,8 +5,11 @@ import net.cocoonmc.core.block.state.StateDefinition;
 import net.cocoonmc.core.item.context.BlockPlaceContext;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.resources.ResourceLocation;
+import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
+import net.cocoonmc.runtime.IAssociatedContainer;
+import net.cocoonmc.runtime.IAssociatedContainerProvider;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -14,14 +17,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class Block {
+public class Block implements IAssociatedContainerProvider {
 
     private ResourceLocation key;
 
-    private final Properties properties;
-
     protected final StateDefinition<Block, BlockState> stateDefinition;
     private BlockState defaultBlockState;
+
+    private final Properties properties;
+    private final SimpleAssociatedStorage storage = new SimpleAssociatedStorage();
 
     public Block(Properties properties) {
         this.properties = properties;
@@ -70,6 +74,11 @@ public class Block {
 
     public BlockState defaultBlockState() {
         return defaultBlockState;
+    }
+
+    @Override
+    public IAssociatedContainer getAssociatedContainer() {
+        return storage;
     }
 
     @Nullable
