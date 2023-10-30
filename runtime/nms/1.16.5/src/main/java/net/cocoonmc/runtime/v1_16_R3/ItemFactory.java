@@ -1,13 +1,10 @@
 package net.cocoonmc.runtime.v1_16_R3;
 
-import net.cocoonmc.core.nbt.CompoundTag;
-import net.cocoonmc.core.utils.ReflectUtils;
-import net.cocoonmc.core.utils.SimpleAssociatedKey;
-import net.cocoonmc.runtime.IAssociatedContainerKey;
+import net.cocoonmc.core.utils.ReflectHelper;
 import net.cocoonmc.runtime.IItemFactory;
+import net.cocoonmc.runtime.impl.ItemStackAccessor;
 import net.cocoonmc.runtime.impl.ItemStackTransformer;
 import net.cocoonmc.runtime.impl.ItemStackWrapper;
-import net.cocoonmc.runtime.impl.VanillaStackAccessor;
 import net.minecraft.server.v1_16_R3.BlockPosition;
 import net.minecraft.server.v1_16_R3.EntityPlayer;
 import net.minecraft.server.v1_16_R3.EnumDirection;
@@ -19,7 +16,6 @@ import net.minecraft.server.v1_16_R3.MovingObjectPositionBlock;
 import net.minecraft.server.v1_16_R3.NBTTagCompound;
 import net.minecraft.server.v1_16_R3.Vec3D;
 import net.minecraft.server.v1_16_R3.WorldServer;
-import org.apache.commons.lang.NotImplementedException;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_16_R3.inventory.CraftItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -64,20 +60,15 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
         return EnumHand.values()[hand.ordinal()];
     }
 
-    private static BlockPosition _unwrap(net.cocoonmc.core.BlockPos pos) {
-        return new BlockPosition(pos.getX(), pos.getY(), pos.getZ());
-    }
-
-
     private static ItemActionContext _unwrap(net.cocoonmc.core.item.context.UseOnContext context, ItemStack itemStack, EnumHand useItemHand) {
-        WorldServer level = convertToVanilla(context.getWorld());
+        WorldServer level = convertToVanilla(context.getLevel());
         EntityPlayer player = convertToVanilla(context.getPlayer());
         return new ItemActionContext(level, player, useItemHand, itemStack, _unwrap(context.getHitResult()));
     }
 
     private static MovingObjectPositionBlock _unwrap(net.cocoonmc.core.item.context.BlockHitResult hitResult) {
         Vec3D loc = _unwrap(hitResult.getLocation());
-        BlockPosition pos = _unwrap(hitResult.getBlockPos());
+        BlockPosition pos = convertToVanilla(hitResult.getBlockPos());
         EnumDirection dir = _unwrap(hitResult.getDirection());
         switch (hitResult.getType()) {
             case ENTITY:
@@ -115,7 +106,7 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
             public net.cocoonmc.core.item.ItemStack mirror(Object... itemStack) {
                 org.bukkit.inventory.ItemStack bukkitStack = (org.bukkit.inventory.ItemStack) itemStack[0];
                 ItemStack vanillaStack = (ItemStack) itemStack[1];
-                return new ItemStackWrapper<>(bukkitStack, new VanillaStackAccessor() {
+                return new ItemStackWrapper<>(bukkitStack, new ItemStackAccessor() {
                     @Override
                     public net.cocoonmc.core.nbt.CompoundTag getTag() {
                         if (vanillaStack.getTag() != null) {
@@ -143,12 +134,7 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
             @Nullable
             @Override
             public net.cocoonmc.core.item.ItemStack get(Object itemStack) {
-                throw new NotImplementedException();
-            }
-
-            @Override
-            public IAssociatedContainerKey<net.cocoonmc.core.item.ItemStack> getCacheKey() {
-                return SimpleAssociatedKey.of("CocoonStack", net.cocoonmc.core.item.ItemStack.class);
+                throw new UnsupportedOperationException();
             }
         };
     }
@@ -167,12 +153,12 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
 
             @Override
             public net.cocoonmc.core.nbt.CompoundTag serialize(org.bukkit.inventory.ItemStack itemStack) {
-                throw new NotImplementedException();
+                throw new UnsupportedOperationException();
             }
 
             @Override
             public org.bukkit.inventory.ItemStack deserialize(net.cocoonmc.core.nbt.CompoundTag tag) {
-                throw new NotImplementedException();
+                throw new UnsupportedOperationException();
             }
 
             @Override
@@ -189,12 +175,7 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
             @Nullable
             @Override
             public org.bukkit.inventory.ItemStack get(Object itemStack) {
-                return null;
-            }
-
-            @Override
-            public IAssociatedContainerKey<org.bukkit.inventory.ItemStack> getCacheKey() {
-                return SimpleAssociatedKey.of("BukkitStack", org.bukkit.inventory.ItemStack.class);
+                throw new UnsupportedOperationException();
             }
         };
     }
@@ -235,16 +216,11 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
             @Nullable
             @Override
             public ItemStack get(Object itemStack) {
-                // try get the vanilla stack via reflection,
+                // try to get the vanilla stack via reflection,
                 if (itemStack instanceof CraftItemStack) {
-                    return ReflectUtils.getMemberField(itemStack.getClass(), "handle").get(itemStack);
+                    return ReflectHelper.getMemberField(itemStack.getClass(), "handle").get(itemStack);
                 }
                 return null;
-            }
-
-            @Override
-            public IAssociatedContainerKey<ItemStack> getCacheKey() {
-                return SimpleAssociatedKey.of("VanillaStack", ItemStack.class);
             }
         };
     }

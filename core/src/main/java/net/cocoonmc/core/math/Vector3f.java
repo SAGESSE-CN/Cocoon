@@ -2,6 +2,8 @@ package net.cocoonmc.core.math;
 
 public class Vector3f {
 
+    public static final Vector3f ZERO = new Vector3f(0, 0, 0);
+
     private float x;
     private float y;
     private float z;

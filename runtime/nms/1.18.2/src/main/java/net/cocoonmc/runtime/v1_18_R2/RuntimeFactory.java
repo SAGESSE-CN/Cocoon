@@ -6,6 +6,7 @@ import net.cocoonmc.runtime.IMenuFactory;
 import net.cocoonmc.runtime.IRuntime;
 import net.cocoonmc.runtime.ITagFactory;
 
+@SuppressWarnings("unused")
 public class RuntimeFactory implements IRuntime {
 
     public static final TagFactory TAG = new TagFactory();

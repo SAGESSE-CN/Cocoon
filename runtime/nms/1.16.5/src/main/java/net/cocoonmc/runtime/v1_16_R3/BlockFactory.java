@@ -2,74 +2,81 @@ package net.cocoonmc.runtime.v1_16_R3;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
-import net.cocoonmc.core.utils.ReflectUtils;
+import net.cocoonmc.Cocoon;
+import net.cocoonmc.core.block.BlockState;
+import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.runtime.IBlockFactory;
-import org.bukkit.block.Skull;
+import net.cocoonmc.runtime.impl.BlockData;
+import net.cocoonmc.runtime.impl.BlockEntityAccessor;
+import net.cocoonmc.runtime.impl.CacheKeys;
+import net.minecraft.server.v1_16_R3.BlockPosition;
+import net.minecraft.server.v1_16_R3.Blocks;
+import net.minecraft.server.v1_16_R3.TileEntity;
+import net.minecraft.server.v1_16_R3.TileEntitySkull;
+import net.minecraft.server.v1_16_R3.World;
+import net.minecraft.server.v1_16_R3.WorldServer;
 
 import java.util.UUID;
 
 public class BlockFactory extends TransformFactory implements IBlockFactory {
 
     @Override
-    public void setSkullTexture(Skull skull, String texture) {
-        GameProfile profile = new GameProfile(UUID.randomUUID(), null);
-        Property property = new Property("textures", texture);
-        profile.getProperties().put("textures", property);
-        ReflectUtils.getMemberField(skull.getClass(), "profile").set(skull, profile);
+    public void setBlockData(net.cocoonmc.core.world.Level level, net.cocoonmc.core.BlockPos blockPos, BlockData blockData) {
+        WorldServer serverLevel = convertToVanilla(level);
+        BlockPosition blockPos1 = convertToVanilla(blockPos);
+        TileEntity blockEntity = serverLevel.getTileEntity(blockPos1);
+        if (!(blockEntity instanceof TileEntitySkull)) {
+            serverLevel.a(blockPos1, Blocks.PLAYER_HEAD.getBlockData(), 2, 1042);
+            blockEntity = serverLevel.getTileEntity(blockPos1);
+        }
+
+        if (blockEntity instanceof TileEntitySkull) {
+            blockData.setBlockEntity(convertToCocoon(blockEntity));
+            Cocoon.API.CACHE.set(blockData, CacheKeys.BLOCK_DATA_KEY, blockData);
+            GameProfile profile = new GameProfile(UUID.randomUUID(), null);
+            Property property = new Property("textures", BukkitHelper.getBlockDataTexture(blockData.getBlock(), blockData.getBlockState(), blockData.getBlockTag()));
+            profile.getProperties().put("textures", property);
+            ((TileEntitySkull) blockEntity).setGameProfile(profile);
+        }
     }
 
     @Override
-    public String getSkullTexture(Skull skull) {
-        GameProfile profile = ReflectUtils.getMemberField(skull.getClass(), "profile").get(skull);
-        if (profile != null) {
-            return profile.getProperties().get("textures").stream().findFirst().map(Property::getValue).orElse(null);
+    public BlockData getBlockData(net.cocoonmc.core.world.Level level, net.cocoonmc.core.BlockPos blockPos) {
+        WorldServer serverLevel = convertToVanilla(level);
+        BlockPosition blockPos1 = convertToVanilla(blockPos);
+        TileEntity blockEntity = serverLevel.getTileEntity(blockPos1);
+        if (!(blockEntity instanceof TileEntitySkull)) {
+            return null;
         }
-        return null;
+        GameProfile profile = ((TileEntitySkull) blockEntity).gameProfile;
+        if (profile == null || profile.getName() != null) {
+            return null;
+        }
+        return Cocoon.API.CACHE.computeIfAbsent(blockEntity, CacheKeys.BLOCK_DATA_KEY, it -> {
+            String texture = profile.getProperties().get("textures").stream().findFirst().map(Property::getValue).orElse(null);
+            BlockData blockData = BukkitHelper.getBlockDataFromTexture(level, blockPos, texture);
+            if (blockData != null) {
+                blockData.setBlockEntity(convertToCocoon(blockEntity));
+            }
+            return blockData;
+        });
     }
 
-//    public static void setBlock(UseOnContext context, String id, @Nullable BlockState state, @Nullable CompoundTag tag) {
-//
-//        @Override
-//        public int placeItem(org.bukkit.inventory.ItemStack itemStack, IBlockPlaceContext context, EquipmentSlot hand) {
 
+    private static BlockEntityAccessor convertToCocoon(TileEntity blockEntity) {
+        return new BlockEntityAccessor() {
+            @Override
+            public void setChanged() {
+                blockEntity.update();
+            }
 
-//        try {
-////            String skinURL = getSkinURL(id, state, tag);
-////
-////            // ..
-////            Location pos = context.getClickedBlock().getLocation();
-////            Location location = context.getClickedBlock().getLocation();
-////            CustomBlock.BlockPlaceContext context1;
-////            EquipmentSlot hand = EquipmentSlot.HAND;
-////            context1 = new CustomBlock.BlockPlaceContext(context.getPlayer(), hand, 2, pos, location, BlockFace.NORTH);
-////            CustomBlock.placeItem(NBTEditor.getHead(skinURL), context1, hand);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-
-//    public static void setBlockAndUpdate(UseOnContext context, String id, @Nullable BlockState state, @Nullable CompoundTag tag) {
-//        setBlock(context, id, state, tag);
-//        org.bukkit.block.Block target = context.getClickedBlock().getRelative(BlockFace.NORTH);
-//        if (!target.getType().isAir()) {
-//            target.getState().update(true, false);
-//        }
-//    }
-//
-//    public static void updateBlock(org.bukkit.block.Block block, String id, @Nullable BlockState state, @Nullable CompoundTag tag) {
-//        try {
-//            String skinURL = getSkinURL(id, state, tag);
-//            if (block.getType() != Material.PLAYER_HEAD) {
-//                block.setType(Material.PLAYER_HEAD, true);
-//            }
-//            setSkullTexture(block, skinURL);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    public static void updateBlockAndUpdate(org.bukkit.block.Block block, String id, @Nullable BlockState state, @Nullable CompoundTag tag) {
-//        updateBlock(block, id, state, tag);
-//        block.getState().update(true, false);
-//    }
+            @Override
+            public void sendBlockUpdated(net.cocoonmc.core.BlockPos pos, BlockState oldBlockState, BlockState newBlockState, int flags) {
+                World level = blockEntity.getWorld();
+                if (level != null) {
+                    level.notify(blockEntity.getPosition(), blockEntity.getBlock(), blockEntity.getBlock(), flags);
+                }
+            }
+        };
+    }
 }

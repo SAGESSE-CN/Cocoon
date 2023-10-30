@@ -1,12 +1,14 @@
 package net.cocoonmc.core.inventory;
 
 import net.cocoonmc.core.item.ItemStack;
-import org.bukkit.entity.Player;
+import net.cocoonmc.core.world.entity.Player;
 import org.bukkit.inventory.Inventory;
 
 public interface MenuImpl {
 
     void super$removed(Player player);
+
+    void super$clearContainer(Player player, Inventory inventory);
 
     void super$broadcastChanges();
 

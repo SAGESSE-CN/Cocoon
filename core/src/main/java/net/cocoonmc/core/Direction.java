@@ -1,9 +1,9 @@
 package net.cocoonmc.core;
 
 import net.cocoonmc.core.math.Vector3i;
-import net.cocoonmc.core.utils.BukkitUtils;
-import org.bukkit.entity.Entity;
-import org.bukkit.util.Vector;
+import net.cocoonmc.core.utils.BukkitHelper;
+import net.cocoonmc.core.world.entity.Entity;
+import org.bukkit.block.BlockFace;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
@@ -35,18 +35,13 @@ public enum Direction {
         this.normal = normal;
     }
 
-    public static Direction of(org.bukkit.block.BlockFace face) {
-        return BukkitUtils.FACE_TO_DIRECTION[face.ordinal()];
-    }
-
-    public static org.bukkit.block.BlockFace of(Direction direction) {
-        return BukkitUtils.DIRECTION_TO_FACE[direction.ordinal()];
+    public static Direction by(BlockFace face) {
+        return BukkitHelper.convertToCocoon(face);
     }
 
     public static Direction[] orderedByNearest(Entity entity) {
-        Vector vec = entity.getLocation().getDirection();
-        double f = vec.getX() * (Math.PI / 180);
-        double g = -vec.getY() * (Math.PI / 180);
+        float f = entity.getViewXRot(1.0f) * ((float) Math.PI / 180);
+        float g = -entity.getViewYRot(1.0f) * ((float) Math.PI / 180);
         double h = Math.sin(f);
         double i = Math.cos(f);
         double j = Math.sin(g);
@@ -407,6 +402,10 @@ public enum Direction {
         }
 
         return var3;
+    }
+
+    public BlockFace asBukkit() {
+        return BukkitHelper.convertToBukkit(this);
     }
 
     @Override

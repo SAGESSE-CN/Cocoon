@@ -5,8 +5,8 @@ import net.cocoonmc.core.Direction;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.math.Vector3f;
 import net.cocoonmc.core.world.InteractionHand;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
+import net.cocoonmc.core.world.Level;
+import net.cocoonmc.core.world.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 public class UseOnContext {
@@ -15,15 +15,15 @@ public class UseOnContext {
     protected final Player player;
     protected final InteractionHand hand;
     protected final BlockHitResult hitResult;
-    protected final World world;
+    protected final Level level;
     protected final ItemStack itemStack;
 
-    public UseOnContext(World world, @Nullable Player player, InteractionHand hand, ItemStack itemStack, BlockHitResult hitResult) {
+    public UseOnContext(Level level, @Nullable Player player, InteractionHand hand, ItemStack itemStack, BlockHitResult hitResult) {
         this.player = player;
         this.hand = hand;
         this.hitResult = hitResult;
         this.itemStack = itemStack;
-        this.world = world;
+        this.level = level;
     }
 
     public BlockHitResult getHitResult() {
@@ -34,8 +34,8 @@ public class UseOnContext {
         return player;
     }
 
-    public World getWorld() {
-        return world;
+    public Level getLevel() {
+        return level;
     }
 
     public ItemStack getItemInHand() {
@@ -64,13 +64,13 @@ public class UseOnContext {
 
     public Direction getHorizontalDirection() {
         if (player != null) {
-            return Direction.of(player.getFacing());
+            return player.getDirection();
         }
         return Direction.NORTH;
     }
 
-//    public boolean isSecondaryUseActive() {
-//        return this.player != null && this.player.isSecondaryUseActive();
-//    }
+    public boolean isSecondaryUseActive() {
+        return player != null && player.isSecondaryUseActive();
+    }
 }
 

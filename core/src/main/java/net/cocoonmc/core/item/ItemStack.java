@@ -4,13 +4,13 @@ import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.Tag;
-import net.cocoonmc.core.utils.BukkitUtils;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
+import net.cocoonmc.core.world.Level;
+import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerProvider;
 import net.cocoonmc.runtime.impl.Constants;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
+import net.cocoonmc.runtime.impl.ItemStackWrapper;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
@@ -48,7 +48,7 @@ public class ItemStack implements IAssociatedContainerProvider {
             itemTag = tag.getCompound("tag");
         }
         String wrapperId = tag.getString("id");
-        String sourceId = BukkitUtils.getReadId(wrapperId, itemTag);
+        String sourceId = ItemStackWrapper.getReadId(wrapperId, itemTag);
         this.item = Items.byId(sourceId);
         this.count = tag.getByte("Count");
         this.tag = itemTag;
@@ -63,8 +63,8 @@ public class ItemStack implements IAssociatedContainerProvider {
     }
 
     public CompoundTag save(CompoundTag outputTag) {
-        String sourceId = item.getKey().toString();
-        String wrapperId = BukkitUtils.getWrapperId(sourceId, tag, getMaxStackSize());
+        String sourceId = item.getRegistryName().toString();
+        String wrapperId = ItemStackWrapper.getWrapperId(sourceId, tag, getMaxStackSize());
         outputTag.putString("id", wrapperId);
         outputTag.putByte("Count", (byte) count);
         CompoundTag itemTag = null;
@@ -234,11 +234,11 @@ public class ItemStack implements IAssociatedContainerProvider {
      * underlying block?
      *
      * @param player The Player that is wielding the item
-     * @param world  The world
+     * @param level  The world
      * @param pos    Block position in level
      */
-    public boolean doesSneakBypassUse(Player player, World world, BlockPos pos) {
-        return isEmpty() || getItem().doesSneakBypassUse(this, player, world, pos);
+    public boolean doesSneakBypassUse(Player player, Level level, BlockPos pos) {
+        return isEmpty() || getItem().doesSneakBypassUse(this, player, level, pos);
     }
 
 
@@ -326,6 +326,6 @@ public class ItemStack implements IAssociatedContainerProvider {
 
     @Override
     public String toString() {
-        return "" + count + " " + item.getKey();
+        return count + " " + item.getRegistryName();
     }
 }

@@ -2,7 +2,7 @@ package net.cocoonmc.core.inventory;
 
 import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.item.ItemStack;
-import org.bukkit.entity.Player;
+import net.cocoonmc.core.world.entity.Player;
 import org.bukkit.inventory.Inventory;
 
 import java.util.List;
@@ -13,7 +13,9 @@ public interface Container {
 
     int getContainerSize();
 
-    int getMaxStackSize();
+    default int getMaxStackSize() {
+        return 64;
+    }
 
     ItemStack getItem(int slot);
 
@@ -27,7 +29,7 @@ public interface Container {
 
     boolean stillValid(Player player);
 
-    List<ItemStack> getContents();
+    List<ItemStack> getItems();
 
     void clearContent();
 
@@ -38,7 +40,6 @@ public interface Container {
     default boolean canTakeItem(int slot, ItemStack itemStack) {
         return true;
     }
-
 
     default Inventory asBukkit() {
         return Cocoon.API.MENU.create(this);

@@ -6,8 +6,8 @@ import net.cocoonmc.core.block.state.StateHolder;
 import net.cocoonmc.core.block.state.properties.Property;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
+import net.cocoonmc.core.world.Level;
+import net.cocoonmc.core.world.entity.Player;
 
 public class BlockState extends StateHolder<Block, BlockState> {
 
@@ -15,16 +15,16 @@ public class BlockState extends StateHolder<Block, BlockState> {
         super(block, values);
     }
 
-    public InteractionResult use(World world, BlockPos blockPos, Player player, InteractionHand hand) {
-        return getBlock().use(this, world, blockPos, player, hand);
+    public InteractionResult use(Level level, BlockPos blockPos, Player player, InteractionHand hand) {
+        return getBlock().use(this, level, blockPos, player, hand);
     }
 
-    public InteractionResult attack(World world, BlockPos blockPos, Player player) {
-        return getBlock().attack(this, world, blockPos, player);
+    public InteractionResult attack(Level level, BlockPos blockPos, Player player) {
+        return getBlock().attack(this, level, blockPos, player);
     }
 
-    public boolean canSurvive(World world, BlockPos blockPos) {
-        return getBlock().canSurvive(this, world, blockPos);
+    public boolean canSurvive(Level level, BlockPos blockPos) {
+        return getBlock().canSurvive(this, level, blockPos);
     }
 
 

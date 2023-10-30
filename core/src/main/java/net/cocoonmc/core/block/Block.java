@@ -3,23 +3,25 @@ package net.cocoonmc.core.block;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.block.state.StateDefinition;
 import net.cocoonmc.core.item.context.BlockPlaceContext;
-import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
+import net.cocoonmc.core.world.Level;
+import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerProvider;
 import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 public class Block implements IAssociatedContainerProvider {
 
-    private ResourceLocation key;
+    private static final HashMap<ResourceLocation, Block> KEYED_BLOCKS = new HashMap<>();
+
+    private ResourceLocation registryName;
 
     protected final StateDefinition<Block, BlockState> stateDefinition;
     private BlockState defaultBlockState;
@@ -35,15 +37,15 @@ public class Block implements IAssociatedContainerProvider {
         this.registerDefaultState(this.stateDefinition.any());
     }
 
-    public InteractionResult use(BlockState blockState, World world, BlockPos blockPos, Player player, InteractionHand hand) {
+    public InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand hand) {
         return InteractionResult.PASS;
     }
 
-    public InteractionResult attack(BlockState blockState, World world, BlockPos blockPos, Player player) {
+    public InteractionResult attack(BlockState blockState, Level level, BlockPos blockPos, Player player) {
         return InteractionResult.PASS;
     }
 
-    public boolean canSurvive(BlockState blockState, World world, BlockPos blockPos) {
+    public boolean canSurvive(BlockState blockState, Level level, BlockPos blockPos) {
         return true;
     }
 
@@ -51,8 +53,12 @@ public class Block implements IAssociatedContainerProvider {
     }
 
     @Nullable
-    public BlockEntity createBlockEntity(World world, BlockPos pos, BlockState blockState, @Nullable CompoundTag tag) {
-        return new BlockEntity(world, pos, blockState, tag);
+    public BlockEntity createBlockEntity(Level level, BlockPos pos, BlockState blockState) {
+        BlockEntityType<?> entityType = properties.blockEntityType;
+        if (entityType != null) {
+            return entityType.create(level, pos, blockState);
+        }
+        return null;
     }
 
     @Nullable
@@ -60,12 +66,8 @@ public class Block implements IAssociatedContainerProvider {
         return defaultBlockState();
     }
 
-    public void setKey(ResourceLocation key) {
-        this.key = key;
-    }
-
-    public ResourceLocation getKey() {
-        return key;
+    public ResourceLocation getRegistryName() {
+        return registryName;
     }
 
     public void registerDefaultState(BlockState defaultBlockState) {
@@ -98,17 +100,28 @@ public class Block implements IAssociatedContainerProvider {
         if (this == o) return true;
         if (!(o instanceof Block)) return false;
         Block block = (Block) o;
-        return Objects.equals(key, block.key);
+        return Objects.equals(registryName, block.registryName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key);
+        return Objects.hash(registryName);
+    }
+
+    public static Block byKey(ResourceLocation key) {
+        return KEYED_BLOCKS.get(key);
+    }
+
+    public static Block register(ResourceLocation registryName, Block block) {
+        block.registryName = registryName;
+        KEYED_BLOCKS.put(registryName, block);
+        return block;
     }
 
     public static class Properties {
 
         Material material;
+        BlockEntityType<?> blockEntityType;
         boolean isInteractable = false;
         boolean noDrops = false;
         boolean noOcclusion = false;
@@ -131,6 +144,11 @@ public class Block implements IAssociatedContainerProvider {
 
         public Properties isInteractable() {
             this.isInteractable = true;
+            return this;
+        }
+
+        public Properties entity(BlockEntityType<?> entityType) {
+            this.blockEntityType = entityType;
             return this;
         }
 

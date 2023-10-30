@@ -1,7 +1,7 @@
 package net.cocoonmc.core.inventory;
 
 import net.cocoonmc.core.item.ItemStack;
-import org.bukkit.entity.Player;
+import net.cocoonmc.core.world.entity.Player;
 
 public interface SlotImpl {
 

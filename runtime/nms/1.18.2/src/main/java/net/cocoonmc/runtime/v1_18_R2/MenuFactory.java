@@ -16,6 +16,8 @@ import net.minecraft.world.item.ItemStack;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_18_R2.entity.CraftHumanEntity;
 import org.bukkit.craftbukkit.v1_18_R2.event.CraftEventFactory;
+import org.bukkit.craftbukkit.v1_18_R2.inventory.CraftInventory;
+import org.bukkit.craftbukkit.v1_18_R2.inventory.CraftInventoryView;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -34,20 +36,15 @@ public class MenuFactory extends TransformFactory implements IMenuFactory {
     }
 
     @Override
-    public MenuImpl create(net.cocoonmc.core.inventory.Menu impl, org.bukkit.entity.Player player, net.cocoonmc.core.network.Component title) {
+    public MenuImpl create(net.cocoonmc.core.inventory.Menu impl, net.cocoonmc.core.world.entity.Player player, net.cocoonmc.core.network.Component title) {
         ProxyMenu menu = new ProxyMenu(impl, convertToVanilla(player));
         menu.setTitle(Component.Serializer.fromJson(title.serialize()));
         return menu;
     }
 
     @Override
-    public Inventory create(InventoryHolder owner, int size, String title) {
-        return createInventory(owner, size, title);
-    }
-
-    @Override
     public Inventory create(net.cocoonmc.core.inventory.Container container) {
-        return createInventory(new ProxyContainer(container));
+        return new CraftInventory(new ProxyContainer(container));
     }
 
 
@@ -131,7 +128,7 @@ public class MenuFactory extends TransformFactory implements IMenuFactory {
         }
 
         @Override
-        public boolean super$mayPickup(org.bukkit.entity.Player player) {
+        public boolean super$mayPickup(net.cocoonmc.core.world.entity.Player player) {
             return super.mayPickup(convertToVanilla(player));
         }
     }
@@ -142,7 +139,6 @@ public class MenuFactory extends TransformFactory implements IMenuFactory {
 
         private final ServerPlayer player;
 
-        private Inventory inventory;
         private InventoryView inventoryView;
 
         protected ProxyMenu(net.cocoonmc.core.inventory.Menu impl, ServerPlayer player) {
@@ -154,7 +150,7 @@ public class MenuFactory extends TransformFactory implements IMenuFactory {
         @Override
         public InventoryView getBukkitView() {
             if (inventoryView == null) {
-                inventoryView = createInventoryView(player.getBukkitEntity(), impl.getInventory(), this);
+                inventoryView = new CraftInventoryView(player.getBukkitEntity(), impl.getInventory(), this);
             }
             return inventoryView;
         }
@@ -180,8 +176,13 @@ public class MenuFactory extends TransformFactory implements IMenuFactory {
         }
 
         @Override
-        public void super$removed(org.bukkit.entity.Player player) {
+        public void super$removed(net.cocoonmc.core.world.entity.Player player) {
             super.removed(convertToVanilla(player));
+        }
+
+        @Override
+        public void super$clearContainer(net.cocoonmc.core.world.entity.Player player, Inventory inventory) {
+            super.clearContainer(convertToVanilla(player), convertToVanilla(inventory));
         }
 
         @Override
@@ -284,7 +285,7 @@ public class MenuFactory extends TransformFactory implements IMenuFactory {
 
         @Override
         public List<ItemStack> getContents() {
-            return impl.getContents().stream().map(TransformFactory::convertToVanilla).collect(Collectors.toList());
+            return impl.getItems().stream().map(TransformFactory::convertToVanilla).collect(Collectors.toList());
         }
 
         @Override

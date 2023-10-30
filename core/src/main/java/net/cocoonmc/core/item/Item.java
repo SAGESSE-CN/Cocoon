@@ -7,20 +7,23 @@ import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.InteractionResultHolder;
+import net.cocoonmc.core.world.Level;
+import net.cocoonmc.core.world.entity.Entity;
+import net.cocoonmc.core.world.entity.LivingEntity;
+import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerProvider;
 import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 public class Item implements IAssociatedContainerProvider {
 
-    private ResourceLocation key;
+    private static final HashMap<ResourceLocation, Item> KEYED_ITEMS = new HashMap<>();
+
+    private ResourceLocation registryName;
 
     private final Properties properties;
     private final SimpleAssociatedStorage storage = new SimpleAssociatedStorage();
@@ -70,10 +73,10 @@ public class Item implements IAssociatedContainerProvider {
      *
      * @param stack  The Item being used
      * @param player The Player that is wielding the item
-     * @param world  The world
+     * @param level  The world
      * @param pos    Block position in level
      */
-    public boolean doesSneakBypassUse(ItemStack stack, Player player, World world, BlockPos pos) {
+    public boolean doesSneakBypassUse(ItemStack stack, Player player, Level level, BlockPos pos) {
         return false;
     }
 
@@ -81,12 +84,8 @@ public class Item implements IAssociatedContainerProvider {
         return properties.maxStackSize;
     }
 
-    public void setKey(ResourceLocation key) {
-        this.key = key;
-    }
-
-    public ResourceLocation getKey() {
-        return key;
+    public ResourceLocation getRegistryName() {
+        return registryName;
     }
 
     @Override
@@ -108,12 +107,23 @@ public class Item implements IAssociatedContainerProvider {
         if (this == o) return true;
         if (!(o instanceof Item)) return false;
         Item item = (Item) o;
-        return Objects.equals(key, item.key);
+        return Objects.equals(registryName, item.registryName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key);
+        return Objects.hash(registryName);
+    }
+
+
+    public static Item byKey(ResourceLocation registryName) {
+        return KEYED_ITEMS.get(registryName);
+    }
+
+    public static Item register(ResourceLocation registryName, Item item) {
+        item.registryName = registryName;
+        KEYED_ITEMS.put(registryName, item);
+        return item;
     }
 
     public static class Properties {

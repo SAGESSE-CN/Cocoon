@@ -1,30 +1,43 @@
 package net.cocoonmc.core.inventory;
 
 import net.cocoonmc.core.resources.ResourceLocation;
-import org.bukkit.entity.Player;
+import net.cocoonmc.core.world.entity.Player;
+
+import java.util.HashMap;
 
 public class MenuType<T extends Menu> {
 
-    private final ResourceLocation registryName;
+    private static final HashMap<ResourceLocation, MenuType<?>> KEYED_MENU_TYPES = new HashMap<>();
+
+    private ResourceLocation registryName;
     private final Factory<T, ?> factory;
 
-    public MenuType(ResourceLocation registryName, Factory<T, ?> factory) {
-        this.registryName = registryName;
+    public MenuType(Factory<T, ?> factory) {
         this.factory = factory;
     }
 
+    @SuppressWarnings("unchecked")
     public <V> T createMenu(Player player, V hostObject) {
-        // noinspection unchecked
         Factory<T, V> factory1 = (Factory<T, V>) factory;
-        return factory1.createMenu(this, player, hostObject);
+        return factory1.create(this, player, hostObject);
     }
 
     public ResourceLocation getRegistryName() {
         return registryName;
     }
 
+    public static MenuType<?> byKey(ResourceLocation registryName) {
+        return KEYED_MENU_TYPES.get(registryName);
+    }
+
+    public static <T extends Menu> MenuType<T> register(ResourceLocation registryName, MenuType<T> menuType) {
+        menuType.registryName = registryName;
+        KEYED_MENU_TYPES.put(registryName, menuType);
+        return menuType;
+    }
+
     public interface Factory<T, V> {
 
-        T createMenu(MenuType<?> menuType, Player player, V hostObject);
+        T create(MenuType<?> menuType, Player player, V hostObject);
     }
 }

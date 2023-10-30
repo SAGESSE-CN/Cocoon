@@ -12,12 +12,4 @@ public interface IItemFactory {
     org.bukkit.inventory.ItemStack convertTo(ItemStack itemStack);
 
     InteractionResult useOn(ItemStack itemStack, UseOnContext context);
-
-
-    default boolean isRedirectedItem(org.bukkit.inventory.ItemStack itemStack) {
-        if (itemStack.hasItemMeta()) {
-            return convertTo(itemStack).hasTagElement(Constants.ITEM_REDIRECTED_KEY);
-        }
-        return false;
-    }
 }

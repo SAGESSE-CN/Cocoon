@@ -49,7 +49,7 @@ public class BlockLoadMixin implements IOriginalLevelChunk {
                 CompoundTag newTag = pair.getSecond();
                 setOriginalBlockState(pos, Blocks.PLAYER_HEAD.defaultBlockState());
                 chunk.setBlockState(pos, newState, false);
-                if (newTag != null && !newState.hasBlockEntity()) {
+                if (newTag != null && newState.hasBlockEntity()) {
                     BlockEntity blockEntity1 = chunk.getBlockEntity(pos);
                     if (blockEntity1 != null) {
                         blockEntity1.handleUpdateTag(newTag);

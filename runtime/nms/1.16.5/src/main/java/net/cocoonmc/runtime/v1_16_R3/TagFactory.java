@@ -1,6 +1,7 @@
 package net.cocoonmc.runtime.v1_16_R3;
 
 import net.cocoonmc.runtime.ITagFactory;
+import net.cocoonmc.runtime.impl.TagWrapper;
 import net.minecraft.server.v1_16_R3.MojangsonParser;
 import net.minecraft.server.v1_16_R3.NBTBase;
 import net.minecraft.server.v1_16_R3.NBTCompressedStreamTools;
@@ -28,71 +29,71 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class TagFactory implements ITagFactory {
+public class TagFactory extends TagWrapper implements ITagFactory {
 
     @Override
-    public net.cocoonmc.core.nbt.ByteTag create(byte value) {
+    public WrappedByteTag create(byte value) {
         return wrap(NBTTagByte.a(value));
     }
 
     @Override
-    public net.cocoonmc.core.nbt.ShortTag create(short value) {
+    public WrappedShortTag create(short value) {
         return wrap(NBTTagShort.a(value));
     }
 
     @Override
-    public net.cocoonmc.core.nbt.IntTag create(int value) {
+    public WrappedIntTag create(int value) {
         return wrap(NBTTagInt.a(value));
     }
 
     @Override
-    public net.cocoonmc.core.nbt.LongTag create(long value) {
+    public WrappedLongTag create(long value) {
         return wrap(NBTTagLong.a(value));
     }
 
     @Override
-    public net.cocoonmc.core.nbt.FloatTag create(float value) {
+    public WrappedFloatTag create(float value) {
         return wrap(NBTTagFloat.a(value));
     }
 
     @Override
-    public net.cocoonmc.core.nbt.DoubleTag create(double value) {
+    public WrappedDoubleTag create(double value) {
         return wrap(NBTTagDouble.a(value));
     }
 
     @Override
-    public net.cocoonmc.core.nbt.StringTag create(String value) {
+    public WrappedStringTag create(String value) {
         return wrap(NBTTagString.a(value));
     }
 
     @Override
-    public net.cocoonmc.core.nbt.ByteArrayTag create(byte[] values) {
+    public WrappedByteArrayTag create(byte[] values) {
         return wrap(new NBTTagByteArray(values));
     }
 
     @Override
-    public net.cocoonmc.core.nbt.IntArrayTag create(int[] values) {
+    public WrappedIntArrayTag create(int[] values) {
         return wrap(new NBTTagIntArray(values));
     }
 
     @Override
-    public net.cocoonmc.core.nbt.LongArrayTag create(long[] values) {
+    public WrappedLongArrayTag create(long[] values) {
         return wrap(new NBTTagLongArray(values));
     }
 
     @Override
-    public net.cocoonmc.core.nbt.ListTag create(List<net.cocoonmc.core.nbt.Tag> values, int elementType) {
+    public WrappedListTag create(List<net.cocoonmc.core.nbt.Tag> values, int elementType) {
         return wrap(new NBTTagList());
     }
 
     @Override
-    public net.cocoonmc.core.nbt.CompoundTag create(Map<String, net.cocoonmc.core.nbt.Tag> values) {
+    public WrappedCompoundTag create(Map<String, net.cocoonmc.core.nbt.Tag> values) {
         return wrap(new NBTTagCompound());
     }
 
 
     @Override
-    public net.cocoonmc.core.nbt.CompoundTag read(InputStream inputStream) throws IOException {
+    public WrappedCompoundTag read(InputStream inputStream) throws IOException {
         return wrap(NBTCompressedStreamTools.a((DataInput) new DataInputStream(inputStream)));
     }
 
@@ -102,7 +103,7 @@ public class TagFactory implements ITagFactory {
     }
 
     @Override
-    public net.cocoonmc.core.nbt.CompoundTag readCompressed(InputStream inputStream) throws IOException {
+    public WrappedCompoundTag readCompressed(InputStream inputStream) throws IOException {
         return wrap(NBTCompressedStreamTools.a(inputStream));
     }
 
@@ -112,11 +113,11 @@ public class TagFactory implements ITagFactory {
     }
 
     @Override
-    public net.cocoonmc.core.nbt.CompoundTag fromString(String tag) {
+    public WrappedCompoundTag fromString(String tag) {
         try {
             return wrap(MojangsonParser.parse(tag));
         } catch (Exception e) {
-            return net.cocoonmc.core.nbt.CompoundTag.newInstance();
+            return create((Map<String, net.cocoonmc.core.nbt.Tag>) null);
         }
     }
 
@@ -125,13 +126,8 @@ public class TagFactory implements ITagFactory {
         return unwrap(tag).toString();
     }
 
-    public static net.cocoonmc.core.nbt.ByteTag wrap(NBTTagByte tag) {
-        return new net.cocoonmc.core.nbt.ByteTag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+    public static WrappedByteTag wrap(NBTTagByte tag) {
+        return new WrappedByteTag(tag) {
 
             @Override
             public Number getAsNumber() {
@@ -140,13 +136,8 @@ public class TagFactory implements ITagFactory {
         };
     }
 
-    public static net.cocoonmc.core.nbt.ShortTag wrap(NBTTagShort tag) {
-        return new net.cocoonmc.core.nbt.ShortTag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+    public static WrappedShortTag wrap(NBTTagShort tag) {
+        return new WrappedShortTag(tag) {
 
             @Override
             public Number getAsNumber() {
@@ -155,13 +146,8 @@ public class TagFactory implements ITagFactory {
         };
     }
 
-    public static net.cocoonmc.core.nbt.IntTag wrap(NBTTagInt tag) {
-        return new net.cocoonmc.core.nbt.IntTag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+    public static WrappedIntTag wrap(NBTTagInt tag) {
+        return new WrappedIntTag(tag) {
 
             @Override
             public Number getAsNumber() {
@@ -170,13 +156,8 @@ public class TagFactory implements ITagFactory {
         };
     }
 
-    public static net.cocoonmc.core.nbt.LongTag wrap(NBTTagLong tag) {
-        return new net.cocoonmc.core.nbt.LongTag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+    public static WrappedLongTag wrap(NBTTagLong tag) {
+        return new WrappedLongTag(tag) {
 
             @Override
             public Number getAsNumber() {
@@ -185,13 +166,8 @@ public class TagFactory implements ITagFactory {
         };
     }
 
-    public static net.cocoonmc.core.nbt.FloatTag wrap(NBTTagFloat tag) {
-        return new net.cocoonmc.core.nbt.FloatTag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+    public static WrappedFloatTag wrap(NBTTagFloat tag) {
+        return new WrappedFloatTag(tag) {
 
             @Override
             public Number getAsNumber() {
@@ -200,13 +176,8 @@ public class TagFactory implements ITagFactory {
         };
     }
 
-    public static net.cocoonmc.core.nbt.DoubleTag wrap(NBTTagDouble tag) {
-        return new net.cocoonmc.core.nbt.DoubleTag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+    public static WrappedDoubleTag wrap(NBTTagDouble tag) {
+        return new WrappedDoubleTag(tag) {
 
             @Override
             public Number getAsNumber() {
@@ -215,13 +186,8 @@ public class TagFactory implements ITagFactory {
         };
     }
 
-    public static net.cocoonmc.core.nbt.StringTag wrap(NBTTagString tag) {
-        return new net.cocoonmc.core.nbt.StringTag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+    public static WrappedStringTag wrap(NBTTagString tag) {
+        return new WrappedStringTag(tag) {
 
             @Override
             public String getAsString() {
@@ -230,13 +196,8 @@ public class TagFactory implements ITagFactory {
         };
     }
 
-    public static net.cocoonmc.core.nbt.ByteArrayTag wrap(NBTTagByteArray tag) {
-        return new net.cocoonmc.core.nbt.ByteArrayTag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+    public static WrappedByteArrayTag wrap(NBTTagByteArray tag) {
+        return new WrappedByteArrayTag(tag) {
 
             @Override
             public byte[] getAsByteArray() {
@@ -275,13 +236,8 @@ public class TagFactory implements ITagFactory {
         };
     }
 
-    public static net.cocoonmc.core.nbt.IntArrayTag wrap(NBTTagIntArray tag) {
-        return new net.cocoonmc.core.nbt.IntArrayTag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+    public static WrappedIntArrayTag wrap(NBTTagIntArray tag) {
+        return new WrappedIntArrayTag(tag) {
 
             @Override
             public int[] getAsIntArray() {
@@ -320,13 +276,8 @@ public class TagFactory implements ITagFactory {
         };
     }
 
-    public static net.cocoonmc.core.nbt.LongArrayTag wrap(NBTTagLongArray tag) {
-        return new net.cocoonmc.core.nbt.LongArrayTag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+    public static WrappedLongArrayTag wrap(NBTTagLongArray tag) {
+        return new WrappedLongArrayTag(tag) {
 
             @Override
             public long[] getAsLongArray() {
@@ -365,13 +316,8 @@ public class TagFactory implements ITagFactory {
         };
     }
 
-    public static net.cocoonmc.core.nbt.ListTag wrap(NBTTagList tag) {
-        return new net.cocoonmc.core.nbt.ListTag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+    public static WrappedListTag wrap(NBTTagList tag) {
+        return new WrappedListTag(tag) {
 
             @Override
             public byte getElementType() {
@@ -415,13 +361,8 @@ public class TagFactory implements ITagFactory {
         };
     }
 
-    public static net.cocoonmc.core.nbt.CompoundTag wrap(NBTTagCompound tag) {
-        return new net.cocoonmc.core.nbt.CompoundTag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+    public static WrappedCompoundTag wrap(NBTTagCompound tag) {
+        return new WrappedCompoundTag(tag) {
 
             @Override
             public net.cocoonmc.core.nbt.Tag get(String key) {
@@ -465,7 +406,7 @@ public class TagFactory implements ITagFactory {
         };
     }
 
-    public static net.cocoonmc.core.nbt.Tag wrap(NBTBase tag) {
+    public static WrappedTag wrap(NBTBase tag) {
         if (tag instanceof NBTTagByte) {
             return wrap((NBTTagByte) tag);
         }
@@ -502,12 +443,7 @@ public class TagFactory implements ITagFactory {
         if (tag instanceof NBTTagCompound) {
             return wrap((NBTTagCompound) tag);
         }
-        return new net.cocoonmc.core.nbt.Tag() {
-
-            @Override
-            public Object getHandle() {
-                return tag;
-            }
+        return new WrappedTag(tag) {
 
             @Override
             public byte getType() {

@@ -8,6 +8,7 @@ import net.cocoonmc.core.item.context.UseOnContext;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.ListTag;
 import net.cocoonmc.core.nbt.NbtIO;
+import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.runtime.impl.Constants;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +129,7 @@ public class BlockItem extends Item {
         CompoundTag properties = CompoundTag.newInstance();
         ListTag textures = ListTag.newInstance();
         CompoundTag texture = CompoundTag.newInstance();
-        texture.putString("Value", getHeadTexture(block, state, tag));
+        texture.putString("Value", BukkitHelper.getBlockDataTexture(block, state, tag));
         textures.add(texture);
         properties.put("textures", textures);
         owner.put("Properties", properties);
@@ -137,23 +138,4 @@ public class BlockItem extends Item {
         return itemStack;
     }
 
-    public static String getHeadTexture(Block block, @Nullable BlockState state, @Nullable CompoundTag tag) {
-        CompoundTag blockTag = CompoundTag.newInstance();
-        blockTag.putString(Constants.BLOCK_REDIRECTED_ID_KEY, block.getKey().toString());
-        if (state != null) {
-            CompoundTag stateTag = state.serialize();
-            if (stateTag.size() != 0) {
-                blockTag.put(Constants.BLOCK_REDIRECTED_STATE_KEY, stateTag);
-            }
-        }
-        if (tag != null) {
-            blockTag.put(Constants.BLOCK_REDIRECTED_TAG_KEY, tag);
-        }
-        try {
-            String value = NbtIO.toString(blockTag);
-            return new String(Base64.getEncoder().encode(String.format(Constants.BLOCK_REDIRECTED_DATA_FMT, value).getBytes()));
-        } catch (Exception e) {
-            return "";
-        }
-    }
 }

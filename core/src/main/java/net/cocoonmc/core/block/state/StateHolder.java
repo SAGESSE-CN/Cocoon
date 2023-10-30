@@ -106,7 +106,7 @@ public class StateHolder<O, S> {
     private <T extends Comparable<T>> StateHolder<O, S> setValueByName(StateHolder<O, S> state, Property<T> property, String valueName) {
         Optional<T> value = property.getValue(valueName);
         if (value.isPresent()) {
-            return (StateHolder<O, S>) setValue(property, value.get());
+            return (StateHolder<O, S>) state.setValue(property, value.get());
         }
         return state;
     }

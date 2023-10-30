@@ -11,22 +11,22 @@ public class SimpleAssociatedKey<T> implements IAssociatedContainerKey<T> {
 
     private final int id;
     private final String name;
-    private final Class<T> type;
+    private final Class<? extends T> type;
     private final Supplier<T> defaultValue;
 
 
-    public SimpleAssociatedKey(String name, Class<T> type, Supplier<T> defaultValue) {
+    public SimpleAssociatedKey(String name, Class<? extends T> type, Supplier<T> defaultValue) {
         this.id = GENERATOR.getAndIncrement();
         this.name = name;
         this.type = type;
         this.defaultValue = defaultValue;
     }
 
-    public static <T> SimpleAssociatedKey<T> of(String name, Class<T> type) {
+    public static <T> SimpleAssociatedKey<T> of(String name, Class<? extends T> type) {
         return new SimpleAssociatedKey<>(name, type, null);
     }
 
-    public static <T> SimpleAssociatedKey<T> of(String name, Class<T> type, Supplier<T> provider) {
+    public static <T> SimpleAssociatedKey<T> of(String name, Class<? extends T> type, Supplier<T> provider) {
         return new SimpleAssociatedKey<>(name, type, provider);
     }
 
@@ -44,7 +44,7 @@ public class SimpleAssociatedKey<T> implements IAssociatedContainerKey<T> {
     }
 
     @Override
-    public Class<T> getType() {
+    public Class<? extends T> getType() {
         return type;
     }
 

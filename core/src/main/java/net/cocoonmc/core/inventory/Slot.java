@@ -3,9 +3,9 @@ package net.cocoonmc.core.inventory;
 import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
+import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerProvider;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
 

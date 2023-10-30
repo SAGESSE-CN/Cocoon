@@ -4,9 +4,9 @@ import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.utils.ContainerHelper;
 import net.cocoonmc.core.utils.NonNullList;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
+import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerProvider;
-import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -113,7 +113,7 @@ public class SimpleContainer implements Container, IAssociatedContainerProvider 
     }
 
     @Override
-    public List<ItemStack> getContents() {
+    public List<ItemStack> getItems() {
         return items;
     }
 

@@ -18,6 +18,10 @@ import java.util.Optional;
 
 public class BlockHelper {
 
+    // base64("{textures:{SKIN:{\"url":\"\",__redirected_block_")
+    private static final String REDIRECTED_DATA_PREFIX = "e3RleHR1cmVzOntTS0lOOnsidXJsIjoiIixfX3JlZGlyZWN0ZWRfYmxvY2tfX";
+    private static final String REDIRECTED_DATA_FMT = "{textures:{SKIN:{\"url\":\"\",__redirected_block__:%s}}}";
+
     private static final HashMap<String, Block> ID_TO_BLOCKS = new HashMap<>();
 
 
@@ -42,16 +46,15 @@ public class BlockHelper {
     }
 
     private static CompoundTag getBlockTagFromTexture(String texture) {
-        // base64("{textures:{SKIN:{\"url":\"\",__redirected_block_")
-        if (texture == null || texture.isEmpty() || !texture.startsWith("e3RleHR1cmVzOntTS0lOOnsidXJsIjoiIixfX3JlZGlyZWN0ZWRfYmxvY2tfX")) {
+        // fast check
+        if (texture == null || texture.isEmpty() || !texture.startsWith(REDIRECTED_DATA_PREFIX)) {
             return null;
         }
         try {
-            String header = "{textures:{SKIN:{\"url\":\"\",__redirected_block__:";
-            String footer = ",__block_redirected__:\"\"}}}";
+            String[] parts = REDIRECTED_DATA_FMT.split("%s");
             String tag = new String(Base64.getDecoder().decode(texture));
-            if (tag.startsWith(header) && tag.endsWith(footer)) {
-                String tag2 = tag.substring(header.length(), tag.length() - footer.length());
+            if (tag.startsWith(parts[0]) && tag.endsWith(parts[1])) {
+                String tag2 = tag.substring(parts[0].length(), tag.length() - parts[1].length());
                 return TagParser.parseTag(tag2);
             }
         } catch (Exception e) {

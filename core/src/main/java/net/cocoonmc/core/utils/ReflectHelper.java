@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 
-public class ReflectUtils {
+public class ReflectHelper {
 
     private static final HashMap<Class<?>, HashMap<String, MemberField>> MEMBER_FIELDS = new HashMap<>();
 
@@ -18,7 +18,7 @@ public class ReflectUtils {
         private final String name;
 
         private Field field;
-        private Exception exception;
+        private Exception fieldException;
         private boolean forceAccess = true;
 
         public MemberField(Class<?> clazz, String name) {
@@ -34,6 +34,7 @@ public class ReflectUtils {
                     return (T) field.get(owner);
                 }
             } catch (Exception e) {
+                // ignore read exception
             }
             return null;
         }
@@ -45,31 +46,28 @@ public class ReflectUtils {
                     field.set(owner, value);
                 }
             } catch (Exception e) {
-                // .
+                // ignore write exception
             }
         }
-
 
         private Field getField() {
-            try {
-                if (field == null && exception == null) {
-                    field = findField(name);
-                    field.setAccessible(true);
-                }
-                return field;
-            } catch (Exception e) {
-                // don't try again
-                exception = e;
+            if (field != null) {
                 return field;
             }
+            if (fieldException != null) {
+                return null;
+            }
+            try {
+                field = lookupField(clazz, name);
+                field.setAccessible(true);
+            } catch (Exception e) {
+                // don't try again
+                fieldException = e;
+            }
+            return field;
         }
 
-        public Field findField(String fieldName) {
-            return lookupField(clazz, fieldName);
-        }
-
-        // For recursion
-        private Field lookupField(Class<?> instanceClass, String fieldName) {
+        private Field lookupField(Class<?> instanceClass, String fieldName) throws NoSuchFieldException {
             for (Field field : instanceClass.getDeclaredFields()) {
                 if ((forceAccess || Modifier.isPublic(field.getModifiers())) && field.getName().equals(fieldName)) {
                     return field;
@@ -78,10 +76,10 @@ public class ReflectUtils {
 
             // Recursively find the correct field
             if (instanceClass.getSuperclass() != null) {
-                return this.lookupField(instanceClass.getSuperclass(), fieldName);
+                return lookupField(instanceClass.getSuperclass(), fieldName);
             }
 
-            return null;
+            throw new NoSuchFieldException(fieldName);
         }
     }
 }

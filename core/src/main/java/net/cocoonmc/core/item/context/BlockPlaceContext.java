@@ -4,8 +4,8 @@ import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.Direction;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.world.InteractionHand;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
+import net.cocoonmc.core.world.Level;
+import net.cocoonmc.core.world.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 public class BlockPlaceContext extends UseOnContext {
@@ -14,11 +14,11 @@ public class BlockPlaceContext extends UseOnContext {
     protected boolean replaceClicked;
 
     public BlockPlaceContext(UseOnContext context) {
-        this(context.getWorld(), context.getPlayer(), context.getHand(), context.getItemInHand(), context.getHitResult());
+        this(context.getLevel(), context.getPlayer(), context.getHand(), context.getItemInHand(), context.getHitResult());
     }
 
-    public BlockPlaceContext(World world, @Nullable Player player, InteractionHand hand, ItemStack itemStack, BlockHitResult hitResult) {
-        super(world, player, hand, itemStack, hitResult);
+    public BlockPlaceContext(Level level, @Nullable Player player, InteractionHand hand, ItemStack itemStack, BlockHitResult hitResult) {
+        super(level, player, hand, itemStack, hitResult);
         this.replaceClicked = true;
         this.relativePos = hitResult.getBlockPos().relative(hitResult.getDirection());
         this.replaceClicked = canBeReplaced(hitResult.getBlockPos());
@@ -41,7 +41,7 @@ public class BlockPlaceContext extends UseOnContext {
     }
 
     public Direction getNearestLookingDirection() {
-        return Direction.orderedByNearest(getPlayer())[0];
+        return Direction.orderedByNearest(player)[0];
     }
 
     public Direction getNearestLookingVerticalDirection() {
@@ -49,7 +49,7 @@ public class BlockPlaceContext extends UseOnContext {
     }
 
     public Direction[] getNearestLookingDirections() {
-        Direction[] directions = Direction.orderedByNearest(getPlayer());
+        Direction[] directions = Direction.orderedByNearest(player);
         if (replaceClicked) {
             return directions;
         }
@@ -65,6 +65,6 @@ public class BlockPlaceContext extends UseOnContext {
     }
 
     private boolean canBeReplaced(BlockPos pos) {
-        return world.getBlockAt(pos.getX(), pos.getY(), pos.getZ()).isEmpty();
+        return level.asBukkit().getBlockAt(pos.getX(), pos.getY(), pos.getZ()).isEmpty();
     }
 }

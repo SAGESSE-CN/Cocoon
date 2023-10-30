@@ -5,9 +5,9 @@ import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.network.Component;
 import net.cocoonmc.core.network.FriendlyByteBuf;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
+import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerProvider;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
 import java.util.ArrayList;
@@ -42,6 +42,10 @@ public abstract class Menu implements IAssociatedContainerProvider {
         impl.super$removed(player);
     }
 
+    public void clearContainer(Player player, Inventory inventory) {
+        impl.super$clearContainer(player, inventory);
+    }
+
     public ItemStack quickMoveStack(Player player, int index) {
         return slots.get(index).getItem();
     }
@@ -63,7 +67,7 @@ public abstract class Menu implements IAssociatedContainerProvider {
         buffer.writeComponent(title);
         buffer.writeByteArray(additionalData.array());
         // send to player.
-        player.sendPluginMessage(Cocoon.getInstance().getPlugin(), "fml:play", buffer.array());
+        player.asBukkit().sendPluginMessage(Cocoon.getInstance().getPlugin(), "fml:play", buffer.array());
     }
 
     public void handleCloseWindowPacket(int windowId) {
