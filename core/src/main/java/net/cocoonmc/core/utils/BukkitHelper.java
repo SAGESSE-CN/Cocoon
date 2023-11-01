@@ -7,6 +7,9 @@ import net.cocoonmc.core.block.Block;
 import net.cocoonmc.core.block.BlockEntity;
 import net.cocoonmc.core.block.BlockState;
 import net.cocoonmc.core.block.Blocks;
+import net.cocoonmc.core.item.Item;
+import net.cocoonmc.core.item.ItemStack;
+import net.cocoonmc.core.item.Items;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.NbtIO;
 import net.cocoonmc.core.world.Level;
@@ -16,6 +19,7 @@ import org.bukkit.block.BlockFace;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Base64;
+import java.util.List;
 
 public class BukkitHelper {
 
@@ -110,6 +114,22 @@ public class BukkitHelper {
             return new String(Base64.getEncoder().encode(String.format(Constants.BLOCK_REDIRECTED_DATA_FMT, value).getBytes()));
         } catch (Exception e) {
             return "";
+        }
+    }
+
+    public static void replaceDrops(List<ItemStack> dropItems, Block block) {
+        Item item = block.asItem();
+        for (int i = 0; i < dropItems.size(); ++i) {
+            ItemStack itemStack = dropItems.get(i);
+            if (!itemStack.is(Items.PLAYER_HEAD)) {
+                continue;
+            }
+            if (item == Items.AIR) {
+                dropItems.remove(i);
+                i -= 1;
+                continue;
+            }
+            dropItems.set(i, new ItemStack(item, itemStack.getCount()));
         }
     }
 

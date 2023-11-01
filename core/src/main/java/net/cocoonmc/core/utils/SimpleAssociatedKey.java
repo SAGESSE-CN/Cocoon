@@ -10,24 +10,22 @@ public class SimpleAssociatedKey<T> implements IAssociatedContainerKey<T> {
     private static final AtomicInteger GENERATOR = new AtomicInteger();
 
     private final int id;
-    private final String name;
     private final Class<? extends T> type;
     private final Supplier<T> defaultValue;
 
 
-    public SimpleAssociatedKey(String name, Class<? extends T> type, Supplier<T> defaultValue) {
+    public SimpleAssociatedKey(Class<? extends T> type, Supplier<T> defaultValue) {
         this.id = GENERATOR.getAndIncrement();
-        this.name = name;
         this.type = type;
         this.defaultValue = defaultValue;
     }
 
-    public static <T> SimpleAssociatedKey<T> of(String name, Class<? extends T> type) {
-        return new SimpleAssociatedKey<>(name, type, null);
+    public static <T> SimpleAssociatedKey<T> of(Class<? extends T> type) {
+        return new SimpleAssociatedKey<>(type, null);
     }
 
-    public static <T> SimpleAssociatedKey<T> of(String name, Class<? extends T> type, Supplier<T> provider) {
-        return new SimpleAssociatedKey<>(name, type, provider);
+    public static <T> SimpleAssociatedKey<T> of(Class<? extends T> type, Supplier<T> provider) {
+        return new SimpleAssociatedKey<>(type, provider);
     }
 
     @Override

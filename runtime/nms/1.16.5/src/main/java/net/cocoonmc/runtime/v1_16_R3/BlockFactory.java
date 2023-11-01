@@ -28,10 +28,11 @@ public class BlockFactory extends TransformFactory implements IBlockFactory {
         if (!(blockEntity instanceof TileEntitySkull)) {
             serverLevel.a(blockPos1, Blocks.PLAYER_HEAD.getBlockData(), 2, 1042);
             blockEntity = serverLevel.getTileEntity(blockPos1);
+            if (blockEntity != null) {
+                blockData.setBlockAccessor(convertToCocoon(blockEntity));
+            }
         }
-
         if (blockEntity instanceof TileEntitySkull) {
-            blockData.setBlockEntity(convertToCocoon(blockEntity));
             Cocoon.API.CACHE.set(blockData, CacheKeys.BLOCK_DATA_KEY, blockData);
             GameProfile profile = new GameProfile(UUID.randomUUID(), null);
             Property property = new Property("textures", BukkitHelper.getBlockDataTexture(blockData.getBlock(), blockData.getBlockState(), blockData.getBlockTag()));
@@ -56,7 +57,7 @@ public class BlockFactory extends TransformFactory implements IBlockFactory {
             String texture = profile.getProperties().get("textures").stream().findFirst().map(Property::getValue).orElse(null);
             BlockData blockData = BukkitHelper.getBlockDataFromTexture(level, blockPos, texture);
             if (blockData != null) {
-                blockData.setBlockEntity(convertToCocoon(blockEntity));
+                blockData.setBlockAccessor(convertToCocoon(blockEntity));
             }
             return blockData;
         });

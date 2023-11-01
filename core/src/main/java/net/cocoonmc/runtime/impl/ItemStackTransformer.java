@@ -19,7 +19,7 @@ public class ItemStackTransformer<CocoonItemStack extends net.cocoonmc.core.item
         this.cocoonLayer = cocoonLayer;
         this.bukkitLayer = bukkitLayer;
         this.vanillaLayer = vanillaLayer;
-        this.relationCacheKey = SimpleAssociatedKey.of("Relation", getRelationClass());
+        this.relationCacheKey = SimpleAssociatedKey.of(getRelationClass());
     }
 
     public BukkitItemStack convertToBukkit(CocoonItemStack itemStack) {

@@ -30,4 +30,9 @@ public class Vector3f {
         return z;
     }
 
+
+    public org.bukkit.Location asBukkit() {
+        return new org.bukkit.Location(null, x, y, z);
+    }
+
 }

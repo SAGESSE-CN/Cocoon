@@ -25,6 +25,7 @@ public class ItemStackWrapper<BukkitItemStack extends org.bukkit.inventory.ItemS
     public void setCount(int count) {
         super.setCount(count);
         bukkitStack.setAmount(count);
+        vanillaStack.setCount(count);
     }
 
     @Override

@@ -7,6 +7,7 @@ import net.cocoonmc.core.block.BlockState;
 import net.cocoonmc.core.world.entity.Entity;
 import net.cocoonmc.runtime.impl.BlockData;
 import net.cocoonmc.runtime.impl.CacheKeys;
+import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
 
 public class Level {
@@ -45,6 +46,12 @@ public class Level {
     }
 
     public void setBlock(BlockPos pos, BlockState state, int flags) {
+        // if the new state is vanilla block, we only need update to bukkit.
+        org.bukkit.Material material = state.getBlock().asMaterial();
+        if (material != null) {
+            world.setType(pos.asBukkit(), material);
+            return;
+        }
         BlockData blockData = Cocoon.API.BLOCK.getBlockData(this, pos);
         if (blockData != null) {
             blockData.setBlockState(state, flags);

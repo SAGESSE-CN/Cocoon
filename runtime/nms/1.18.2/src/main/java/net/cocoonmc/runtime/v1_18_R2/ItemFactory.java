@@ -2,9 +2,9 @@ package net.cocoonmc.runtime.v1_18_R2;
 
 import net.cocoonmc.core.utils.ReflectHelper;
 import net.cocoonmc.runtime.IItemFactory;
+import net.cocoonmc.runtime.impl.ItemStackAccessor;
 import net.cocoonmc.runtime.impl.ItemStackTransformer;
 import net.cocoonmc.runtime.impl.ItemStackWrapper;
-import net.cocoonmc.runtime.impl.ItemStackAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -40,7 +40,9 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
     public net.cocoonmc.core.world.InteractionResult useOn(net.cocoonmc.core.item.ItemStack itemStackIn, net.cocoonmc.core.item.context.UseOnContext context) {
         InteractionHand useItemHand = _unwrap(context.getHand());
         ItemStack itemStack = ITEM_TRANSFORMER.convertToVanilla(itemStackIn);
-        return _wrap(itemStack.useOn(_unwrap(context, itemStack, useItemHand), useItemHand));
+        InteractionResult result = itemStack.useOn(_unwrap(context, itemStack, useItemHand), useItemHand);
+        itemStackIn.setCount(itemStack.getCount());
+        return _wrap(result);
     }
 
 
@@ -107,6 +109,12 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
                 org.bukkit.inventory.ItemStack bukkitStack = (org.bukkit.inventory.ItemStack) itemStack[0];
                 ItemStack vanillaStack = (ItemStack) itemStack[1];
                 return new ItemStackWrapper<>(bukkitStack, new ItemStackAccessor() {
+
+                    @Override
+                    public void setCount(int count) {
+                        vanillaStack.setCount(count);
+                    }
+
                     @Override
                     public net.cocoonmc.core.nbt.CompoundTag getTag() {
                         if (vanillaStack.getTag() != null) {

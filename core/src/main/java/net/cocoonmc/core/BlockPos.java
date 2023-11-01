@@ -79,6 +79,10 @@ public class BlockPos {
         return BlockPos.asLong(this.getX(), this.getY(), this.getZ());
     }
 
+    public org.bukkit.Location asBukkit() {
+        return new org.bukkit.Location(null, x, y, z);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

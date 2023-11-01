@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import net.cocoonmc.core.block.state.properties.Property;
+import net.cocoonmc.core.utils.Pair;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,29 +55,6 @@ public class StateDefinition<O, S extends StateHolder<O, S>> {
 
     public interface Factory<O, S> {
         S create(O var1, ImmutableMap<Property<?>, Comparable<?>> var2);
-    }
-
-    public static class Pair<F, S> {
-
-        private final F first;
-        private final S second;
-
-        public Pair(final F first, final S second) {
-            this.first = first;
-            this.second = second;
-        }
-
-        public static <F, S> Pair<F, S> of(final F first, final S second) {
-            return new Pair<>(first, second);
-        }
-
-        public F getFirst() {
-            return first;
-        }
-
-        public S getSecond() {
-            return second;
-        }
     }
 
     public static class Builder<O, S extends StateHolder<O, S>> {

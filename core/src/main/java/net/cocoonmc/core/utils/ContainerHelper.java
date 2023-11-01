@@ -2,10 +2,13 @@ package net.cocoonmc.core.utils;
 
 import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.item.ItemStack;
+import net.cocoonmc.core.math.Vector3f;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.ListTag;
+import net.cocoonmc.core.world.entity.Player;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import org.bukkit.Location;
+import org.bukkit.World;
 
 import java.util.List;
 
@@ -66,11 +69,19 @@ public class ContainerHelper {
     }
 
     public static void drop(org.bukkit.inventory.ItemStack itemStack, Player player, boolean bl2) {
-        Bukkit.getScheduler().runTask(Cocoon.getInstance().getPlugin(), () -> {
-            player.getWorld().dropItem(player.getLocation(), itemStack);
+        Bukkit.getScheduler().runTask(Cocoon.getPlugin(), () -> {
+            player.asBukkit().getWorld().dropItem(player.asBukkit().getLocation(), itemStack);
 //            if (bl2) {
 //                itemEntity.setThrower(player.getUUID());
 //            }
+        });
+    }
+
+    public static void dropItems(List<ItemStack> itemStacks, Player player, Vector3f location) {
+        Bukkit.getScheduler().runTask(Cocoon.getPlugin(), () -> {
+            org.bukkit.World world = player.asBukkit().getWorld();
+            org.bukkit.Location loc = location.asBukkit();
+            itemStacks.forEach(it -> world.dropItemNaturally(loc, it.asBukkit()));
         });
     }
 }

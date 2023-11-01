@@ -12,6 +12,9 @@ public class Blocks {
 
     public static Block AIR = register(Material.AIR);
 
+    public static void init() {
+    }
+
     public static Block byId(String id) {
         return NAMED_BLOCKS.computeIfAbsent(id, id1 -> Block.byKey(new ResourceLocation(id1)));
     }

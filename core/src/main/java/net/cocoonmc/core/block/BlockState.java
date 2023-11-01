@@ -23,6 +23,10 @@ public class BlockState extends StateHolder<Block, BlockState> {
         return getBlock().attack(this, level, blockPos, player);
     }
 
+    public void onRemove(Level level, BlockPos blockPos, BlockState blockState, boolean bl) {
+        getBlock().onRemove(level, blockPos, this, blockState, bl);
+    }
+
     public boolean canSurvive(Level level, BlockPos blockPos) {
         return getBlock().canSurvive(this, level, blockPos);
     }

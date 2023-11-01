@@ -22,7 +22,7 @@ public class Slot implements IAssociatedContainerProvider {
     public Slot(Inventory inventory, int index, int x, int y) {
         this.inventory = inventory;
         this.slot = index;
-        this.impl = Cocoon.API.MENU.create(this, inventory, index, x, y);
+        this.impl = Cocoon.API.MENU.createProxy(this, inventory, index, x, y);
     }
 
     public boolean hasItem() {

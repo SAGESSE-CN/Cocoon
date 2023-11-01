@@ -2,6 +2,7 @@ package net.cocoonmc.core.block;
 
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.block.state.StateDefinition;
+import net.cocoonmc.core.item.Item;
 import net.cocoonmc.core.item.context.BlockPlaceContext;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
@@ -43,6 +44,9 @@ public class Block implements IAssociatedContainerProvider {
 
     public InteractionResult attack(BlockState blockState, Level level, BlockPos blockPos, Player player) {
         return InteractionResult.PASS;
+    }
+
+    public void onRemove(Level level, BlockPos blockPos, BlockState oldBlockState, BlockState newBlockState, boolean bl) {
     }
 
     public boolean canSurvive(BlockState blockState, Level level, BlockPos blockPos) {
@@ -88,6 +92,10 @@ public class Block implements IAssociatedContainerProvider {
         return properties.material;
     }
 
+    public Item asItem() {
+        return Item.byBlock(this);
+    }
+
     public boolean isInteractable() {
         if (properties.material != null) {
             return properties.material.isInteractable();
@@ -106,6 +114,10 @@ public class Block implements IAssociatedContainerProvider {
     @Override
     public int hashCode() {
         return Objects.hash(registryName);
+    }
+
+    public String toString() {
+        return "Block{" + getRegistryName() + "}";
     }
 
     public static Block byKey(ResourceLocation key) {

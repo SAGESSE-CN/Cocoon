@@ -1,6 +1,8 @@
 package net.cocoonmc.core.item;
 
+import com.google.common.collect.Maps;
 import net.cocoonmc.core.BlockPos;
+import net.cocoonmc.core.block.Block;
 import net.cocoonmc.core.item.context.UseOnContext;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
@@ -17,10 +19,12 @@ import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class Item implements IAssociatedContainerProvider {
 
+    private static final Map<Block, Item> BY_BLOCK = Maps.newHashMap();
     private static final HashMap<ResourceLocation, Item> KEYED_ITEMS = new HashMap<>();
 
     private ResourceLocation registryName;
@@ -120,9 +124,16 @@ public class Item implements IAssociatedContainerProvider {
         return KEYED_ITEMS.get(registryName);
     }
 
+    public static Item byBlock(Block block) {
+        return BY_BLOCK.getOrDefault(block, Items.AIR);
+    }
+
     public static Item register(ResourceLocation registryName, Item item) {
         item.registryName = registryName;
         KEYED_ITEMS.put(registryName, item);
+        if (item instanceof BlockItem) {
+            BY_BLOCK.put(((BlockItem) item).getBlock(), item);
+        }
         return item;
     }
 

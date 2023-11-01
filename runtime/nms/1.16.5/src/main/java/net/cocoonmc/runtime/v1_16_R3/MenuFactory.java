@@ -30,23 +30,31 @@ import java.util.stream.Collectors;
 public class MenuFactory extends TransformFactory implements IMenuFactory {
 
     @Override
-    public SlotImpl create(net.cocoonmc.core.inventory.Slot impl, Inventory inventory, int index, int x, int y) {
+    public SlotImpl createProxy(net.cocoonmc.core.inventory.Slot impl, Inventory inventory, int index, int x, int y) {
         IInventory container = convertToVanilla(inventory);
         return new ProxySlot(impl, container, index, x, y);
     }
 
     @Override
-    public MenuImpl create(net.cocoonmc.core.inventory.Menu impl, net.cocoonmc.core.world.entity.Player player, net.cocoonmc.core.network.Component title) {
+    public MenuImpl createProxy(net.cocoonmc.core.inventory.Menu impl, net.cocoonmc.core.world.entity.Player player, net.cocoonmc.core.network.Component title) {
         ProxyMenu menu = new ProxyMenu(impl, convertToVanilla(player));
         menu.setTitle(IChatBaseComponent.ChatSerializer.a(title.serialize()));
         return menu;
     }
 
     @Override
-    public Inventory create(net.cocoonmc.core.inventory.Container container) {
+    public Inventory createInventory(net.cocoonmc.core.inventory.Container container) {
         return new CraftInventory(new ProxyContainer(container));
     }
 
+    @Override
+    public net.cocoonmc.core.inventory.Menu getActivedMenu(net.cocoonmc.core.world.entity.Player player) {
+        EntityPlayer player1 = convertToVanilla(player);
+        if (player1 != null && player1.activeContainer instanceof ProxyMenu) {
+            return ((ProxyMenu) player1.activeContainer).impl;
+        }
+        return null;
+    }
 
     public static class ProxySlot extends Slot implements SlotImpl {
 

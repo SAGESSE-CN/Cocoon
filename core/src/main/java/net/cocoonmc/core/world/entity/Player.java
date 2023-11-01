@@ -2,11 +2,13 @@ package net.cocoonmc.core.world.entity;
 
 import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.Direction;
+import net.cocoonmc.core.inventory.Menu;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.network.Component;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.runtime.impl.CacheKeys;
+import org.bukkit.GameMode;
 import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
@@ -94,12 +96,20 @@ public class Player extends LivingEntity {
     }
 
 
+    public GameMode getGameMode() {
+        return player.getGameMode();
+    }
+
     public String getDisplayName() {
         return player.getDisplayName();
     }
 
     public Direction getDirection() {
         return Direction.by(player.getFacing());
+    }
+
+    public Menu getActivedMenu() {
+        return Cocoon.API.MENU.getActivedMenu(this);
     }
 
     public Level getLevel() {

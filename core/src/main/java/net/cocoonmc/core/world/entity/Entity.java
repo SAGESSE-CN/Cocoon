@@ -5,7 +5,6 @@ import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.runtime.impl.CacheKeys;
 import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataType;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -46,9 +45,12 @@ public class Entity {
         return entity.getEntityId();
     }
 
-    @Nullable
     public UUID getUUID() {
         return entity.getUniqueId();
+    }
+
+    public String getStringUUID() {
+        return entity.getUniqueId().toString();
     }
 
     public boolean isValid() {

@@ -3,23 +3,29 @@ package net.cocoonmc.runtime.impl;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.Direction;
 import net.cocoonmc.core.block.BlockState;
+import net.cocoonmc.core.block.Blocks;
 import net.cocoonmc.core.item.Item;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.item.context.BlockHitResult;
 import net.cocoonmc.core.item.context.UseOnContext;
 import net.cocoonmc.core.math.Vector3f;
 import net.cocoonmc.core.utils.BukkitHelper;
+import net.cocoonmc.core.utils.ContainerHelper;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.InteractionResultHolder;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.LivingEntity;
 import net.cocoonmc.core.world.entity.Player;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
@@ -31,11 +37,14 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.LoomInventory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class ItemEventHandler implements Listener {
+public class ItemEventListener implements Listener {
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onInteractBlock(PlayerInteractEvent event) {
         Player player = Player.of(event.getPlayer());
         Level level = player.getLevel();
@@ -101,7 +110,7 @@ public class ItemEventHandler implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onInteractEntity(PlayerInteractEntityEvent event) {
         if (!(event.getRightClicked() instanceof org.bukkit.entity.LivingEntity)) {
             return;
@@ -116,14 +125,14 @@ public class ItemEventHandler implements Listener {
     }
 
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onCraft(CraftItemEvent event) {
         if (Arrays.stream(event.getInventory().getMatrix()).anyMatch(BukkitHelper::isRedirectedItem)) {
             event.getInventory().setResult(ItemStack.EMPTY.asBukkit());
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onInventoryClick(InventoryClickEvent event) {
         if (event.getInventory() instanceof LoomInventory) {
             if (BukkitHelper.isRedirectedItem(event.getCurrentItem())) {
@@ -132,14 +141,14 @@ public class ItemEventHandler implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onFurnaceBurn(FurnaceBurnEvent event) {
         if (BukkitHelper.isRedirectedItem(event.getFuel())) {
             event.setCancelled(true);
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onFurnaceSmelt(FurnaceSmeltEvent event) {
         if (BukkitHelper.isRedirectedItem(event.getSource())) {
             event.setCancelled(true);
@@ -147,22 +156,50 @@ public class ItemEventHandler implements Listener {
     }
 
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPistonExtend(BlockPistonExtendEvent event) {
         if (event.getBlocks().stream().anyMatch(BukkitHelper::isRedirectedBlock)) {
             event.setCancelled(true);
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPistonRetract(BlockPistonRetractEvent event) {
         if (event.getBlocks().stream().anyMatch(BukkitHelper::isRedirectedBlock)) {
             event.setCancelled(true);
         }
     }
 
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent event) {
+        Level level = Level.of(event.getBlock().getWorld());
+        BlockPos blockPos = BlockPos.of(event.getBlock().getLocation());
+        BlockState blockState = level.getBlockState(blockPos);
+        if (blockState == null) {
+            return;
+        }
+        // if remove event change the block, we need to cancel the event.
+        blockState.onRemove(level, blockPos, Blocks.AIR.defaultBlockState(), event.isDropItems());
+        if (event.isDropItems()) {
+            // we not need cancel this event, but block can't drop items.
+            Player player = Player.of(event.getPlayer());
+            if (player.getGameMode().equals(GameMode.CREATIVE)) {
+                event.setDropItems(false);
+                return;
+            }
+            // replace with we custom items.
+            ArrayList<ItemStack> dropItems = new ArrayList<>();
+            event.getBlock().getDrops().stream().map(ItemStack::of).forEach(dropItems::add);
+            BukkitHelper.replaceDrops(dropItems, blockState.getBlock());
+            // break the block.
+            event.setCancelled(true);
+            event.getBlock().setType(Material.AIR);
+            // drop item by manual.
+            ContainerHelper.dropItems(dropItems, player, Vector3f.of(event.getBlock().getLocation()));
+        }
+    }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onLiquidDispense(BlockFromToEvent event) {
         if (BukkitHelper.isRedirectedBlock(event.getToBlock())) {
             event.setCancelled(true);

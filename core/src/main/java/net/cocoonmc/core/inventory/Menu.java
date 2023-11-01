@@ -27,7 +27,7 @@ public abstract class Menu implements IAssociatedContainerProvider {
         this.title = title;
         this.menuType = menuType;
         this.player = player;
-        this.impl = Cocoon.API.MENU.create(this, player, title);
+        this.impl = Cocoon.API.MENU.createProxy(this, player, title);
     }
 
     public void openMenu() {
@@ -67,7 +67,7 @@ public abstract class Menu implements IAssociatedContainerProvider {
         buffer.writeComponent(title);
         buffer.writeByteArray(additionalData.array());
         // send to player.
-        player.asBukkit().sendPluginMessage(Cocoon.getInstance().getPlugin(), "fml:play", buffer.array());
+        player.asBukkit().sendPluginMessage(Cocoon.getPlugin(), "fml:play", buffer.array());
     }
 
     public void handleCloseWindowPacket(int windowId) {

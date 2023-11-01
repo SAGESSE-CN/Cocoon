@@ -15,17 +15,17 @@ public class CacheFactory implements ICacheFactory {
 
     @Override
     public  <T, V> V get(T obj, IAssociatedContainerKey<V> key) {
-        return _getContainer(obj, key).getAssociatedObject(key);
+        return _getContainer(obj).getAssociatedObject(key);
     }
 
     @Override
     public  <T, V> void set(T obj, IAssociatedContainerKey<V> key, V value) {
-        _getContainer(obj, key).setAssociatedObject(key, value);
+        _getContainer(obj).setAssociatedObject(key, value);
     }
 
     @Override
     public  <T, V> V computeIfAbsent(T obj, IAssociatedContainerKey<V> key, Function<T, V> getter) {
-        IAssociatedContainer container = _getContainer(obj, key);
+        IAssociatedContainer container = _getContainer(obj);
         V value = container.getAssociatedObject(key);
         if (value != null) {
             return value;
@@ -36,10 +36,10 @@ public class CacheFactory implements ICacheFactory {
     }
 
 
-    private IAssociatedContainer _getContainer(Object obj, IAssociatedContainerKey<?> key) {
+    private IAssociatedContainer _getContainer(Object obj) {
         if (obj instanceof IAssociatedContainer) {
             return (IAssociatedContainer) obj;
         }
-        return allStorages.computeIfAbsent(key.getType(), it -> new WeakHashMap<>()).computeIfAbsent(obj, it -> new SimpleAssociatedStorage());
+        return allStorages.computeIfAbsent(obj.getClass(), it -> new WeakHashMap<>()).computeIfAbsent(obj, it -> new SimpleAssociatedStorage());
     }
 }

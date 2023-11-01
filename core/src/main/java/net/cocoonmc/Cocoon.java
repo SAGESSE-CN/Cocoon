@@ -1,5 +1,6 @@
 package net.cocoonmc;
 
+import net.cocoonmc.core.block.Blocks;
 import net.cocoonmc.core.item.Items;
 import net.cocoonmc.runtime.IBlockFactory;
 import net.cocoonmc.runtime.ICacheFactory;
@@ -9,40 +10,31 @@ import net.cocoonmc.runtime.IRuntime;
 import net.cocoonmc.runtime.IRuntimeLoader;
 import net.cocoonmc.runtime.ITagFactory;
 import net.cocoonmc.runtime.impl.CacheFactory;
-import net.cocoonmc.runtime.impl.ItemEventHandler;
+import net.cocoonmc.runtime.impl.ItemEventListener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Cocoon {
 
-    private static final Cocoon INSTANCE = new Cocoon();
+    private static JavaPlugin PLUGIN;
+    private static PluginManager PLUGIN_MANAGER;
+
     private static final IRuntime RUNTIME = IRuntimeLoader.load();
 
-    private JavaPlugin plugin;
-    private PluginManager pluginManager;
-
-    public static Cocoon getInstance() {
-        return INSTANCE;
+    private Cocoon() {
     }
 
-    public void init(JavaPlugin plugin) {
-        this.plugin = plugin;
-        this.pluginManager = plugin.getServer().getPluginManager();
-        this.pluginManager.registerEvents(new ItemEventHandler(), plugin);
-//        if (isInited) {
-//            return;
-//        }
-//        isInited = true;
-        // ..
+    public static void init(JavaPlugin plugin) {
+        PLUGIN = plugin;
+        PLUGIN_MANAGER = plugin.getServer().getPluginManager();
+        PLUGIN_MANAGER.registerEvents(new ItemEventListener(), plugin);
+
         Items.init();
+        Blocks.init();
     }
 
-    public void release() {
-    }
-
-
-    public JavaPlugin getPlugin() {
-        return plugin;
+    public static JavaPlugin getPlugin() {
+        return PLUGIN;
     }
 
     public static class API {

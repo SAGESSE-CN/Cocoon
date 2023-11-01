@@ -11,11 +11,13 @@ import org.bukkit.inventory.Inventory;
 
 public interface IMenuFactory {
 
-    MenuImpl create(Menu impl, Player player, Component title);
+    MenuImpl createProxy(Menu impl, Player player, Component title);
 
-    SlotImpl create(Slot impl, Inventory inventory, int index, int x, int y);
+    SlotImpl createProxy(Slot impl, Inventory inventory, int index, int x, int y);
 
-    Inventory create(Container container);
+    Inventory createInventory(Container container);
+
+    Menu getActivedMenu(net.cocoonmc.core.world.entity.Player player);
 }
 
 

@@ -11,19 +11,18 @@ import org.bukkit.Bukkit;
 
 public class BlockData {
 
-    private Level level;
-    private BlockPos blockPos;
+    private final Level level;
+    private final BlockPos blockPos;
 
-    private Block block;
+    private final Block block;
+    private final BlockEntity blockEntity;
+
     private BlockState blockState;
-    private BlockEntity blockEntity;
-
     private CompoundTag blockTag;
+    private BlockEntityAccessor blockAccessor;
 
-    private Block lastBlock;
     private BlockState lastBlockState;
     private CompoundTag lastBlockTag;
-    private BlockEntityAccessor lasBlockAccessor;
     private int lasStateUpdateFlags = 3;
 
     private boolean isTagChangeMark = false;
@@ -40,16 +39,17 @@ public class BlockData {
         this.clear();
     }
 
-
-    public void setChanged() {
-        this.isTagChangeMark = true;
+    public void sendBlockUpdated(BlockState oldState, BlockState newState, int flags) {
+        this.isStateChangeMark = true;
+        this.lasStateUpdateFlags |= flags;
+        if (!oldState.equals(newState)) {
+            this.blockState = newState;
+        }
         this.sendToBukkit();
     }
 
-    public void sendBlockUpdated(BlockState oldState, BlockState newState, int flags) {
-        // TODO: oldState => newState
-        this.isStateChangeMark = true;
-        this.lasStateUpdateFlags = flags;
+    public void setChanged() {
+        this.isTagChangeMark = true;
         this.sendToBukkit();
     }
 
@@ -71,8 +71,8 @@ public class BlockData {
         this.sendToBukkit();
     }
 
-    public void setBlockEntity(BlockEntityAccessor accessor) {
-        this.lasBlockAccessor = accessor;
+    public void setBlockAccessor(BlockEntityAccessor accessor) {
+        this.blockAccessor = accessor;
     }
 
 
@@ -97,7 +97,7 @@ public class BlockData {
             return;
         }
         isSending = true;
-        Bukkit.getScheduler().runTaskLater(Cocoon.getInstance().getPlugin(), () -> {
+        Bukkit.getScheduler().runTaskLater(Cocoon.getPlugin(), () -> {
             isSending = false;
             copyToBukkit();
             clear();
@@ -126,23 +126,24 @@ public class BlockData {
             lastBlockTag = tag;
         }
         // only when is a real changes, we need to update the block data to level.
-        if (isStateChanged || isTagChanged) {
+        if (isTagChanged || isStateChanged) {
             Cocoon.API.BLOCK.setBlockData(level, blockPos, this);
+            isTagChanged = true; // we use tag to storage
         }
         isTagChanged |= isStateChangeMark;
-        if (isTagChanged && lasBlockAccessor != null) {
-            lasBlockAccessor.setChanged();
+        if (isTagChanged && blockAccessor != null) {
+            blockAccessor.setChanged();
         }
         isStateChanged |= isStateChangeMark;
-        if (isStateChanged && lasBlockAccessor != null) {
-            lasBlockAccessor.sendBlockUpdated(blockPos, blockState, blockState, lasStateUpdateFlags);
+        if (isStateChanged && blockAccessor != null) {
+            blockAccessor.sendBlockUpdated(blockPos, blockState, blockState, lasStateUpdateFlags);
         }
         clear();
     }
 
     private void clear() {
         lastBlockState = blockState;
-        lastBlock = block;
+        Block lastBlock = block;
         isTagChangeMark = false;
         isStateChangeMark = false;
         lasStateUpdateFlags = 0;

@@ -8,13 +8,13 @@ import net.cocoonmc.core.world.entity.Player;
 
 public class CacheKeys {
 
-    public static final SimpleAssociatedKey<BlockData> BLOCK_DATA_KEY = SimpleAssociatedKey.of("BlockData", BlockData.class);
+    public static final SimpleAssociatedKey<BlockData> BLOCK_DATA_KEY = SimpleAssociatedKey.of(BlockData.class);
 
-    public static final SimpleAssociatedKey<Entity> ENTITY_KEY = SimpleAssociatedKey.of("Entity", Entity.class);
-    public static final SimpleAssociatedKey<LivingEntity> LIVING_ENTITY_KEY = SimpleAssociatedKey.of("LivingEntity", LivingEntity.class);
-    public static final SimpleAssociatedKey<Player> PLAYER_KEY = SimpleAssociatedKey.of("Player", Player.class);
+    public static final SimpleAssociatedKey<Entity> ENTITY_KEY = SimpleAssociatedKey.of(Entity.class);
+    public static final SimpleAssociatedKey<LivingEntity> LIVING_ENTITY_KEY = SimpleAssociatedKey.of(LivingEntity.class);
+    public static final SimpleAssociatedKey<Player> PLAYER_KEY = SimpleAssociatedKey.of(Player.class);
 
-    public static final SimpleAssociatedKey<Level> LEVEL_KEY = SimpleAssociatedKey.of("Level", Level.class);
+    public static final SimpleAssociatedKey<Level> LEVEL_KEY = SimpleAssociatedKey.of(Level.class);
 
 
 }

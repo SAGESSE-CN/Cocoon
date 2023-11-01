@@ -42,6 +42,6 @@ public interface Container {
     }
 
     default Inventory asBukkit() {
-        return Cocoon.API.MENU.create(this);
+        return Cocoon.API.MENU.createInventory(this);
     }
 }
