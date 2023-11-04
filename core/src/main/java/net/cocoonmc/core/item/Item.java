@@ -5,6 +5,7 @@ import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.block.Block;
 import net.cocoonmc.core.item.context.UseOnContext;
 import net.cocoonmc.core.resources.ResourceLocation;
+import net.cocoonmc.core.utils.ObjectHelper;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
@@ -16,6 +17,7 @@ import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerProvider;
 import org.bukkit.Material;
+import org.bukkit.inventory.EquipmentSlot;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -98,12 +100,19 @@ public class Item implements IAssociatedContainerProvider {
     }
 
     @Nullable
-    public Material asMaterial() {
+    public Material asBukkit() {
         return properties.material;
     }
 
     public ItemStack getDefaultInstance() {
         return new ItemStack(this);
+    }
+
+    public EquipmentSlot getEquipmentSlot() {
+        if (properties.material != null) {
+            return properties.material.getEquipmentSlot();
+        }
+        return EquipmentSlot.HAND;
     }
 
     @Override
@@ -119,12 +128,20 @@ public class Item implements IAssociatedContainerProvider {
         return Objects.hash(registryName);
     }
 
+    @Override
+    public String toString() {
+        return ObjectHelper.makeDescription(this, "id", getRegistryName());
+    }
 
     public static Item byKey(ResourceLocation registryName) {
         return KEYED_ITEMS.get(registryName);
     }
 
     public static Item byBlock(Block block) {
+        Material material = block.asBukkit();
+        if (material != null && material.isItem()) {
+            return Items.register(material);
+        }
         return BY_BLOCK.getOrDefault(block, Items.AIR);
     }
 

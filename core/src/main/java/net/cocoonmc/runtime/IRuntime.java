@@ -6,7 +6,7 @@ public interface IRuntime {
 
     IItemFactory getItem();
 
-    IBlockFactory getBlock();
-
     IMenuFactory getMenu();
+
+    INetworkFactory getNetwork();
 }

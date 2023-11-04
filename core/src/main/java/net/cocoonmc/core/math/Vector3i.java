@@ -1,5 +1,7 @@
 package net.cocoonmc.core.math;
 
+import java.util.Objects;
+
 public class Vector3i {
 
     private int x;
@@ -22,5 +24,23 @@ public class Vector3i {
 
     public int getZ() {
         return z;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Vector3i)) return false;
+        Vector3i vector3i = (Vector3i) o;
+        return x == vector3i.x && y == vector3i.y && z == vector3i.z;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y, z);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("(%d, %d, %d)", x, y, z);
     }
 }

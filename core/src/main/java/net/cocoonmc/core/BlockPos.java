@@ -1,6 +1,6 @@
 package net.cocoonmc.core;
 
-import net.cocoonmc.core.utils.MathUtils;
+import net.cocoonmc.core.utils.MathHelper;
 
 import java.util.Objects;
 
@@ -32,8 +32,8 @@ public class BlockPos {
         return new BlockPos(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
     }
 
-    public static org.bukkit.Location of(BlockPos pos) {
-        return new org.bukkit.Location(null, pos.getX(), pos.getY(), pos.getZ());
+    public static BlockPos of(org.bukkit.block.Block block) {
+        return of(block.getLocation());
     }
 
     public static BlockPos of(long l) {
@@ -75,20 +75,12 @@ public class BlockPos {
         return z;
     }
 
-    public long asLong() {
-        return BlockPos.asLong(this.getX(), this.getY(), this.getZ());
-    }
-
-    public org.bukkit.Location asBukkit() {
-        return new org.bukkit.Location(null, x, y, z);
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof BlockPos)) return false;
-        BlockPos blockPos = (BlockPos) o;
-        return x == blockPos.x && y == blockPos.y && z == blockPos.z;
+        BlockPos pos = (BlockPos) o;
+        return x == pos.x && y == pos.y && z == pos.z;
     }
 
     @Override
@@ -96,8 +88,22 @@ public class BlockPos {
         return Objects.hash(x, y, z);
     }
 
+    @Override
+    public String toString() {
+        return String.format("(%d, %d, %d)", x, y, z);
+    }
+
+    public long asLong() {
+        return BlockPos.asLong(x, y, z);
+    }
+
+    public org.bukkit.Location asBukkit() {
+        return new org.bukkit.Location(null, x, y, z);
+    }
+
+
     static {
-        PACKED_X_LENGTH = 1 + MathUtils.log2(MathUtils.smallestEncompassingPowerOfTwo(30000000));
+        PACKED_X_LENGTH = 1 + MathHelper.log2(MathHelper.smallestEncompassingPowerOfTwo(30000000));
         PACKED_Z_LENGTH = PACKED_X_LENGTH;
         PACKED_Y_LENGTH = 64 - PACKED_X_LENGTH - PACKED_Z_LENGTH;
         PACKED_X_MASK = (1L << PACKED_X_LENGTH) - 1L;

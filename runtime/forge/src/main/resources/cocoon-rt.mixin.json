@@ -4,11 +4,11 @@
   "plugin": "net.cocoonmc.runtime.forge.helper.ConfigHelper",
   "compatibilityLevel": "JAVA_8",
   "client": [
-    "BlockLoadMixin",
+    "ClientLevelMixin",
+    "ClientLevelChunkMixin",
     "FriendlyByteBufMixin",
     "ItemStackMixin",
-    "ItemTagMixin",
-    "OpenContainerMixin"
+    "NetworkMixin"
   ],
   "injectors": {
     "defaultRequire": 1

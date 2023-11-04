@@ -32,13 +32,13 @@ public class StateHolder<O, S> {
         return property.getValueClass().cast(entry);
     }
 
-    @SuppressWarnings("unchecked")
     public <T extends Comparable<T>, V extends T> S setValue(Property<T> property, V value) {
         Comparable<?> entry = values.get(property);
         if (entry == null) {
             throw new IllegalArgumentException("Cannot set property " + property + " as it does not exist in " + this.owner);
         }
         if (entry.equals(value)) {
+            // noinspection unchecked
             return (S) this;
         }
         S object = neighbours.get(property, value);
@@ -54,7 +54,6 @@ public class StateHolder<O, S> {
         return tag;
     }
 
-    @SuppressWarnings("unchecked")
     public S deserialize(CompoundTag tag) {
         StateHolder<O, S> state = this;
         for (Property<?> property : values.keySet()) {
@@ -63,6 +62,7 @@ public class StateHolder<O, S> {
                 state = setValueByName(state, property, tag.getString(name));
             }
         }
+        // noinspection unchecked
         return (S) state;
     }
 
@@ -102,17 +102,17 @@ public class StateHolder<O, S> {
         return map;
     }
 
-    @SuppressWarnings("unchecked")
     private <T extends Comparable<T>> StateHolder<O, S> setValueByName(StateHolder<O, S> state, Property<T> property, String valueName) {
         Optional<T> value = property.getValue(valueName);
         if (value.isPresent()) {
+            // noinspection unchecked
             return (StateHolder<O, S>) state.setValue(property, value.get());
         }
         return state;
     }
 
-    @SuppressWarnings("unchecked")
     private <T extends Comparable<T>> String getValueName(Property<T> property, Comparable<?> value) {
+        // noinspection unchecked
         return property.getName((T) value);
     }
 

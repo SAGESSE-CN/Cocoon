@@ -10,7 +10,7 @@ import io.netty.handler.codec.EncoderException;
 import io.netty.util.ByteProcessor;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.nbt.CompoundTag;
-import net.cocoonmc.core.nbt.NbtIO;
+import net.cocoonmc.core.nbt.NbtIo;
 import net.cocoonmc.core.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,15 +169,15 @@ public class FriendlyByteBuf extends ByteBuf {
     }
 
     public FriendlyByteBuf writeNbt(@Nullable CompoundTag tag) {
-        if (tag == null) {
+        if (tag != null) {
+            try {
+                NbtIo.write(tag, new ByteBufOutputStream(this));
+            } catch (IOException var3) {
+                throw new EncoderException(var3);
+            }
+        } else {
             this.writeByte(0);
         }
-        try {
-            NbtIO.write(tag, new ByteBufOutputStream(this));
-        } catch (IOException var3) {
-            throw new EncoderException(var3);
-        }
-
         return this;
     }
 
@@ -190,7 +190,7 @@ public class FriendlyByteBuf extends ByteBuf {
         }
         this.readerIndex(i);
         try {
-            return NbtIO.read(new ByteBufInputStream(this));
+            return NbtIo.read(new ByteBufInputStream(this));
         } catch (IOException var5) {
             throw new EncoderException(var5);
         }

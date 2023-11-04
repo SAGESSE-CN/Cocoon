@@ -4,27 +4,38 @@ import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.Direction;
 import net.cocoonmc.core.block.Block;
-import net.cocoonmc.core.block.BlockEntity;
 import net.cocoonmc.core.block.BlockState;
-import net.cocoonmc.core.block.Blocks;
 import net.cocoonmc.core.item.Item;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.item.Items;
+import net.cocoonmc.core.item.context.UseOnContext;
 import net.cocoonmc.core.nbt.CompoundTag;
-import net.cocoonmc.core.nbt.NbtIO;
+import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.Level;
-import net.cocoonmc.runtime.impl.BlockData;
-import net.cocoonmc.runtime.impl.Constants;
+import net.cocoonmc.runtime.impl.ChunkDataPlaceTask;
+import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockFace;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Base64;
 import java.util.List;
 
 public class BukkitHelper {
 
     private static final Direction[] FACE_TO_DIRECTION = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.UP, Direction.DOWN};
     private static final BlockFace[] DIRECTION_TO_FACE = {BlockFace.DOWN, BlockFace.UP, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST};
+
+
+    public static InteractionResult placeBlock(Block wrapper, BlockState blockState, @Nullable CompoundTag entityTag, UseOnContext context) {
+        ItemStack wrapperStack = new ItemStack(wrapper.asItem());
+        ChunkDataPlaceTask.push(wrapper, blockState, entityTag);
+        InteractionResult result = Cocoon.API.ITEM.useOn(context.getPlayer(), wrapperStack, context);
+        ChunkDataPlaceTask.pop(wrapper);
+        if (wrapperStack.isEmpty()) {
+            context.getItemInHand().shrink(1);
+        }
+        return result;
+    }
 
 
 //    public static void updateBlockData(org.bukkit.block.Block block, Block newBlock, @Nullable BlockState newState, @Nullable CompoundTag newTag) {
@@ -60,77 +71,101 @@ public class BukkitHelper {
 //        return Cocoon.API.BLOCK.getBlockData(level, blockPos);
 //    }
 
-    @Nullable
-    public static BlockData getBlockDataFromTexture(Level level, BlockPos pos, String texture) {
-        // fast check
-        if (texture == null || texture.isEmpty() || !texture.startsWith(Constants.BLOCK_REDIRECTED_DATA_PREFIX)) {
-            return null;
-        }
-        try {
-            String[] parts = Constants.BLOCK_REDIRECTED_DATA_FMT.split("%s");
-            String tag = new String(Base64.getDecoder().decode(texture));
-            if (tag.startsWith(parts[0]) && tag.endsWith(parts[1])) {
-                String tag2 = tag.substring(parts[0].length(), tag.length() - parts[1].length());
-                return getBlockDataFromTag(level, pos, NbtIO.fromString(tag2));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+    public static NamespacedKey getKey(String namespace, String path) {
+        return new NamespacedKey(namespace, path);
     }
 
-    @Nullable
-    public static BlockData getBlockDataFromTag(Level level, BlockPos pos, CompoundTag tag) {
-        Block block = Blocks.byId(tag.getString(Constants.BLOCK_REDIRECTED_ID_KEY));
-        if (block == null || block.asMaterial() != null) {
-            return null;
-        }
-        CompoundTag blockTag = null;
-        BlockState blockState = block.defaultBlockState().deserialize(tag.getCompound(Constants.BLOCK_REDIRECTED_STATE_KEY));
-        if (tag.contains(Constants.BLOCK_REDIRECTED_TAG_KEY, 10)) {
-            blockTag = tag.getCompound(Constants.BLOCK_REDIRECTED_TAG_KEY);
-        }
-        BlockEntity blockEntity = block.createBlockEntity(level, pos, blockState);
-        BlockData blockData = new BlockData(level, pos, block, blockState, blockEntity);
-        blockData.setBlockTag(blockTag);
-        return blockData;
-    }
 
-    public static String getBlockDataTexture(Block block, @Nullable BlockState state, @Nullable CompoundTag tag) {
-        CompoundTag blockTag = CompoundTag.newInstance();
-        blockTag.putString(Constants.BLOCK_REDIRECTED_ID_KEY, block.getRegistryName().toString());
-        if (state != null) {
-            CompoundTag stateTag = state.serialize();
-            if (stateTag.size() != 0) {
-                blockTag.put(Constants.BLOCK_REDIRECTED_STATE_KEY, stateTag);
-            }
-        }
-        if (tag != null) {
-            blockTag.put(Constants.BLOCK_REDIRECTED_TAG_KEY, tag);
-        }
-        try {
-            String value = NbtIO.toString(blockTag);
-            System.out.printf("%s", value);
-            return new String(Base64.getEncoder().encode(String.format(Constants.BLOCK_REDIRECTED_DATA_FMT, value).getBytes()));
-        } catch (Exception e) {
-            return "";
-        }
-    }
+//    @Nullable
+//    public static BlockData getBlockDataFromTexture(Level level, BlockPos pos, String texture) {
+//        // fast check
+//        if (texture == null || texture.isEmpty() || !texture.startsWith(Constants.BLOCK_REDIRECTED_DATA_PREFIX)) {
+//            return null;
+//        }
+//        try {
+//            String[] parts = Constants.BLOCK_REDIRECTED_DATA_FMT.split("%s");
+//            String tag = new String(Base64.getDecoder().decode(texture));
+//            if (tag.startsWith(parts[0]) && tag.endsWith(parts[1])) {
+//                String tag2 = tag.substring(parts[0].length(), tag.length() - parts[1].length());
+//                return getBlockDataFromTag(level, pos, CompoundTag.parseTag(tag2));
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return null;
+//    }
+//
+//    @Nullable
+//    public static BlockData getBlockDataFromTag(Level level, BlockPos pos, CompoundTag tag) {
+//        Block block = Blocks.byId(tag.getString(Constants.BLOCK_REDIRECTED_ID_KEY));
+//        if (block == null || block.asBukkit() != null) {
+//            return null;
+//        }
+//        CompoundTag blockTag = null;
+//        BlockState blockState = block.defaultBlockState().deserialize(tag.getCompound(Constants.BLOCK_REDIRECTED_STATE_KEY));
+//        if (tag.contains(Constants.BLOCK_REDIRECTED_TAG_KEY, 10)) {
+//            blockTag = tag.getCompound(Constants.BLOCK_REDIRECTED_TAG_KEY);
+//        }
+////        BlockEntity blockEntity = block.createBlockEntity(level, pos, blockState);
+////        BlockData blockData = new BlockData(level, pos, blockState, blockEntity);
+////        blockData.setBlockTag(blockTag);
+////        return blockData;
+//        return null;
+//    }
+//
+//    public static CompoundTag getBlockDataTag(Block block, @Nullable BlockState state, @Nullable CompoundTag entityTag) {
+//        CompoundTag blockTag = CompoundTag.newInstance();
+//        blockTag.putString(Constants.BLOCK_REDIRECTED_ID_KEY, block.getRegistryName().toString());
+//        if (state != null) {
+//            CompoundTag stateTag = state.serialize();
+//            if (stateTag.size() != 0) {
+//                blockTag.put(Constants.BLOCK_REDIRECTED_STATE_KEY, stateTag);
+//            }
+//        }
+//        if (entityTag != null) {
+//            blockTag.put(Constants.BLOCK_REDIRECTED_TAG_KEY, entityTag);
+//        }
+//        return blockTag;
+//    }
+//
+//    public static String getBlockDataTexture(Block block, @Nullable BlockState state, @Nullable CompoundTag tag) {
+//        CompoundTag blockTag = getBlockDataTag(block, state, tag);
+//        try {
+//            String value = blockTag.toString();
+//            System.out.printf("%s", value);
+//            return new String(Base64.getEncoder().encode(String.format(Constants.BLOCK_REDIRECTED_DATA_FMT, value).getBytes()));
+//        } catch (Exception e) {
+//            return "";
+//        }
+//    }
 
     public static void replaceDrops(List<ItemStack> dropItems, Block block) {
-        Item item = block.asItem();
+        Item oldItem = block.getDelegate().asItem();
+        Item newItem = block.asItem();
         for (int i = 0; i < dropItems.size(); ++i) {
             ItemStack itemStack = dropItems.get(i);
-            if (!itemStack.is(Items.PLAYER_HEAD)) {
+            if (!itemStack.is(oldItem)) {
                 continue;
             }
-            if (item == Items.AIR) {
+            if (newItem == Items.AIR) {
                 dropItems.remove(i);
                 i -= 1;
                 continue;
             }
-            dropItems.set(i, new ItemStack(item, itemStack.getCount()));
+            dropItems.set(i, new ItemStack(newItem, itemStack.getCount()));
         }
+    }
+
+    public static void dropItems(List<ItemStack> itemStacks, org.bukkit.block.Block block) {
+        dropItems(itemStacks, block.getWorld(), block.getLocation());
+    }
+
+    public static void dropItems(List<ItemStack> itemStacks, org.bukkit.World world, org.bukkit.Location location) {
+        Bukkit.getScheduler().runTask(Cocoon.getPlugin(), () -> itemStacks.forEach(it -> {
+            if (!it.isEmpty()) {
+                world.dropItemNaturally(location, it.asBukkit());
+            }
+        }));
     }
 
     public static Direction convertToCocoon(org.bukkit.block.BlockFace face) {
@@ -144,13 +179,13 @@ public class BukkitHelper {
 
     public static boolean isRedirectedBlock(org.bukkit.block.Block block) {
         Level level = Level.of(block.getWorld());
-        BlockPos blockPos = BlockPos.of(block.getLocation());
-        return Cocoon.API.BLOCK.getBlockData(level, blockPos) != null;
+        BlockPos blockPos = BlockPos.of(block);
+        return level.getBlockState(blockPos) != null;
     }
 
     public static boolean isRedirectedItem(org.bukkit.inventory.ItemStack itemStack) {
         if (itemStack != null && itemStack.hasItemMeta()) {
-            return Cocoon.API.ITEM.convertTo(itemStack).getItem().asMaterial() == null;
+            return Cocoon.API.ITEM.convertTo(itemStack).getItem().asBukkit() == null;
         }
         return false;
     }

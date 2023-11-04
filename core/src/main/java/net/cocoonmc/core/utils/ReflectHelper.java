@@ -1,18 +1,49 @@
 package net.cocoonmc.core.utils;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 
 public class ReflectHelper {
 
-    private static final HashMap<Class<?>, HashMap<String, MemberField>> MEMBER_FIELDS = new HashMap<>();
+    private static final HashMap<Class<?>, HashMap<String, UnsafeMember>> MEMBER_FIELDS = new HashMap<>();
 
-    public static MemberField getMemberField(Class<?> clazz, String name) {
-        return MEMBER_FIELDS.computeIfAbsent(clazz, it -> new HashMap<>()).computeIfAbsent(name, it -> new MemberField(clazz, it));
+    @Nullable
+    public static <T> T getMember(Object owner, String name) {
+        // noinspection unchecked
+        return (T) getMemberUnsafeField(owner.getClass(), name).get(owner);
     }
 
-    public static class MemberField {
+    public static <T> Member<T> getMemberField(Class<?> clazz, String name) {
+        return new Member<>(getMemberUnsafeField(clazz, name));
+    }
+
+    public static UnsafeMember getMemberUnsafeField(Class<?> clazz, String name) {
+        return MEMBER_FIELDS.computeIfAbsent(clazz, it -> new HashMap<>()).computeIfAbsent(name, it -> new UnsafeMember(clazz, it));
+    }
+
+    public static class Member<T> {
+
+        private final UnsafeMember member;
+
+        private Member(UnsafeMember member) {
+            this.member = member;
+        }
+
+        public void set(Object owner, T value) {
+            member.set(owner, value);
+        }
+
+        public T get(Object owner) {
+            // noinspection unchecked
+            return (T) member.get(owner);
+        }
+
+    }
+
+    public static class UnsafeMember {
 
         private final Class<?> clazz;
         private final String name;
@@ -21,17 +52,16 @@ public class ReflectHelper {
         private Exception fieldException;
         private boolean forceAccess = true;
 
-        public MemberField(Class<?> clazz, String name) {
+        public UnsafeMember(Class<?> clazz, String name) {
             this.clazz = clazz;
             this.name = name;
         }
 
-        @SuppressWarnings("unchecked")
-        public <T> T get(Object owner) {
+        public Object get(Object owner) {
             try {
                 Field field = getField();
                 if (field != null) {
-                    return (T) field.get(owner);
+                    return field.get(owner);
                 }
             } catch (Exception e) {
                 // ignore read exception
@@ -39,7 +69,7 @@ public class ReflectHelper {
             return null;
         }
 
-        public <T> void set(Object owner, T value) {
+        public void set(Object owner, Object value) {
             try {
                 Field field = getField();
                 if (field != null) {

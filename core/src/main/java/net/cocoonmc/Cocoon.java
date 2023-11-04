@@ -2,48 +2,78 @@ package net.cocoonmc;
 
 import net.cocoonmc.core.block.Blocks;
 import net.cocoonmc.core.item.Items;
-import net.cocoonmc.runtime.IBlockFactory;
+import net.cocoonmc.core.network.PacketTransformer;
+import net.cocoonmc.core.network.protocol.ClientboundBlockUpdatePacket;
+import net.cocoonmc.core.network.protocol.ClientboundLevelChunkWithLightPacket;
 import net.cocoonmc.runtime.ICacheFactory;
 import net.cocoonmc.runtime.IItemFactory;
 import net.cocoonmc.runtime.IMenuFactory;
+import net.cocoonmc.runtime.INetworkFactory;
 import net.cocoonmc.runtime.IRuntime;
 import net.cocoonmc.runtime.IRuntimeLoader;
 import net.cocoonmc.runtime.ITagFactory;
+import net.cocoonmc.runtime.impl.BlockDataListener;
 import net.cocoonmc.runtime.impl.CacheFactory;
-import net.cocoonmc.runtime.impl.ItemEventListener;
+import net.cocoonmc.runtime.impl.ChunkDataListener;
+import net.cocoonmc.runtime.impl.Constants;
+import net.cocoonmc.runtime.impl.ItemDataListener;
+import net.cocoonmc.runtime.impl.LevelData;
+import net.cocoonmc.runtime.impl.PacketDataListener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.messaging.Messenger;
 
 public class Cocoon {
 
-    private static JavaPlugin PLUGIN;
-    private static PluginManager PLUGIN_MANAGER;
-
+    private static final Cocoon INSTANCE = new Cocoon();
     private static final IRuntime RUNTIME = IRuntimeLoader.load();
 
+    private final JavaPlugin plugin;
+    private final PluginManager manager;
+    private final Messenger messenger;
+
     private Cocoon() {
+        this.plugin = JavaPlugin.getProvidingPlugin(Cocoon.class);
+        this.manager = plugin.getServer().getPluginManager();
+        this.messenger = plugin.getServer().getMessenger();
     }
 
-    public static void init(JavaPlugin plugin) {
-        PLUGIN = plugin;
-        PLUGIN_MANAGER = plugin.getServer().getPluginManager();
-        PLUGIN_MANAGER.registerEvents(new ItemEventListener(), plugin);
+    private void registerEvents() {
+        this.manager.registerEvents(new ItemDataListener(), plugin);
+        this.manager.registerEvents(new BlockDataListener(), plugin);
+        this.manager.registerEvents(new ChunkDataListener(), plugin);
+        this.manager.registerEvents(new PacketDataListener(), plugin);
+        this.messenger.registerOutgoingPluginChannel(plugin, Constants.NETWORK_KEY);
+    }
 
+    public static void enable() {
         Items.init();
         Blocks.init();
+        LevelData.open();
+        INSTANCE.registerEvents();
+        // register some handlers.
+        API.TRANSFORMER.register(PacketDataListener::handleChunkUpdate, ClientboundLevelChunkWithLightPacket.class);
+        API.TRANSFORMER.register(PacketDataListener::handleBlockUpdate, ClientboundBlockUpdatePacket.class);
+    }
+
+    public static void disable() {
+        // uregister all handlers
+        API.TRANSFORMER.clear();
     }
 
     public static JavaPlugin getPlugin() {
-        return PLUGIN;
+        return INSTANCE.plugin;
     }
 
     public static class API {
 
         public static final ITagFactory TAG = RUNTIME.getTag();
         public static final IItemFactory ITEM = RUNTIME.getItem();
-        public static final IBlockFactory BLOCK = RUNTIME.getBlock();
         public static final IMenuFactory MENU = RUNTIME.getMenu();
-        public static final ICacheFactory CACHE = new CacheFactory();
 
+        public static final ICacheFactory CACHE = new CacheFactory();
+        public static final INetworkFactory NETWORK = RUNTIME.getNetwork();
+
+        public static final PacketTransformer TRANSFORMER = new PacketTransformer();
     }
 }

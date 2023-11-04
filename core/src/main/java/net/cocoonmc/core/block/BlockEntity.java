@@ -6,20 +6,21 @@ import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerProvider;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 public class BlockEntity implements IAssociatedContainerProvider {
 
+    protected Level level;
     protected BlockState blockState;
 
-    protected final Level level;
     protected final BlockPos blockPos;
+    protected final BlockEntityType<?> type;
 
     private final SimpleAssociatedStorage storage = new SimpleAssociatedStorage();
 
-
-    public BlockEntity(Level level, BlockPos pos, BlockState blockState) {
-        this.level = level;
+    public BlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState) {
+        this.type = type;
         this.blockPos = pos;
         this.blockState = blockState;
     }
@@ -31,7 +32,20 @@ public class BlockEntity implements IAssociatedContainerProvider {
     }
 
     public void setChanged() {
-        level.setBlockEntityChanged(blockPos);
+        if (level != null) {
+            level.setBlockEntityChanged(blockPos, blockState, 0);
+        }
+    }
+
+    public CompoundTag serializeNBT() {
+        CompoundTag tag = CompoundTag.newInstance();
+        writeToNBT(tag);
+        return tag;
+    }
+
+    @Nullable
+    public CompoundTag getUpdateTag() {
+        return null;
     }
 
     public Block getBlock() {
@@ -50,8 +64,16 @@ public class BlockEntity implements IAssociatedContainerProvider {
         return blockPos;
     }
 
+    public void setLevel(Level level) {
+        this.level = level;
+    }
+
     public Level getLevel() {
         return level;
+    }
+
+    public BlockEntityType<?> getType() {
+        return type;
     }
 
     @Override

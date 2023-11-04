@@ -5,6 +5,7 @@ import net.cocoonmc.core.block.state.StateDefinition;
 import net.cocoonmc.core.item.Item;
 import net.cocoonmc.core.item.context.BlockPlaceContext;
 import net.cocoonmc.core.resources.ResourceLocation;
+import net.cocoonmc.core.utils.ObjectHelper;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
@@ -46,7 +47,13 @@ public class Block implements IAssociatedContainerProvider {
         return InteractionResult.PASS;
     }
 
+    public void onPlace(Level level, BlockPos blockPos, BlockState oldBlockState, BlockState newBlockState, boolean bl) {
+    }
+
     public void onRemove(Level level, BlockPos blockPos, BlockState oldBlockState, BlockState newBlockState, boolean bl) {
+    }
+
+    public void onNeighborChanged(Level level, BlockPos pos, BlockState state, Block block, BlockPos blockPos2, boolean bl) {
     }
 
     public boolean canSurvive(BlockState blockState, Level level, BlockPos blockPos) {
@@ -54,15 +61,6 @@ public class Block implements IAssociatedContainerProvider {
     }
 
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-    }
-
-    @Nullable
-    public BlockEntity createBlockEntity(Level level, BlockPos pos, BlockState blockState) {
-        BlockEntityType<?> entityType = properties.blockEntityType;
-        if (entityType != null) {
-            return entityType.create(level, pos, blockState);
-        }
-        return null;
     }
 
     @Nullable
@@ -87,8 +85,18 @@ public class Block implements IAssociatedContainerProvider {
         return storage;
     }
 
+    public Block getDelegate() {
+        if (properties.delegate != null) {
+            return properties.delegate;
+        }
+        if (properties.material != null) {
+            return this;
+        }
+        return Blocks.DIRT;
+    }
+
     @Nullable
-    public Material asMaterial() {
+    public Material asBukkit() {
         return properties.material;
     }
 
@@ -117,7 +125,7 @@ public class Block implements IAssociatedContainerProvider {
     }
 
     public String toString() {
-        return "Block{" + getRegistryName() + "}";
+        return ObjectHelper.makeDescription(this, "id", getRegistryName());
     }
 
     public static Block byKey(ResourceLocation key) {
@@ -132,8 +140,8 @@ public class Block implements IAssociatedContainerProvider {
 
     public static class Properties {
 
+        Block delegate;
         Material material;
-        BlockEntityType<?> blockEntityType;
         boolean isInteractable = false;
         boolean noDrops = false;
         boolean noOcclusion = false;
@@ -159,8 +167,8 @@ public class Block implements IAssociatedContainerProvider {
             return this;
         }
 
-        public Properties entity(BlockEntityType<?> entityType) {
-            this.blockEntityType = entityType;
+        public Properties delegate(Block delegate) {
+            this.delegate = delegate;
             return this;
         }
 

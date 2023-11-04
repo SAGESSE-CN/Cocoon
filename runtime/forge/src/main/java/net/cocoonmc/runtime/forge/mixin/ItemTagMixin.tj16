@@ -1,6 +1,6 @@
 package net.cocoonmc.runtime.forge.mixin;
 
-import net.cocoonmc.runtime.forge.annotation.Available;
+import net.cocoonmc.runtime.forge.api.Available;
 import net.minecraft.tags.Tag;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -15,7 +15,7 @@ public class ItemTagMixin<T> {
     @Shadow Tag<T> tag;
 
     @Inject(method = "contains", at = @At("HEAD"), cancellable = true)
-    public void aw$contains(T value, CallbackInfoReturnable<Boolean> cir) {
+    public void cocoon$contains(T value, CallbackInfoReturnable<Boolean> cir) {
         if (tag == null) {
             cir.setReturnValue(false);
         }

@@ -1,25 +1,36 @@
 package net.cocoonmc.core.world;
 
-import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
+import net.cocoonmc.core.block.Block;
 import net.cocoonmc.core.block.BlockEntity;
 import net.cocoonmc.core.block.BlockState;
+import net.cocoonmc.core.utils.ObjectHelper;
+import net.cocoonmc.core.world.chunk.Chunk;
 import net.cocoonmc.core.world.entity.Entity;
-import net.cocoonmc.runtime.impl.BlockData;
-import net.cocoonmc.runtime.impl.CacheKeys;
-import org.bukkit.Material;
+import net.cocoonmc.runtime.impl.LevelData;
+import net.cocoonmc.runtime.impl.Logs;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.UUID;
+
+@SuppressWarnings("unused")
 public class Level {
 
     private final org.bukkit.World world;
+    private final HashMap<Long, Chunk> chunks = new HashMap<>();
+
+    private final UUID uuid;
+    private final String name;
 
     public Level(org.bukkit.World world) {
         this.world = world;
+        this.uuid = world.getUID();
+        this.name = world.getName();
     }
 
     public static Level of(org.bukkit.World world) {
-        return Cocoon.API.CACHE.computeIfAbsent(world, CacheKeys.LEVEL_KEY, Level::new);
+        return LevelData.get(world);
     }
 
     public static Level of(org.bukkit.block.Block block) {
@@ -30,50 +41,42 @@ public class Level {
         return of(blockState.getWorld());
     }
 
-
-    public void sendBlockUpdated(BlockPos pos, BlockState oldState, BlockState newState, int flags) {
-        BlockData blockData = Cocoon.API.BLOCK.getBlockData(this, pos);
-        if (blockData != null) {
-            blockData.sendBlockUpdated(oldState, newState, flags);
+    public void save() {
+        int counter = 0;
+        for (Chunk chunk : chunks.values()) {
+            if (chunk.isDirty()) {
+                chunk.save();
+                counter += 1;
+            }
         }
+        Logs.debug("{} save {} chunks", getName(), counter);
     }
 
-    public void setBlockEntityChanged(BlockPos pos) {
-        BlockData blockData = Cocoon.API.BLOCK.getBlockData(this, pos);
-        if (blockData != null) {
-            blockData.setChanged();
-        }
+    public void sendBlockUpdated(BlockPos pos, BlockState oldState, BlockState newState, int flags) {
+        Chunk chunk = getChunkAt(pos);
+        chunk.setBlockDirty(pos, newState, flags);
+    }
+
+    public void setBlockEntityChanged(BlockPos pos, BlockState state, int flags) {
+        Chunk chunk = getChunkAt(pos);
+        chunk.setBlockDirty(pos, state, flags);
     }
 
     public void setBlock(BlockPos pos, BlockState state, int flags) {
-        // if the new state is vanilla block, we only need update to bukkit.
-        org.bukkit.Material material = state.getBlock().asMaterial();
-        if (material != null) {
-            world.setType(pos.asBukkit(), material);
-            return;
-        }
-        BlockData blockData = Cocoon.API.BLOCK.getBlockData(this, pos);
-        if (blockData != null) {
-            blockData.setBlockState(state, flags);
-        }
+        Chunk chunk = getChunkAt(pos);
+        chunk.setBlock(pos, state);
+        setBukkitBlockIfNeeded(pos, state);
+        setDirty();
     }
 
     @Nullable
     public BlockState getBlockState(BlockPos pos) {
-        BlockData blockData = Cocoon.API.BLOCK.getBlockData(this, pos);
-        if (blockData != null) {
-            return blockData.getBlockState();
-        }
-        return null;
+        return getChunkAt(pos).getBlockState(pos);
     }
 
     @Nullable
     public BlockEntity getBlockEntity(BlockPos pos) {
-        BlockData blockData = Cocoon.API.BLOCK.getBlockData(this, pos);
-        if (blockData != null) {
-            return blockData.getBlockEntity();
-        }
-        return null;
+        return getChunkAt(pos).getBlockEntity(pos);
     }
 
     @Nullable
@@ -90,7 +93,42 @@ public class Level {
         return world.getBlockAt(pos.getX(), pos.getY(), pos.getZ()).getBlockPower() > 0;
     }
 
+    public void setDirty() {
+    }
+
+    public Chunk getChunkAt(BlockPos blockPos) {
+        return getChunk(blockPos.getX() >> 4, blockPos.getZ() >> 4);
+    }
+
+    public Chunk getChunk(int x, int z) {
+        long index = (long) x << 32 | (long) z;
+        return chunks.computeIfAbsent(index, it -> new Chunk(this, world.getChunkAt(x, z)));
+    }
+
+    public String getName() {
+        return world.getName();
+    }
+
+    public UUID getUUID() {
+        return uuid;
+    }
+
     public org.bukkit.World asBukkit() {
         return world;
+    }
+
+    @Override
+    public String toString() {
+        return ObjectHelper.makeDescription(this, "uuid", getUUID(), "name", name);
+    }
+
+
+    private void setBukkitBlockIfNeeded(BlockPos pos, BlockState state) {
+        Block delegate = state.getBlock().getDelegate();
+        org.bukkit.Material material = delegate.asBukkit();
+        org.bukkit.block.Block target = world.getBlockAt(pos.asBukkit());
+        if (material != null && !target.getType().equals(material)) {
+            target.setType(material);
+        }
     }
 }

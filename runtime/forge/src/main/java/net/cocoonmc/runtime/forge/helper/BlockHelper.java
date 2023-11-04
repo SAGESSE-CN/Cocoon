@@ -3,72 +3,38 @@ package net.cocoonmc.runtime.forge.helper;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Optional;
 
 public class BlockHelper {
 
-    // base64("{textures:{SKIN:{\"url":\"\",__redirected_block_")
-    private static final String REDIRECTED_DATA_PREFIX = "e3RleHR1cmVzOntTS0lOOnsidXJsIjoiIixfX3JlZGlyZWN0ZWRfYmxvY2tfX";
-    private static final String REDIRECTED_DATA_FMT = "{textures:{SKIN:{\"url\":\"\",__redirected_block__:%s}}}";
-
     private static final HashMap<String, Block> ID_TO_BLOCKS = new HashMap<>();
 
-
-    public static boolean isPlayerHead(BlockState state) {
-        return state.is(Blocks.PLAYER_HEAD) || state.is(Blocks.PLAYER_WALL_HEAD);
+    public static BlockPos getBlockPos(CompoundTag arg) {
+        return new BlockPos(arg.getInt("x"), arg.getInt("y"), arg.getInt("z"));
     }
 
-    public static Pair<BlockState, CompoundTag> getBlockFromTexture(String texture) {
-        CompoundTag blockTag = getBlockTagFromTexture(texture);
-        if (blockTag == null || blockTag.isEmpty()) {
-            return null;
-        }
+    public static Pair<BlockState, CompoundTag> getBlockFromTag(CompoundTag blockTag) {
         BlockState state = getBlockState(blockTag.getString("id"), blockTag.getCompound("state"));
         if (state == null) {
             return null;
         }
-        CompoundTag tag = null;
+        CompoundTag entityTag = null;
         if (blockTag.contains("tag", 10)) {
-            tag = blockTag.getCompound("tag");
+            entityTag = blockTag.getCompound("tag");
         }
-        return Pair.of(state, tag);
-    }
-
-    private static CompoundTag getBlockTagFromTexture(String texture) {
-        // fast check
-        if (texture == null || texture.isEmpty() || !texture.startsWith(REDIRECTED_DATA_PREFIX)) {
-            return null;
-        }
-        try {
-            String[] parts = REDIRECTED_DATA_FMT.split("%s");
-            String tag = new String(Base64.getDecoder().decode(texture));
-            if (tag.startsWith(parts[0]) && tag.endsWith(parts[1])) {
-                String tag2 = tag.substring(parts[0].length(), tag.length() - parts[1].length());
-                return TagParser.parseTag(tag2);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+        return Pair.of(state, entityTag);
     }
 
     private static Block getBlock(String id) {
         return ID_TO_BLOCKS.computeIfAbsent(id, it -> ForgeRegistries.BLOCKS.getValue(new ResourceLocation(id)));
-    }
-
-    private static BlockPos getBlockPos(CompoundTag arg) {
-        return new BlockPos(arg.getInt("x"), arg.getInt("y"), arg.getInt("z"));
     }
 
     private static BlockState getBlockState(String id, CompoundTag prop) {

@@ -23,6 +23,10 @@ public class BlockState extends StateHolder<Block, BlockState> {
         return getBlock().attack(this, level, blockPos, player);
     }
 
+    public void onPlace(Level level, BlockPos blockPos, BlockState blockState, boolean bl) {
+        getBlock().onPlace(level, blockPos, blockState, this, bl);
+    }
+
     public void onRemove(Level level, BlockPos blockPos, BlockState blockState, boolean bl) {
         getBlock().onRemove(level, blockPos, this, blockState, bl);
     }
@@ -31,9 +35,15 @@ public class BlockState extends StateHolder<Block, BlockState> {
         return getBlock().canSurvive(this, level, blockPos);
     }
 
-
     public Block getBlock() {
         return owner;
     }
 
+    public boolean hasBlockEntity() {
+        return owner instanceof BlockEntitySupplier;
+    }
+
+    public boolean is(Block block) {
+        return owner.equals(block);
+    }
 }

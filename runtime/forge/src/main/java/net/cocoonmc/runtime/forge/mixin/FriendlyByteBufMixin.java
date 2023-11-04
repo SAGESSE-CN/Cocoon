@@ -14,14 +14,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class FriendlyByteBufMixin {
 
     @Inject(method = "readItem", at = @At("RETURN"), cancellable = true)
-    public void aw$readItem(CallbackInfoReturnable<ItemStack> cir) {
+    public void cocoon$readItem(CallbackInfoReturnable<ItemStack> cir) {
         if (ItemHelper.isEnableRedirect()) {
             ItemMixinHelper.readItem(cir);
         }
     }
 
     @ModifyVariable(method = "writeItem", at = @At("HEAD"), argsOnly = true)
-    public ItemStack aw$writeItem(ItemStack itemStack) {
+    public ItemStack cocoon$writeItem(ItemStack itemStack) {
         if (ItemHelper.isEnableRedirect()) {
             return ItemMixinHelper.writeItem(itemStack);
         }
@@ -29,7 +29,7 @@ public abstract class FriendlyByteBufMixin {
     }
 
     @ModifyVariable(method = "writeItemStack", at = @At("HEAD"), argsOnly = true, remap = false)
-    public ItemStack aw$writeItemStack(ItemStack originItemStack, ItemStack itemStack, boolean flag) {
+    public ItemStack cocoon$writeItemStack(ItemStack originItemStack, ItemStack itemStack, boolean flag) {
         if (ItemHelper.isEnableRedirect()) {
             return ItemMixinHelper.writeItem(itemStack);
         }

@@ -5,6 +5,8 @@ import net.minecraft.server.v1_16_R3.EntityHuman;
 import net.minecraft.server.v1_16_R3.EntityPlayer;
 import net.minecraft.server.v1_16_R3.IInventory;
 import net.minecraft.server.v1_16_R3.ItemStack;
+import net.minecraft.server.v1_16_R3.MinecraftKey;
+import net.minecraft.server.v1_16_R3.PacketDataSerializer;
 import net.minecraft.server.v1_16_R3.WorldServer;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_16_R3.entity.CraftPlayer;
@@ -25,13 +27,24 @@ public class TransformFactory {
         return net.cocoonmc.core.world.entity.Player.of((org.bukkit.entity.Player) player.getBukkitEntity());
     }
 
+    public static net.cocoonmc.core.BlockPos convertToCocoon(BlockPosition pos) {
+        return new net.cocoonmc.core.BlockPos(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    public static net.cocoonmc.core.resources.ResourceLocation convertToCocoon(MinecraftKey rl) {
+        return new net.cocoonmc.core.resources.ResourceLocation(rl.getNamespace(), rl.getKey());
+    }
+
+    public static net.cocoonmc.core.network.FriendlyByteBuf convertToCocoon(PacketDataSerializer buf) {
+        return new net.cocoonmc.core.network.FriendlyByteBuf(buf);
+    }
+
     public static EntityPlayer convertToVanilla(net.cocoonmc.core.world.entity.Player player) {
         if (player != null) {
             return ((CraftPlayer) player.asBukkit()).getHandle();
         }
         return null;
     }
-
 
     public static WorldServer convertToVanilla(net.cocoonmc.core.world.Level level) {
         if (level != null) {
@@ -46,5 +59,13 @@ public class TransformFactory {
 
     public static BlockPosition convertToVanilla(net.cocoonmc.core.BlockPos pos) {
         return new BlockPosition(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    public static MinecraftKey convertToVanilla(net.cocoonmc.core.resources.ResourceLocation rl) {
+        return new MinecraftKey(rl.getNamespace(), rl.getPath());
+    }
+
+    public static PacketDataSerializer convertToVanilla(net.cocoonmc.core.network.FriendlyByteBuf buf) {
+        return new PacketDataSerializer(buf);
     }
 }

@@ -111,17 +111,12 @@ public class TagFactory extends TagWrapper implements ITagFactory {
     }
 
     @Override
-    public WrappedCompoundTag fromString(String tag) {
+    public WrappedCompoundTag parseTag(String tag) {
         try {
             return wrap(TagParser.parseTag(tag));
         } catch (Exception e) {
             return create((Map<String, net.cocoonmc.core.nbt.Tag>) null);
         }
-    }
-
-    @Override
-    public String toString(net.cocoonmc.core.nbt.CompoundTag tag) {
-        return unwrap(tag).toString();
     }
 
     public static WrappedByteTag wrap(ByteTag tag) {

@@ -37,7 +37,7 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
     }
 
     @Override
-    public net.cocoonmc.core.world.InteractionResult useOn(net.cocoonmc.core.item.ItemStack itemStackIn, net.cocoonmc.core.item.context.UseOnContext context) {
+    public net.cocoonmc.core.world.InteractionResult useOn(net.cocoonmc.core.world.entity.Player player, net.cocoonmc.core.item.ItemStack itemStackIn, net.cocoonmc.core.item.context.UseOnContext context) {
         EnumHand useItemHand = _unwrap(context.getHand());
         ItemStack itemStack = ITEM_TRANSFORMER.convertToVanilla(itemStackIn);
         EnumInteractionResult result = itemStack.placeItem(_unwrap(context, itemStack, useItemHand), useItemHand);
@@ -226,7 +226,7 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
             public ItemStack get(Object itemStack) {
                 // try to get the vanilla stack via reflection,
                 if (itemStack instanceof CraftItemStack) {
-                    return ReflectHelper.getMemberField(itemStack.getClass(), "handle").get(itemStack);
+                    return ReflectHelper.getMember(itemStack, "handle");
                 }
                 return null;
             }

@@ -4,6 +4,7 @@ import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.Tag;
+import net.cocoonmc.core.utils.ObjectHelper;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.Player;
@@ -326,6 +327,6 @@ public class ItemStack implements IAssociatedContainerProvider {
 
     @Override
     public String toString() {
-        return count + " " + item.getRegistryName();
+        return ObjectHelper.makeDescription(this, "id", item.getRegistryName(), "count", count);
     }
 }

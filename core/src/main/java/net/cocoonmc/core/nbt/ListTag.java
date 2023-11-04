@@ -71,11 +71,11 @@ public interface ListTag extends CollectionTag<Tag> {
 
     ListTag copy();
 
-    @SuppressWarnings("unchecked")
     default <T extends Tag, V> Optional<V> _get(int index, int type, Function<T, V> getter) {
         if (index >= 0 && index < size()) {
             Tag tag = get(index);
             if (tag.getType() == type) {
+                // noinspection unchecked
                 return Optional.ofNullable(getter.apply((T) tag));
             }
         }

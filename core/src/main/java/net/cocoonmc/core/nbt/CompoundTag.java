@@ -17,6 +17,10 @@ public interface CompoundTag extends Tag {
         return Cocoon.API.TAG.create((Map<String, Tag>) null);
     }
 
+    static CompoundTag parseTag(String value) {
+        return Cocoon.API.TAG.parseTag(value);
+    }
+
     @Override
     default byte getType() {
         return 10;
@@ -197,11 +201,11 @@ public interface CompoundTag extends Tag {
 
     CompoundTag copy();
 
-    @SuppressWarnings("unchecked")
     default <T extends Tag, V> Optional<V> _get(String key, int type, Function<T, V> getter) {
         if (contains(key, type)) {
             Tag tag = get(key);
             if (tag != null) {
+                // noinspection unchecked
                 return Optional.ofNullable(getter.apply((T) tag));
             }
         }

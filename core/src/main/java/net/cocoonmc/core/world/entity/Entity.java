@@ -2,8 +2,8 @@ package net.cocoonmc.core.world.entity;
 
 import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.resources.ResourceLocation;
-import net.cocoonmc.runtime.impl.CacheKeys;
-import org.bukkit.NamespacedKey;
+import net.cocoonmc.core.utils.ObjectHelper;
+import net.cocoonmc.runtime.impl.ConstantKeys;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.UUID;
@@ -20,7 +20,7 @@ public class Entity {
         if (entity instanceof org.bukkit.entity.LivingEntity) {
             return LivingEntity.of((org.bukkit.entity.LivingEntity) entity);
         }
-        return Cocoon.API.CACHE.computeIfAbsent(entity, CacheKeys.ENTITY_KEY, Entity::new);
+        return Cocoon.API.CACHE.computeIfAbsent(entity, ConstantKeys.ENTITY_KEY, Entity::new);
     }
 
     public double distanceTo(Entity entity) {
@@ -59,14 +59,19 @@ public class Entity {
 
 
     public <T, V> void setPersistentData(ResourceLocation key, PersistentDataType<T, V> dataType, V value) {
-        entity.getPersistentDataContainer().set(new NamespacedKey(key.getNamespace(), key.getPath()), dataType, value);
+        entity.getPersistentDataContainer().set(key.asBukkit(), dataType, value);
     }
 
     public <T, V> V getPersistentData(ResourceLocation key, PersistentDataType<T, V> dataType) {
-        return entity.getPersistentDataContainer().get(new NamespacedKey(key.getNamespace(), key.getPath()), dataType);
+        return entity.getPersistentDataContainer().get(key.asBukkit(), dataType);
     }
 
     public org.bukkit.entity.Entity asBukkit() {
         return entity;
+    }
+
+    @Override
+    public String toString() {
+        return ObjectHelper.makeDescription(this, "uuid", getUUID());
     }
 }

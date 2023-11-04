@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ItemStackMixin {
 
     @ModifyVariable(method = "<init>(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("HEAD"), argsOnly = true)
-    private static CompoundTag aw$read(CompoundTag tag) {
+    private static CompoundTag cocoon$read(CompoundTag tag) {
         if (ItemHelper.isEnableRedirect()) {
             String targetId = ItemHelper.getId(tag, 0);
             if (targetId != null) {
@@ -26,7 +26,7 @@ public abstract class ItemStackMixin {
     }
 
     @Inject(method = "save", at = @At("RETURN"))
-    public void aw$save(CompoundTag tag, CallbackInfoReturnable<CompoundTag> cir) {
+    public void cocoon$save(CompoundTag tag, CallbackInfoReturnable<CompoundTag> cir) {
         if (ItemHelper.isEnableRedirect()) {
             CompoundTag itemTag = cir.getReturnValue();
             String targetId = itemTag.getString("id");

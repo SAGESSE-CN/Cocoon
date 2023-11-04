@@ -45,4 +45,9 @@ public class Component {
     public BaseComponent getContents() {
         return contents;
     }
+
+    @Override
+    public String toString() {
+        return contents.toString();
+    }
 }

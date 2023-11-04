@@ -1,7 +1,7 @@
 package net.cocoonmc.core.world.entity;
 
 import net.cocoonmc.Cocoon;
-import net.cocoonmc.runtime.impl.CacheKeys;
+import net.cocoonmc.runtime.impl.ConstantKeys;
 
 public class LivingEntity extends Entity {
 
@@ -16,7 +16,7 @@ public class LivingEntity extends Entity {
         if (livingEntity instanceof org.bukkit.entity.Player) {
             return Player.of((org.bukkit.entity.Player) livingEntity);
         }
-        return Cocoon.API.CACHE.computeIfAbsent(livingEntity, CacheKeys.LIVING_ENTITY_KEY, LivingEntity::new);
+        return Cocoon.API.CACHE.computeIfAbsent(livingEntity, ConstantKeys.LIVING_ENTITY_KEY, LivingEntity::new);
     }
 
     @Override

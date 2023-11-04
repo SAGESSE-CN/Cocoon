@@ -5,9 +5,10 @@ import net.cocoonmc.core.Direction;
 import net.cocoonmc.core.inventory.Menu;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.network.Component;
+import net.cocoonmc.core.utils.ObjectHelper;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.Level;
-import net.cocoonmc.runtime.impl.CacheKeys;
+import net.cocoonmc.runtime.impl.ConstantKeys;
 import org.bukkit.GameMode;
 import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.EquipmentSlot;
@@ -25,7 +26,7 @@ public class Player extends LivingEntity {
     }
 
     public static Player of(org.bukkit.entity.Player player) {
-        return Cocoon.API.CACHE.computeIfAbsent(player, CacheKeys.PLAYER_KEY, Player::new);
+        return Cocoon.API.CACHE.computeIfAbsent(player, ConstantKeys.PLAYER_KEY, Player::new);
     }
 
     public void addChannel(String channel) {
@@ -127,5 +128,10 @@ public class Player extends LivingEntity {
     @Override
     public org.bukkit.entity.Player asBukkit() {
         return player;
+    }
+
+    @Override
+    public String toString() {
+        return ObjectHelper.makeDescription(this, "uuid", getUUID());
     }
 }

@@ -1,0 +1,61 @@
+package net.cocoonmc.runtime.forge.helper;
+
+import net.cocoonmc.runtime.forge.api.Available;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
+import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistry;
+
+@Available("[1.16, 1.18)")
+public class RuntimeHelper {
+
+    public static int getIdByMenuKey(ResourceLocation rl) {
+        return ((ForgeRegistry<?>) ForgeRegistries.CONTAINERS).getID(rl);
+    }
+
+    public static int getBlockEntityId(ResourceLocation rl) {
+        if (rl != null) {
+            return ((ForgeRegistry<?>) ForgeRegistries.TILE_ENTITIES).getID(rl);
+        }
+        return 0;
+    }
+
+    public static ResourceLocation getBlockEntityKey(ChunkAccess chunk, BlockPos pos) {
+        BlockEntity entity = chunk.getBlockEntity(pos);
+        if (entity != null) {
+            return ForgeRegistries.TILE_ENTITIES.getKey(entity.getType());
+        }
+        return null;
+    }
+
+
+    public static void handleBlockEntity(ChunkAccess chunk, BlockPos pos, BlockState state, CompoundTag tag) {
+        if (!state.hasTileEntity()) {
+            return;
+        }
+        BlockEntity blockEntity = chunk.getBlockEntity(pos);
+        if (blockEntity != null) {
+            blockEntity.handleUpdateTag(state, tag);
+        }
+    }
+
+    public static ClientboundBlockUpdatePacket buildBlockUpdatePacket(BlockPos pos, BlockState state) {
+        return new ClientboundBlockUpdatePacket(pos, state);
+    }
+
+    public static ClientboundBlockEntityDataPacket buildBlockEntityDataPacket(BlockPos pos, ResourceLocation type, CompoundTag tag) {
+        return new ClientboundBlockEntityDataPacket(pos, 0, tag);
+    }
+
+    public static ClientboundCustomPayloadPacket buildCustomPayloadPacket(ResourceLocation id, FriendlyByteBuf buf) {
+        return new ClientboundCustomPayloadPacket(id, buf);
+    }
+}

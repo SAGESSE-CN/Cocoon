@@ -1,8 +1,8 @@
 package net.cocoonmc.runtime.v1_18_R2;
 
-import net.cocoonmc.runtime.IBlockFactory;
 import net.cocoonmc.runtime.IItemFactory;
 import net.cocoonmc.runtime.IMenuFactory;
+import net.cocoonmc.runtime.INetworkFactory;
 import net.cocoonmc.runtime.IRuntime;
 import net.cocoonmc.runtime.ITagFactory;
 
@@ -11,8 +11,8 @@ public class RuntimeFactory implements IRuntime {
 
     public static final TagFactory TAG = new TagFactory();
     public static final ItemFactory ITEM = new ItemFactory();
-    public static final BlockFactory BLOCK = new BlockFactory();
     public static final MenuFactory MENU = new MenuFactory();
+    public static final NetworkFactory NETWORK = new NetworkFactory();
 
     @Override
     public ITagFactory getTag() {
@@ -25,12 +25,12 @@ public class RuntimeFactory implements IRuntime {
     }
 
     @Override
-    public IBlockFactory getBlock() {
-        return BLOCK;
+    public IMenuFactory getMenu() {
+        return MENU;
     }
 
     @Override
-    public IMenuFactory getMenu() {
-        return MENU;
+    public INetworkFactory getNetwork() {
+        return NETWORK;
     }
 }

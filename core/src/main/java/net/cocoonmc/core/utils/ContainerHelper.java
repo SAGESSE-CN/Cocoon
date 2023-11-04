@@ -5,10 +5,9 @@ import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.math.Vector3f;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.ListTag;
+import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.Player;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
 
 import java.util.List;
 
@@ -77,11 +76,8 @@ public class ContainerHelper {
         });
     }
 
-    public static void dropItems(List<ItemStack> itemStacks, Player player, Vector3f location) {
-        Bukkit.getScheduler().runTask(Cocoon.getPlugin(), () -> {
-            org.bukkit.World world = player.asBukkit().getWorld();
-            org.bukkit.Location loc = location.asBukkit();
-            itemStacks.forEach(it -> world.dropItemNaturally(loc, it.asBukkit()));
-        });
+    public static void dropItems(List<ItemStack> itemStacks, Level level, Vector3f location) {
+        BukkitHelper.dropItems(itemStacks, level.asBukkit(), location.asBukkit());
     }
+
 }

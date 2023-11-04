@@ -13,7 +13,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.Material;
@@ -37,12 +36,13 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
     }
 
     @Override
-    public net.cocoonmc.core.world.InteractionResult useOn(net.cocoonmc.core.item.ItemStack itemStackIn, net.cocoonmc.core.item.context.UseOnContext context) {
+    public net.cocoonmc.core.world.InteractionResult useOn(net.cocoonmc.core.world.entity.Player player, net.cocoonmc.core.item.ItemStack itemStackIn, net.cocoonmc.core.item.context.UseOnContext context) {
+        ServerLevel serverLevel = convertToVanilla(context.getLevel());
+        ServerPlayer serverPlayer = convertToVanilla(player);
         InteractionHand useItemHand = _unwrap(context.getHand());
         ItemStack itemStack = ITEM_TRANSFORMER.convertToVanilla(itemStackIn);
-        InteractionResult result = itemStack.useOn(_unwrap(context, itemStack, useItemHand), useItemHand);
-        itemStackIn.setCount(itemStack.getCount());
-        return _wrap(result);
+        BlockHitResult hitResult = _unwrap(context.getHitResult());
+        return _wrap(serverPlayer.gameMode.useItemOn(serverPlayer, serverLevel, itemStack, useItemHand, hitResult));
     }
 
 
@@ -60,12 +60,6 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
 
     private static InteractionHand _unwrap(net.cocoonmc.core.world.InteractionHand hand) {
         return InteractionHand.values()[hand.ordinal()];
-    }
-
-    private static UseOnContext _unwrap(net.cocoonmc.core.item.context.UseOnContext context, ItemStack itemStack, InteractionHand useItemHand) {
-        ServerLevel level = convertToVanilla(context.getLevel());
-        ServerPlayer player = convertToVanilla(context.getPlayer());
-        return new UseOnContext(level, player, useItemHand, itemStack, _unwrap(context.getHitResult()));
     }
 
     private static BlockHitResult _unwrap(net.cocoonmc.core.item.context.BlockHitResult hitResult) {
@@ -226,7 +220,7 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
             public ItemStack get(Object itemStack) {
                 // try to get the vanilla stack via reflection,
                 if (itemStack instanceof CraftItemStack) {
-                    return ReflectHelper.getMemberField(itemStack.getClass(), "handle").get(itemStack);
+                    return ReflectHelper.getMember(itemStack, "handle");
                 }
                 return null;
             }

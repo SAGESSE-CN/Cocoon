@@ -3,7 +3,7 @@ package net.cocoonmc.runtime;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.item.context.UseOnContext;
 import net.cocoonmc.core.world.InteractionResult;
-import net.cocoonmc.runtime.impl.Constants;
+import net.cocoonmc.core.world.entity.Player;
 
 public interface IItemFactory {
 
@@ -11,5 +11,5 @@ public interface IItemFactory {
 
     org.bukkit.inventory.ItemStack convertTo(ItemStack itemStack);
 
-    InteractionResult useOn(ItemStack itemStack, UseOnContext context);
+    InteractionResult useOn(Player player, ItemStack itemStack, UseOnContext context);
 }

@@ -56,7 +56,6 @@ public interface ITagFactory {
 
     CompoundTag readCompressed(InputStream inputStream) throws IOException;
 
-    String toString(CompoundTag tag);
 
-    CompoundTag fromString(String tag);
+    CompoundTag parseTag(String tag);
 }

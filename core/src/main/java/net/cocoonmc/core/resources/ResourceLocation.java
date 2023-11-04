@@ -1,6 +1,6 @@
 package net.cocoonmc.core.resources;
 
-import org.bukkit.NamespacedKey;
+import net.cocoonmc.core.utils.BukkitHelper;
 
 import java.util.Objects;
 
@@ -22,10 +22,6 @@ public class ResourceLocation {
 
     public static ResourceLocation of(org.bukkit.NamespacedKey key) {
         return new ResourceLocation(key.getNamespace(), key.getKey());
-    }
-
-    public static org.bukkit.NamespacedKey of(ResourceLocation key) {
-        return new NamespacedKey(key.getNamespace(), key.getPath());
     }
 
     public String getNamespace() {
@@ -52,6 +48,10 @@ public class ResourceLocation {
     @Override
     public String toString() {
         return namespace + ":" + path;
+    }
+
+    public org.bukkit.NamespacedKey asBukkit() {
+        return BukkitHelper.getKey(namespace, path);
     }
 
     private static String[] decompose(String id, char delimiter) {

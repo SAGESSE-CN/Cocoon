@@ -22,11 +22,11 @@ public class NonNullList<E> extends AbstractList<E> {
         return new NonNullList<>(Lists.newArrayListWithCapacity(cap), null);
     }
 
-    @SuppressWarnings("unchecked")
     public static <E> NonNullList<E> withSize(int size, E object) {
         //Validate.notNull(object);
         Object[] objects = new Object[size];
         Arrays.fill(objects, object);
+        // noinspection unchecked
         return new NonNullList<>(Arrays.asList((E[]) objects), object);
     }
 
