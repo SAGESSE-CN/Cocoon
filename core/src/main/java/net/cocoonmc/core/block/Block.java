@@ -3,6 +3,7 @@ package net.cocoonmc.core.block;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.block.state.StateDefinition;
 import net.cocoonmc.core.item.Item;
+import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.item.context.BlockPlaceContext;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.utils.ObjectHelper;
@@ -10,6 +11,7 @@ import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.Level;
+import net.cocoonmc.core.world.entity.LivingEntity;
 import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerProvider;
@@ -47,13 +49,16 @@ public class Block implements IAssociatedContainerProvider {
         return InteractionResult.PASS;
     }
 
+    public void setPlacedBy(Level level, BlockPos blockPos, BlockState blockState, BlockPlaceContext context) {
+    }
+
     public void onPlace(Level level, BlockPos blockPos, BlockState oldBlockState, BlockState newBlockState, boolean bl) {
     }
 
     public void onRemove(Level level, BlockPos blockPos, BlockState oldBlockState, BlockState newBlockState, boolean bl) {
     }
 
-    public void onNeighborChanged(Level level, BlockPos pos, BlockState state, Block block, BlockPos blockPos2, boolean bl) {
+    public void onNeighborChanged(Level level, BlockPos pos, BlockState state, BlockPos sourcePos, Block sourceBlock, boolean bl) {
     }
 
     public boolean canSurvive(BlockState blockState, Level level, BlockPos blockPos) {

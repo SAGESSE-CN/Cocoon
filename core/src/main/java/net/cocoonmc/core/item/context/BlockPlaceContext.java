@@ -1,16 +1,19 @@
 package net.cocoonmc.core.item.context;
 
+import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.Direction;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.Player;
+import net.cocoonmc.runtime.impl.BlockPlaceContextAccessor;
 import org.jetbrains.annotations.Nullable;
 
 public class BlockPlaceContext extends UseOnContext {
 
     protected final BlockPos relativePos;
+    protected final BlockPlaceContextAccessor accessor;
     protected boolean replaceClicked;
 
     public BlockPlaceContext(UseOnContext context) {
@@ -19,9 +22,10 @@ public class BlockPlaceContext extends UseOnContext {
 
     public BlockPlaceContext(Level level, @Nullable Player player, InteractionHand hand, ItemStack itemStack, BlockHitResult hitResult) {
         super(level, player, hand, itemStack, hitResult);
+        this.accessor = Cocoon.API.BLOCK.convertTo(this);
         this.replaceClicked = true;
         this.relativePos = hitResult.getBlockPos().relative(hitResult.getDirection());
-        this.replaceClicked = canBeReplaced(hitResult.getBlockPos());
+        this.replaceClicked = accessor.canBeReplaced(level, hitResult.getBlockPos());
     }
 
     @Override
@@ -33,7 +37,7 @@ public class BlockPlaceContext extends UseOnContext {
     }
 
     public boolean canPlace() {
-        return replaceClicked || canBeReplaced(relativePos);
+        return replaceClicked || accessor.canBeReplaced(level, relativePos);
     }
 
     public boolean replacingClickedOnBlock() {
@@ -62,9 +66,5 @@ public class BlockPlaceContext extends UseOnContext {
             directions[0] = direction.getOpposite();
         }
         return directions;
-    }
-
-    private boolean canBeReplaced(BlockPos pos) {
-        return level.asBukkit().getBlockAt(pos.getX(), pos.getY(), pos.getZ()).isEmpty();
     }
 }

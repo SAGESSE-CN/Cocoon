@@ -17,9 +17,12 @@ import net.minecraft.server.v1_16_R3.PacketListener;
 import net.minecraft.server.v1_16_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_16_R3.PacketPlayOutCustomPayload;
 import net.minecraft.server.v1_16_R3.PacketPlayOutMapChunk;
+import net.minecraft.server.v1_16_R3.PacketPlayOutMultiBlockChange;
 import net.minecraft.server.v1_16_R3.PacketPlayOutSpawnEntity;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class NetworkFactory extends TransformFactory implements INetworkFactory {
@@ -66,6 +69,9 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         }
         if (packet instanceof PacketPlayOutBlockChange) {
             return wrap((PacketPlayOutBlockChange) packet);
+        }
+        if (packet instanceof PacketPlayOutMultiBlockChange) {
+            return wrap((PacketPlayOutMultiBlockChange) packet);
         }
         if (packet instanceof PacketPlayOutCustomPayload) {
             return wrap((PacketPlayOutCustomPayload) packet);
@@ -131,6 +137,23 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
             @Override
             public int getStateId() {
                 return Block.getCombinedId(packet.block);
+            }
+
+            @Override
+            public Object getHandle() {
+                return packet;
+            }
+        };
+    }
+
+    private static net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket wrap(PacketPlayOutMultiBlockChange packet) {
+        return new net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket() {
+
+            @Override
+            public Map<BlockPos, Integer> getChanges() {
+                HashMap<BlockPos, Integer> changes = new HashMap<>();
+                packet.a((pos, state) -> changes.put(convertToCocoon(pos), Block.getCombinedId(state)));
+                return changes;
             }
 
             @Override

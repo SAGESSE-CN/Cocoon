@@ -2,6 +2,7 @@ package net.cocoonmc.runtime.impl;
 
 import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
+import net.cocoonmc.core.block.Block;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.ListTag;
 import net.cocoonmc.core.world.Level;
@@ -10,8 +11,10 @@ import net.cocoonmc.core.world.chunk.ChunkPos;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -23,7 +26,8 @@ public class LevelData {
     private static ConcurrentHashMap<UUID, Level> LEVELS = new ConcurrentHashMap<>();
     private static ConcurrentHashMap<ChunkPos, ClientInfo> CLIENT_INFOS = new ConcurrentHashMap<>();
 
-    private static UpdateTask UPDATE_TASK;
+    private static UpdateTask UPDATE_STATE_TASK;
+    private static UpdateNeighborTask UPDATE_NEIGHBOR_TASK;
 
     public static Level get(org.bukkit.World world) {
         return LevelData.LEVELS.computeIfAbsent(world.getUID(), it -> new Level(world));
@@ -39,18 +43,57 @@ public class LevelData {
     }
 
 
-    public static void updateBukkit(Chunk chunk, BlockPos pos) {
-        if (UPDATE_TASK == null) {
-            UPDATE_TASK = new UpdateTask();
-            Bukkit.getScheduler().runTaskLater(Cocoon.getPlugin(), () -> {
-                UpdateTask task = UPDATE_TASK;
-                UPDATE_TASK = null;
-                task.execute();
-            }, 1);
+    public static void updateStates(Chunk chunk, BlockPos pos) {
+        if (UPDATE_STATE_TASK == null) {
+            beginUpdates();
         }
-        UPDATE_TASK.add(chunk, pos);
+        if (UPDATE_STATE_TASK != null) {
+            UPDATE_STATE_TASK.add(chunk, pos);
+        }
     }
 
+    public static void updateNeighbourShapes(Level level, BlockPos sourcePos, Block sourceBlock, int flags) {
+        if (UPDATE_NEIGHBOR_TASK == null) {
+            beginUpdates();
+        }
+        if (UPDATE_NEIGHBOR_TASK != null) {
+            UPDATE_NEIGHBOR_TASK.add(level, sourcePos, sourceBlock);
+        }
+    }
+
+    public static void beginUpdates() {
+        if (UPDATE_STATE_TASK != null) {
+            return;
+        }
+        UPDATE_STATE_TASK = new UpdateTask();
+        UPDATE_NEIGHBOR_TASK = new UpdateNeighborTask();
+        Bukkit.getScheduler().runTask(Cocoon.getPlugin(), LevelData::endUpdates);
+    }
+
+    public static void endUpdates() {
+        flush();
+    }
+
+    public static void commit(Runnable r) {
+        if (UPDATE_STATE_TASK != null) {
+            UPDATE_STATE_TASK.commitTasks.add(r);
+        } else {
+            r.run();
+        }
+    }
+
+    private static void flush() {
+        UpdateTask task1 = UPDATE_STATE_TASK;
+        UpdateNeighborTask task2 = UPDATE_NEIGHBOR_TASK;
+        UPDATE_STATE_TASK = null;
+        UPDATE_NEIGHBOR_TASK = null;
+        if (task1 != null) {
+            task1.execute();
+        }
+        if (task2 != null) {
+            task2.execute();
+        }
+    }
 
     public static void updateClientChunk(ChunkPos key, Map<BlockPos, CompoundTag> blocks) {
         if (blocks.size() == 0) {
@@ -115,19 +158,42 @@ public class LevelData {
 
     public static class UpdateTask {
 
-        private LinkedHashSet<UpdateInfo> pending = new LinkedHashSet<>();
+        LinkedHashSet<UpdateInfo> pending = new LinkedHashSet<>();
+        ArrayList<Runnable> commitTasks = new ArrayList<>();
 
         public void execute() {
             HashSet<Chunk> chunks = new HashSet<>();
             pending.forEach(it -> {
                 chunks.add(it.chunk);
-                it.chunk.getLevel().asBukkit().getBlockAt(it.pos.asBukkit()).getState().update(true, false);
+                commitTasks.add(() -> {
+                    it.chunk.getLevel().asBukkit().getBlockAt(it.pos.asBukkit()).getState().update(true, false);
+                });
             });
             chunks.forEach(Chunk::freeze);
+            commitTasks.forEach(it -> {
+                it.run();
+            });
         }
 
         public void add(Chunk chunk, BlockPos pos) {
             pending.add(new UpdateInfo(chunk, pos));
+        }
+    }
+
+    public static class UpdateNeighborTask {
+
+        private LinkedHashMap<Level, LinkedHashMap<BlockPos, Block>> pending = new LinkedHashMap<>();
+
+        public void execute() {
+            NeighborUpdater updater = new NeighborUpdater();
+            pending.forEach((level, tasks) -> tasks.forEach((pos, block) -> {
+                //
+                updater.updateNeighborsAtExceptFromFacing(level, pos, block, null);
+            }));
+        }
+
+        public void add(Level level, BlockPos sourcePos, Block sourceBlock) {
+            pending.computeIfAbsent(level, it -> new LinkedHashMap<>()).put(sourcePos, sourceBlock);
         }
     }
 }

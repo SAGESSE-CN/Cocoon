@@ -9,6 +9,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.AttributeKey;
 import net.cocoonmc.Cocoon;
+import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.ListTag;
 import net.cocoonmc.core.network.FriendlyByteBuf;
@@ -16,7 +17,9 @@ import net.cocoonmc.core.network.protocol.ClientboundBlockUpdatePacket;
 import net.cocoonmc.core.network.protocol.ClientboundBundlePacket;
 import net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket;
 import net.cocoonmc.core.network.protocol.ClientboundLevelChunkWithLightPacket;
+import net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket;
 import net.cocoonmc.core.network.protocol.Packet;
+import net.cocoonmc.core.utils.Pair;
 import net.cocoonmc.core.utils.ThrowableConsumer;
 import net.cocoonmc.core.world.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,7 +27,10 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class PacketDataListener implements Listener {
 
@@ -50,9 +56,11 @@ public class PacketDataListener implements Listener {
 
     public static Packet handleChunkUpdate(ClientboundLevelChunkWithLightPacket packet, Player player) {
         ListTag tag = LevelData.getClientChunk(player.getLevel().getUUID(), packet.getX(), packet.getZ());
-        if (tag != null) {
-            packet.getHeightmaps().put(Constants.CHUNK_REDIRECTED_KEY, tag);
+        if (tag == null) {
+            return packet;
         }
+        //Logs.debug("{} patch chunk ({},{})", player.getLevel().getName(), packet.getX(), packet.getZ());
+        packet.getHeightmaps().put(Constants.CHUNK_REDIRECTED_KEY, tag);
         return packet;
     }
 
@@ -66,6 +74,31 @@ public class PacketDataListener implements Listener {
         buf.writeVarInt(packet.getStateId());
         buf.writeNbt(tag);
         Packet pre = ClientboundCustomPayloadPacket.create(buf);
+        //Logs.debug("{} patch block {} => {}", player.getLevel().getName(), packet.getPos(), tag);
+        return ClientboundBundlePacket.create(Lists.newArrayList(pre, packet));
+    }
+
+    public static Packet handleSectionUpdate(ClientboundSectionBlocksUpdatePacket packet, Player player) {
+        UUID levelId = player.getLevel().getUUID();
+        ArrayList<Pair<Integer, CompoundTag>> pairs = new ArrayList<>();
+        for (Map.Entry<BlockPos, Integer> entry : packet.getChanges().entrySet()) {
+            CompoundTag tag = LevelData.getClientBlock(levelId, entry.getKey());
+            if (tag != null) {
+                pairs.add(Pair.of(entry.getValue(), tag));
+            }
+        }
+        if (pairs.isEmpty()) {
+            return packet;
+        }
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.directBuffer());
+        buf.writeVarInt(3); // section update
+        buf.writeVarInt(pairs.size());
+        for (Pair<Integer, CompoundTag> pair : pairs) {
+            buf.writeVarInt(pair.getFirst());
+            buf.writeNbt(pair.getSecond());
+        }
+        Packet pre = ClientboundCustomPayloadPacket.create(buf);
+        //Logs.debug("{} patch section {}", player.getLevel().getName(), pairs.stream().map(Pair::getSecond).collect(Collectors.toList()));
         return ClientboundBundlePacket.create(Lists.newArrayList(pre, packet));
     }
 

@@ -23,12 +23,16 @@ public class BlockState extends StateHolder<Block, BlockState> {
         return getBlock().attack(this, level, blockPos, player);
     }
 
-    public void onPlace(Level level, BlockPos blockPos, BlockState blockState, boolean bl) {
-        getBlock().onPlace(level, blockPos, blockState, this, bl);
+    public void onPlace(Level level, BlockPos pos, BlockState blockState, boolean bl) {
+        getBlock().onPlace(level, pos, blockState, this, bl);
     }
 
-    public void onRemove(Level level, BlockPos blockPos, BlockState blockState, boolean bl) {
-        getBlock().onRemove(level, blockPos, this, blockState, bl);
+    public void onRemove(Level level, BlockPos pos, BlockState blockState, boolean bl) {
+        getBlock().onRemove(level, pos, this, blockState, bl);
+    }
+
+    public void onNeighborChanged(Level level, BlockPos pos, BlockPos sourcePos, Block sourceBlock, boolean bl) {
+        getBlock().onNeighborChanged(level, pos, this, sourcePos, sourceBlock, bl);
     }
 
     public boolean canSurvive(Level level, BlockPos blockPos) {

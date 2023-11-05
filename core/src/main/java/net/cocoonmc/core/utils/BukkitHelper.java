@@ -8,6 +8,7 @@ import net.cocoonmc.core.block.BlockState;
 import net.cocoonmc.core.item.Item;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.item.Items;
+import net.cocoonmc.core.item.context.BlockPlaceContext;
 import net.cocoonmc.core.item.context.UseOnContext;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.world.InteractionResult;
@@ -26,9 +27,9 @@ public class BukkitHelper {
     private static final BlockFace[] DIRECTION_TO_FACE = {BlockFace.DOWN, BlockFace.UP, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST};
 
 
-    public static InteractionResult placeBlock(Block wrapper, BlockState blockState, @Nullable CompoundTag entityTag, UseOnContext context) {
+    public static InteractionResult placeBlock(Block wrapper, BlockState blockState, @Nullable CompoundTag entityTag, BlockPlaceContext context) {
         ItemStack wrapperStack = new ItemStack(wrapper.asItem());
-        ChunkDataPlaceTask.push(wrapper, blockState, entityTag);
+        ChunkDataPlaceTask.push(wrapper, blockState, entityTag, context);
         InteractionResult result = Cocoon.API.ITEM.useOn(context.getPlayer(), wrapperStack, context);
         ChunkDataPlaceTask.pop(wrapper);
         if (wrapperStack.isEmpty()) {

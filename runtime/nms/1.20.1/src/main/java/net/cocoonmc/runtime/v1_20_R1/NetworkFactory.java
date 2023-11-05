@@ -12,6 +12,7 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
+import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerConnectionListener;
 import net.minecraft.server.network.ServerPlayerConnection;
@@ -20,6 +21,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_20_R1.CraftServer;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class NetworkFactory extends TransformFactory implements INetworkFactory {
@@ -55,6 +58,9 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         }
         if (packet instanceof ClientboundBlockUpdatePacket) {
             return wrap((ClientboundBlockUpdatePacket) packet);
+        }
+        if (packet instanceof ClientboundSectionBlocksUpdatePacket) {
+            return wrap((ClientboundSectionBlocksUpdatePacket) packet);
         }
         if (packet instanceof ClientboundCustomPayloadPacket) {
             return wrap((ClientboundCustomPayloadPacket) packet);
@@ -120,6 +126,23 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
             @Override
             public int getStateId() {
                 return Block.getId(packet.blockState);
+            }
+
+            @Override
+            public Object getHandle() {
+                return packet;
+            }
+        };
+    }
+
+    private static net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket wrap(ClientboundSectionBlocksUpdatePacket packet) {
+        return new net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket() {
+
+            @Override
+            public Map<BlockPos, Integer> getChanges() {
+                HashMap<BlockPos, Integer> changes = new HashMap<>();
+                packet.runUpdates((pos, state) -> changes.put(convertToCocoon(pos), Block.getId(state)));
+                return changes;
             }
 
             @Override

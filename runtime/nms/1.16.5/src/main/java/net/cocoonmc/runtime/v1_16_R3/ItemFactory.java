@@ -5,17 +5,11 @@ import net.cocoonmc.runtime.IItemFactory;
 import net.cocoonmc.runtime.impl.ItemStackAccessor;
 import net.cocoonmc.runtime.impl.ItemStackTransformer;
 import net.cocoonmc.runtime.impl.ItemStackWrapper;
-import net.minecraft.server.v1_16_R3.BlockPosition;
-import net.minecraft.server.v1_16_R3.EntityPlayer;
-import net.minecraft.server.v1_16_R3.EnumDirection;
 import net.minecraft.server.v1_16_R3.EnumHand;
 import net.minecraft.server.v1_16_R3.EnumInteractionResult;
 import net.minecraft.server.v1_16_R3.ItemActionContext;
 import net.minecraft.server.v1_16_R3.ItemStack;
-import net.minecraft.server.v1_16_R3.MovingObjectPositionBlock;
 import net.minecraft.server.v1_16_R3.NBTTagCompound;
-import net.minecraft.server.v1_16_R3.Vec3D;
-import net.minecraft.server.v1_16_R3.WorldServer;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_16_R3.inventory.CraftItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -38,48 +32,16 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
 
     @Override
     public net.cocoonmc.core.world.InteractionResult useOn(net.cocoonmc.core.world.entity.Player player, net.cocoonmc.core.item.ItemStack itemStackIn, net.cocoonmc.core.item.context.UseOnContext context) {
-        EnumHand useItemHand = _unwrap(context.getHand());
+        EnumHand useItemHand = convertToVanilla(context.getHand());
         ItemStack itemStack = ITEM_TRANSFORMER.convertToVanilla(itemStackIn);
-        EnumInteractionResult result = itemStack.placeItem(_unwrap(context, itemStack, useItemHand), useItemHand);
+        ItemActionContext actionContext = convertToVanilla(context);
+        EnumInteractionResult result = itemStack.placeItem(actionContext, useItemHand);
         itemStackIn.setCount(itemStack.getCount());
         return _wrap(result);
     }
 
-
     private static net.cocoonmc.core.world.InteractionResult _wrap(EnumInteractionResult result) {
         return net.cocoonmc.core.world.InteractionResult.values()[result.ordinal()];
-    }
-
-    private static Vec3D _unwrap(net.cocoonmc.core.math.Vector3f vector) {
-        return new Vec3D(vector.getX(), vector.getY(), vector.getZ());
-    }
-
-    private static EnumDirection _unwrap(net.cocoonmc.core.Direction dir) {
-        return EnumDirection.values()[dir.ordinal()];
-    }
-
-    private static EnumHand _unwrap(net.cocoonmc.core.world.InteractionHand hand) {
-        return EnumHand.values()[hand.ordinal()];
-    }
-
-    private static ItemActionContext _unwrap(net.cocoonmc.core.item.context.UseOnContext context, ItemStack itemStack, EnumHand useItemHand) {
-        WorldServer level = convertToVanilla(context.getLevel());
-        EntityPlayer player = convertToVanilla(context.getPlayer());
-        return new ItemActionContext(level, player, useItemHand, itemStack, _unwrap(context.getHitResult()));
-    }
-
-    private static MovingObjectPositionBlock _unwrap(net.cocoonmc.core.item.context.BlockHitResult hitResult) {
-        Vec3D loc = _unwrap(hitResult.getLocation());
-        BlockPosition pos = convertToVanilla(hitResult.getBlockPos());
-        EnumDirection dir = _unwrap(hitResult.getDirection());
-        switch (hitResult.getType()) {
-            case ENTITY:
-            case BLOCK:
-                return new MovingObjectPositionBlock(loc, dir, pos, hitResult.isInside());
-
-            default:
-                return MovingObjectPositionBlock.a(loc, dir, pos);
-        }
     }
 
     private static ItemStackTransformer.Layer<net.cocoonmc.core.item.ItemStack> _createCocoonLayer() {

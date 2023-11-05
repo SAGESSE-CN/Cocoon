@@ -63,6 +63,14 @@ public class BlockPos {
         return new BlockPos(getX() + dir.getStepX(), getY() + dir.getStepY(), getZ() + dir.getStepZ());
     }
 
+    public BlockPos offset(BlockPos pos) {
+        return new BlockPos(getX() + pos.getX(), getY() + pos.getY(), getZ() + pos.getZ());
+    }
+
+    public BlockPos subtract(BlockPos pos) {
+        return new BlockPos(getX() - pos.getX(), getY() - pos.getY(), getZ() - pos.getZ());
+    }
+
     public int getX() {
         return x;
     }

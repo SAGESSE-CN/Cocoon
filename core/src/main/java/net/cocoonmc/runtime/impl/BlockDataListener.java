@@ -33,14 +33,16 @@ public class BlockDataListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
-        setBlockDropItemsIfNeeded(event);
+        updateBlockDropItemsIfNeeded(event);
         removeBlockIfNeeded(event.getBlock());
+        updateBlockNeighboursIfNeeded(event.getBlock(), 1);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
         removeBlockIfNeeded(event.getBlock());
         setBlockIfNeeded(event.getBlock());
+        updateBlockNeighboursIfNeeded(event.getBlock(), 2);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -85,7 +87,8 @@ public class BlockDataListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockRedstone(BlockRedstoneEvent event) {
-        updateBlockRedstone(event.getBlock(), event.getOldCurrent(), event.getNewCurrent());
+        updateBlockNeighboursIfNeeded(event.getBlock(), 0);
+        Logs.debug("{}", event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -103,10 +106,13 @@ public class BlockDataListener implements Listener {
 
     private void setBlockIfNeeded(org.bukkit.block.Block block) {
         ChunkDataPlaceTask task = ChunkDataPlaceTask.last();
-        if (task != null && block.getType().equals(task.getWrapper().asBukkit())) {
+        if (task != null && block.getType().equals(task.getDelegate().asBukkit())) {
             Chunk chunk = Chunk.of(block);
             BlockPos blockPos = BlockPos.of(block);
+            LevelData.beginUpdates();
             chunk.setBlock(blockPos, task.getBlockState(), task.getEntityTag());
+            task.getBlock().setPlacedBy(chunk.getLevel(), blockPos, task.getBlockState(), task.getContext());
+            LevelData.endUpdates();
         }
     }
 
@@ -125,13 +131,13 @@ public class BlockDataListener implements Listener {
     private void removeBlockStateIfNeeded(List<org.bukkit.block.BlockState> blocks) {
     }
 
-    private void updateBlockRedstone(org.bukkit.block.Block block, int oldValue, int newValue) {
-
-        Logs.debug("{}, {}, {}", block, oldValue, newValue);
-
+    private void updateBlockNeighboursIfNeeded(org.bukkit.block.Block block, int flags) {
+        Level level = Level.of(block);
+        BlockPos blockPos = BlockPos.of(block);
+        level.updateNeighborsAt(blockPos, Blocks.AIR);
     }
 
-    private void setBlockDropItemsIfNeeded(BlockBreakEvent event) {
+    private void updateBlockDropItemsIfNeeded(BlockBreakEvent event) {
         Level level = Level.of(event.getBlock().getWorld());
         BlockPos blockPos = BlockPos.of(event.getBlock());
         BlockState blockState = level.getBlockState(blockPos);

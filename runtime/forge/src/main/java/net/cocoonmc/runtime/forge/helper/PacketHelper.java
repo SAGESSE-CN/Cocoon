@@ -28,6 +28,7 @@ public class PacketHelper {
             .put(0, PacketHelper::handleOpenWindow)
             .put(1, PacketHelper::handleBlockChange)
             .put(2, PacketHelper::handleBlockData)
+            .put(3, PacketHelper::handleSectionUpdate)
             .build();
 
     public static boolean test(ResourceLocation id) {
@@ -81,6 +82,13 @@ public class PacketHelper {
                 newDataPacket.handle(packetListener);
             }
         });
+    }
+
+    private static void handleSectionUpdate(ClientGamePacketListener packetListener, FriendlyByteBuf payload) {
+        int size = payload.readVarInt();
+        for (int i = 0; i < size; ++i) {
+            handleBlockChange(packetListener, payload);
+        }
     }
 
     private static void handleBlockData(ClientGamePacketListener packetListener, FriendlyByteBuf payload) {

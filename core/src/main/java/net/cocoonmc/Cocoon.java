@@ -5,6 +5,8 @@ import net.cocoonmc.core.item.Items;
 import net.cocoonmc.core.network.PacketTransformer;
 import net.cocoonmc.core.network.protocol.ClientboundBlockUpdatePacket;
 import net.cocoonmc.core.network.protocol.ClientboundLevelChunkWithLightPacket;
+import net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket;
+import net.cocoonmc.runtime.IBlockFactory;
 import net.cocoonmc.runtime.ICacheFactory;
 import net.cocoonmc.runtime.IItemFactory;
 import net.cocoonmc.runtime.IMenuFactory;
@@ -51,13 +53,10 @@ public class Cocoon {
         Blocks.init();
         LevelData.open();
         INSTANCE.registerEvents();
-        // register some handlers.
-        API.TRANSFORMER.register(PacketDataListener::handleChunkUpdate, ClientboundLevelChunkWithLightPacket.class);
-        API.TRANSFORMER.register(PacketDataListener::handleBlockUpdate, ClientboundBlockUpdatePacket.class);
+        API.TRANSFORMER.init();
     }
 
     public static void disable() {
-        // uregister all handlers
         API.TRANSFORMER.clear();
     }
 
@@ -69,6 +68,7 @@ public class Cocoon {
 
         public static final ITagFactory TAG = RUNTIME.getTag();
         public static final IItemFactory ITEM = RUNTIME.getItem();
+        public static final IBlockFactory BLOCK = RUNTIME.getBlock();
         public static final IMenuFactory MENU = RUNTIME.getMenu();
 
         public static final ICacheFactory CACHE = new CacheFactory();

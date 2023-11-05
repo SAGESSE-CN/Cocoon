@@ -23,15 +23,18 @@ public class BlockItem extends Item {
     }
 
     public InteractionResult place(BlockPlaceContext context) {
+        if (!context.canPlace()) {
+            return InteractionResult.FAIL;
+        }
         BlockPlaceContext blockPlaceContext = this.updatePlacementContext(context);
         if (blockPlaceContext == null) {
             return InteractionResult.FAIL;
         }
-        BlockState blockState = getPlacementState(context);
+        BlockState blockState = getPlacementState(blockPlaceContext);
         if (blockState == null) {
             return InteractionResult.FAIL;
         }
-        return BukkitHelper.placeBlock(block.getDelegate(), blockState, null, context);
+        return BukkitHelper.placeBlock(block.getDelegate(), blockState, null, blockPlaceContext);
     }
 
     protected BlockPlaceContext updatePlacementContext(BlockPlaceContext context) {

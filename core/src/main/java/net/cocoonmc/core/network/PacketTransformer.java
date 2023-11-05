@@ -1,7 +1,12 @@
 package net.cocoonmc.core.network;
 
+import net.cocoonmc.Cocoon;
+import net.cocoonmc.core.network.protocol.ClientboundBlockUpdatePacket;
+import net.cocoonmc.core.network.protocol.ClientboundLevelChunkWithLightPacket;
+import net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket;
 import net.cocoonmc.core.network.protocol.Packet;
 import net.cocoonmc.core.world.entity.Player;
+import net.cocoonmc.runtime.impl.PacketDataListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +30,12 @@ public class PacketTransformer {
 
     public <T extends Packet> void unregister(Handler<T> handler, Class<T> type) {
         getOrCreate(type).remove(handler);
+    }
+
+    public void init() {
+        register(PacketDataListener::handleChunkUpdate, ClientboundLevelChunkWithLightPacket.class);
+        register(PacketDataListener::handleBlockUpdate, ClientboundBlockUpdatePacket.class);
+        register(PacketDataListener::handleSectionUpdate, ClientboundSectionBlocksUpdatePacket.class);
     }
 
     public void clear() {

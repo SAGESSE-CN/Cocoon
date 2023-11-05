@@ -2,6 +2,7 @@ package net.cocoonmc.runtime.impl;
 
 import net.cocoonmc.core.block.Block;
 import net.cocoonmc.core.block.BlockState;
+import net.cocoonmc.core.item.context.BlockPlaceContext;
 import net.cocoonmc.core.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,11 +15,13 @@ public class ChunkDataPlaceTask {
     private final Block wrapper;
     private final BlockState blockState;
     private final CompoundTag entityTag;
+    private final BlockPlaceContext context;
 
-    public ChunkDataPlaceTask(Block wrapper, BlockState blockState, @Nullable CompoundTag entityTag) {
+    public ChunkDataPlaceTask(Block wrapper, BlockState blockState, @Nullable CompoundTag entityTag, BlockPlaceContext context) {
         this.wrapper = wrapper;
         this.blockState = blockState;
         this.entityTag = entityTag;
+        this.context = context;
     }
 
     @Nullable
@@ -29,8 +32,8 @@ public class ChunkDataPlaceTask {
         return null;
     }
 
-    public static void push(Block wrapper, BlockState blockState, @Nullable CompoundTag entityTag) {
-        STACK.push(new ChunkDataPlaceTask(wrapper, blockState, entityTag));
+    public static void push(Block wrapper, BlockState blockState, @Nullable CompoundTag entityTag, BlockPlaceContext context) {
+        STACK.push(new ChunkDataPlaceTask(wrapper, blockState, entityTag, context));
     }
 
     public static void pop(Block wrapper) {
@@ -49,7 +52,11 @@ public class ChunkDataPlaceTask {
         return entityTag;
     }
 
-    public Block getWrapper() {
+    public Block getDelegate() {
         return wrapper;
+    }
+
+    public BlockPlaceContext getContext() {
+        return context;
     }
 }

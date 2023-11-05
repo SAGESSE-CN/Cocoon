@@ -12,6 +12,7 @@ import net.cocoonmc.runtime.impl.Logs;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.UUID;
 
 @SuppressWarnings("unused")
@@ -89,6 +90,10 @@ public class Level {
         return null;
     }
 
+    public void updateNeighborsAt(BlockPos pos, Block block) {
+        LevelData.updateNeighbourShapes(this, pos, block, 0);
+    }
+
     public boolean hasNeighborSignal(BlockPos pos) {
         return world.getBlockAt(pos.getX(), pos.getY(), pos.getZ()).getBlockPower() > 0;
     }
@@ -118,6 +123,19 @@ public class Level {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Level)) return false;
+        Level level = (Level) o;
+        return Objects.equals(uuid, level.uuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid);
+    }
+
+    @Override
     public String toString() {
         return ObjectHelper.makeDescription(this, "uuid", getUUID(), "name", name);
     }
@@ -128,7 +146,7 @@ public class Level {
         org.bukkit.Material material = delegate.asBukkit();
         org.bukkit.block.Block target = world.getBlockAt(pos.asBukkit());
         if (material != null && !target.getType().equals(material)) {
-            target.setType(material);
+            LevelData.commit(() -> target.setType(material));
         }
     }
 }

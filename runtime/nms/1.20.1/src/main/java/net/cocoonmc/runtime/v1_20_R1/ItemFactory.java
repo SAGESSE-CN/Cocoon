@@ -5,8 +5,6 @@ import net.cocoonmc.runtime.IItemFactory;
 import net.cocoonmc.runtime.impl.ItemStackAccessor;
 import net.cocoonmc.runtime.impl.ItemStackTransformer;
 import net.cocoonmc.runtime.impl.ItemStackWrapper;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,7 +12,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -39,41 +36,14 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
     public net.cocoonmc.core.world.InteractionResult useOn(net.cocoonmc.core.world.entity.Player player, net.cocoonmc.core.item.ItemStack itemStackIn, net.cocoonmc.core.item.context.UseOnContext context) {
         ServerLevel serverLevel = convertToVanilla(context.getLevel());
         ServerPlayer serverPlayer = convertToVanilla(player);
-        InteractionHand useItemHand = _unwrap(context.getHand());
-        ItemStack itemStack = ITEM_TRANSFORMER.convertToVanilla(itemStackIn);
-        BlockHitResult hitResult = _unwrap(context.getHitResult());
+        InteractionHand useItemHand = convertToVanilla(context.getHand());
+        ItemStack itemStack = convertToVanilla(itemStackIn);
+        BlockHitResult hitResult = convertToVanilla(context.getHitResult());
         return _wrap(serverPlayer.gameMode.useItemOn(serverPlayer, serverLevel, itemStack, useItemHand, hitResult));
     }
 
-
     private static net.cocoonmc.core.world.InteractionResult _wrap(InteractionResult result) {
         return net.cocoonmc.core.world.InteractionResult.values()[result.ordinal()];
-    }
-
-    private static Vec3 _unwrap(net.cocoonmc.core.math.Vector3f vector) {
-        return new Vec3(vector.getX(), vector.getY(), vector.getZ());
-    }
-
-    private static Direction _unwrap(net.cocoonmc.core.Direction dir) {
-        return Direction.values()[dir.ordinal()];
-    }
-
-    private static InteractionHand _unwrap(net.cocoonmc.core.world.InteractionHand hand) {
-        return InteractionHand.values()[hand.ordinal()];
-    }
-
-    private static BlockHitResult _unwrap(net.cocoonmc.core.item.context.BlockHitResult hitResult) {
-        Vec3 loc = _unwrap(hitResult.getLocation());
-        BlockPos pos = convertToVanilla(hitResult.getBlockPos());
-        Direction dir = _unwrap(hitResult.getDirection());
-        switch (hitResult.getType()) {
-            case ENTITY:
-            case BLOCK:
-                return new BlockHitResult(loc, dir, pos, hitResult.isInside());
-
-            default:
-                return BlockHitResult.miss(loc, dir, pos);
-        }
     }
 
     private static ItemStackTransformer.Layer<net.cocoonmc.core.item.ItemStack> _createCocoonLayer() {

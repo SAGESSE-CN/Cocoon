@@ -34,8 +34,6 @@ public class Chunk {
     private final ConcurrentHashMap<BlockPos, BlockEntity> allEntities = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<BlockPos, CompoundTag> allUpdateTags = new ConcurrentHashMap<>();
 
-    private final HashSet<BlockPos> dirtyBlocks = new HashSet<>();
-
     private boolean isSaved = false;
     private boolean isLoaded = false;
     private boolean isDirty = false;
@@ -81,7 +79,7 @@ public class Chunk {
     }
 
     public void setBlock(BlockPos pos, BlockState newState, @Nullable CompoundTag entityTag) {
-        Logs.debug("{} => {}", pos, newState);
+        //Logs.debug("{} => {}", pos, newState);
         BlockState oldState = allStates.getOrDefault(pos, Blocks.AIR.defaultBlockState());
         // when a block is changes, notify the user.
         if (!oldState.is(newState.getBlock())) {
@@ -104,8 +102,7 @@ public class Chunk {
 
     public void setBlockDirty(BlockPos pos, BlockState state, int flags) {
         allUpdateTags.remove(pos);
-        dirtyBlocks.add(pos);
-        LevelData.updateBukkit(this, pos);
+        LevelData.updateStates(this, pos);
     }
 
     @Nullable
@@ -265,7 +262,7 @@ public class Chunk {
         allStates.forEach((pos, state) -> {
             if (!allUpdateTags.containsKey(pos)) {
                 CompoundTag tag = generateClientBlockTag(pos, state);
-                Logs.debug("{} => {}", pos, tag);
+                Logs.debug("{} generate block {} => {}", level.getName(), pos, tag);
                 allUpdateTags.put(pos, tag);
             }
         });
