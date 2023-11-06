@@ -1,21 +1,28 @@
 package net.cocoonmc.runtime.impl;
 
-import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.block.Block;
+import net.cocoonmc.core.math.CollissionBox;
+import net.cocoonmc.core.math.Cursor3D;
+import net.cocoonmc.core.math.Vector3d;
+import net.cocoonmc.core.math.VoxelShape;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.ListTag;
+import net.cocoonmc.core.utils.BukkitHelper;
+import net.cocoonmc.core.utils.MathHelper;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.chunk.Chunk;
 import net.cocoonmc.core.world.chunk.ChunkPos;
-import org.bukkit.Bukkit;
+import net.cocoonmc.core.world.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -67,7 +74,7 @@ public class LevelData {
         }
         UPDATE_STATE_TASK = new UpdateTask();
         UPDATE_NEIGHBOR_TASK = new UpdateNeighborTask();
-        Bukkit.getScheduler().runTask(Cocoon.getPlugin(), LevelData::endUpdates);
+        BukkitHelper.runTask(LevelData::endUpdates);
     }
 
     public static void endUpdates() {
@@ -95,7 +102,7 @@ public class LevelData {
         }
     }
 
-    public static void updateClientChunk(ChunkPos key, Map<BlockPos, CompoundTag> blocks) {
+    public static void updateClientChunk(ChunkPos key, Map<BlockPos, CompoundTag> blocks, Map<BlockPos, VoxelShape> collissionShaps) {
         if (blocks.size() == 0) {
             CLIENT_INFOS.remove(key);
             return;
@@ -105,12 +112,26 @@ public class LevelData {
         blocks.values().forEach(chunk::add);
         info.chunk = chunk;
         info.blocks = new HashMap<>(blocks);
+        info.collissionShaps = new HashMap<>();
+        collissionShaps.forEach((pos, shape) -> {
+            if (!shape.equals(VoxelShape.BLOCK)) {
+                info.collissionShaps.put(pos, new CollissionBox(pos, shape));
+            }
+        });
         CLIENT_INFOS.put(key, info);
     }
 
+//    public static void updateClientCollission(ChunkPos key, BlockPos pos, @Nullable CollissionBox box) {
+//        if (box != null) {
+//            CLIENT_COLLISSION_BOXS.computeIfAbsent(key.getId(), it -> new ConcurrentHashMap<>()).put(pos, box);
+//        } else {
+//            CLIENT_COLLISSION_BOXS.computeIfAbsent(key.getId(), it -> new ConcurrentHashMap<>()).remove(pos);
+//        }
+//    }
+
     @Nullable
-    public static ListTag getClientChunk(UUID id, int x, int z) {
-        ClientInfo info = CLIENT_INFOS.get(new ChunkPos(id, x, z));
+    public static ListTag getClientChunk(Player player, int x, int z) {
+        ClientInfo info = CLIENT_INFOS.get(new ChunkPos(player.getLevel().getUUID(), x, z));
         if (info != null) {
             return info.chunk;
         }
@@ -118,10 +139,24 @@ public class LevelData {
     }
 
     @Nullable
-    public static CompoundTag getClientBlock(UUID id, BlockPos pos) {
-        ClientInfo info = CLIENT_INFOS.get(new ChunkPos(id, pos));
+    public static CompoundTag getClientBlock(Player player, BlockPos pos) {
+        ClientInfo info = CLIENT_INFOS.get(new ChunkPos(player.getLevel().getUUID(), pos));
         if (info != null) {
             return info.blocks.get(pos);
+        }
+        return null;
+    }
+
+    @Nullable
+    public static CollissionBox getClientBlockCollisions(Player player, Vector3d loc) {
+        int x = MathHelper.floor(loc.getX() + 0.3 - 1E-7);
+        int y = MathHelper.floor(loc.getY());
+        int z = MathHelper.floor(loc.getZ() + 0.3 - 1E-7);
+        UUID level = player.getLevel().getUUID();
+        BlockPos pos = new BlockPos(x, y, z);
+        ClientInfo info = CLIENT_INFOS.get(new ChunkPos(level, pos));
+        if (info != null) {
+            return info.collissionShaps.get(pos);
         }
         return null;
     }
@@ -130,6 +165,7 @@ public class LevelData {
 
         ListTag chunk;
         Map<BlockPos, CompoundTag> blocks;
+        Map<BlockPos, CollissionBox> collissionShaps;
     }
 
     public static class UpdateInfo {

@@ -3,11 +3,11 @@ package net.cocoonmc.runtime.impl;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.block.BlockState;
 import net.cocoonmc.core.block.Blocks;
-import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.chunk.Chunk;
 import net.cocoonmc.core.world.entity.Player;
+import net.cocoonmc.core.world.loot.LootContext;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
@@ -26,7 +26,6 @@ import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class BlockDataListener implements Listener {
@@ -154,11 +153,11 @@ public class BlockDataListener implements Listener {
         if (player.getGameMode().equals(GameMode.CREATIVE)) {
             return;
         }
-        // replace with we custom items.
-        ArrayList<ItemStack> dropItems = new ArrayList<>();
-        event.getBlock().getDrops().stream().map(ItemStack::of).forEach(dropItems::add);
-        BukkitHelper.replaceDrops(dropItems, blockState.getBlock());
-        BukkitHelper.dropItems(dropItems, event.getBlock());
+        LootContext context = new LootContext();
+        context.level = level;
+        context.player = player;
+        context.blockEntity = level.getBlockEntity(blockPos);
+        BukkitHelper.dropItems(blockState.getDrops(context), event.getBlock());
     }
 }
 

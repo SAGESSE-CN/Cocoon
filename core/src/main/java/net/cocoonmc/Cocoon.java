@@ -3,9 +3,6 @@ package net.cocoonmc;
 import net.cocoonmc.core.block.Blocks;
 import net.cocoonmc.core.item.Items;
 import net.cocoonmc.core.network.PacketTransformer;
-import net.cocoonmc.core.network.protocol.ClientboundBlockUpdatePacket;
-import net.cocoonmc.core.network.protocol.ClientboundLevelChunkWithLightPacket;
-import net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket;
 import net.cocoonmc.runtime.IBlockFactory;
 import net.cocoonmc.runtime.ICacheFactory;
 import net.cocoonmc.runtime.IItemFactory;
@@ -53,11 +50,11 @@ public class Cocoon {
         Blocks.init();
         LevelData.open();
         INSTANCE.registerEvents();
-        API.TRANSFORMER.init();
+        API.TRANSFORMER.enable();
     }
 
     public static void disable() {
-        API.TRANSFORMER.clear();
+        API.TRANSFORMER.disable();
     }
 
     public static JavaPlugin getPlugin() {

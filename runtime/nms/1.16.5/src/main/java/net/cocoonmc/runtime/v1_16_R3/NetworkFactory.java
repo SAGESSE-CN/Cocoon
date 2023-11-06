@@ -3,26 +3,33 @@ package net.cocoonmc.runtime.v1_16_R3;
 import io.netty.channel.Channel;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.nbt.CompoundTag;
+import net.cocoonmc.core.utils.PacketMap;
 import net.cocoonmc.core.utils.ReflectHelper;
 import net.cocoonmc.runtime.INetworkFactory;
 import net.minecraft.server.v1_16_R3.Block;
 import net.minecraft.server.v1_16_R3.BlockPosition;
 import net.minecraft.server.v1_16_R3.EntityPlayer;
 import net.minecraft.server.v1_16_R3.MinecraftKey;
+import net.minecraft.server.v1_16_R3.MinecraftServer;
 import net.minecraft.server.v1_16_R3.NBTTagCompound;
 import net.minecraft.server.v1_16_R3.NetworkManager;
 import net.minecraft.server.v1_16_R3.Packet;
 import net.minecraft.server.v1_16_R3.PacketDataSerializer;
 import net.minecraft.server.v1_16_R3.PacketListener;
+import net.minecraft.server.v1_16_R3.PacketPlayInFlying;
 import net.minecraft.server.v1_16_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_16_R3.PacketPlayOutCustomPayload;
 import net.minecraft.server.v1_16_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_16_R3.PacketPlayOutMultiBlockChange;
+import net.minecraft.server.v1_16_R3.PacketPlayOutPosition;
 import net.minecraft.server.v1_16_R3.PacketPlayOutSpawnEntity;
+import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.v1_16_R3.CraftServer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class NetworkFactory extends TransformFactory implements INetworkFactory {
@@ -34,8 +41,27 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
     private static final ReflectHelper.Member<Integer> CHUNK_GET_Z = ReflectHelper.getMemberField(PacketPlayOutMapChunk.class, "b");
     private static final ReflectHelper.Member<NBTTagCompound> CHUNK_GET_HEIGHT_MAPS = ReflectHelper.getMemberField(PacketPlayOutMapChunk.class, "d");
 
+    private static final ReflectHelper.Member<Integer> MOVE_IN_GET_ID = ReflectHelper.getMemberField(PacketPlayOutPosition.class, "g");
+    private static final ReflectHelper.Member<Double> MOVE_IN_GET_X = ReflectHelper.getMemberField(PacketPlayOutPosition.class, "a");
+    private static final ReflectHelper.Member<Double> MOVE_IN_GET_Y = ReflectHelper.getMemberField(PacketPlayOutPosition.class, "b");
+    private static final ReflectHelper.Member<Double> MOVE_IN_GET_Z = ReflectHelper.getMemberField(PacketPlayOutPosition.class, "c");
+    private static final ReflectHelper.Member<Float> MOVE_IN_GET_YR = ReflectHelper.getMemberField(PacketPlayOutPosition.class, "d");
+    private static final ReflectHelper.Member<Float> MOVE_IN_GET_XR = ReflectHelper.getMemberField(PacketPlayOutPosition.class, "e");
+    private static final ReflectHelper.Member<Set<PacketPlayOutPosition.EnumPlayerTeleportFlags>> MOVE_IN_GET_FLAGS = ReflectHelper.getMemberField(PacketPlayOutPosition.class, "f");
+
     private static final ReflectHelper.Member<MinecraftKey> CUSTOM_GET_NAME = ReflectHelper.getMemberField(PacketPlayOutCustomPayload.class, "r");
     private static final ReflectHelper.Member<PacketDataSerializer> CUSTOM_GET_PAYLOAD = ReflectHelper.getMemberField(PacketPlayOutCustomPayload.class, "s");
+
+    private static final PacketMap<Packet<?>, net.cocoonmc.core.network.protocol.Packet> MAP = new PacketMap<>(it -> {
+        it.put(PacketPlayOutMapChunk.class, NetworkFactory::wrap);
+        it.put(PacketPlayOutBlockChange.class, NetworkFactory::wrap);
+        it.put(PacketPlayOutMultiBlockChange.class, NetworkFactory::wrap);
+        it.put(PacketPlayOutCustomPayload.class, NetworkFactory::wrap);
+        it.put(PacketPlayOutSpawnEntity.class, NetworkFactory::wrap);
+        it.put(PacketPlayOutPosition.class, NetworkFactory::wrap);
+        it.put(PacketPlayInFlying.PacketPlayInPosition.class, NetworkFactory::wrap);
+        it.put(PacketPlayInFlying.PacketPlayInPositionLook.class, NetworkFactory::wrap);
+    });
 
     @Override
     public void register(net.cocoonmc.core.world.entity.Player player, Consumer<Channel> handler) {
@@ -64,25 +90,10 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
 
     @Override
     public net.cocoonmc.core.network.protocol.Packet convertTo(Object packet) {
-        if (packet instanceof PacketPlayOutMapChunk) {
-            return wrap((PacketPlayOutMapChunk) packet);
-        }
-        if (packet instanceof PacketPlayOutBlockChange) {
-            return wrap((PacketPlayOutBlockChange) packet);
-        }
-        if (packet instanceof PacketPlayOutMultiBlockChange) {
-            return wrap((PacketPlayOutMultiBlockChange) packet);
-        }
-        if (packet instanceof PacketPlayOutCustomPayload) {
-            return wrap((PacketPlayOutCustomPayload) packet);
-        }
-        if (packet instanceof PacketPlayOutSpawnEntity) {
-            return wrap((PacketPlayOutSpawnEntity) packet);
-        }
-        return () -> packet;
+        return MAP.transform((Packet<?>) packet, () -> () -> packet);
     }
 
-    public net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket wrap(PacketPlayOutCustomPayload packet) {
+    public static net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket wrap(PacketPlayOutCustomPayload packet) {
         return new net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket() {
             @Override
             public net.cocoonmc.core.resources.ResourceLocation getName() {
@@ -174,6 +185,93 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
             @Override
             public Object getHandle() {
                 return packet;
+            }
+        };
+    }
+
+    private static net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket wrap(PacketPlayOutPosition packet) {
+        return new net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket() {
+
+            @Override
+            public double getX() {
+                return MOVE_IN_GET_X.get(packet);
+            }
+
+            @Override
+            public double getY() {
+                return MOVE_IN_GET_Y.get(packet);
+            }
+
+            @Override
+            public double getZ() {
+                return MOVE_IN_GET_Z.get(packet);
+            }
+
+            @Override
+            public Object getHandle() {
+                return packet;
+            }
+
+            @Override
+            public net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket moveTo(double x, double y, double z) {
+                return wrap(new PacketPlayOutPosition(x, y, z, MOVE_IN_GET_YR.get(packet), MOVE_IN_GET_XR.get(packet), MOVE_IN_GET_FLAGS.get(packet), MOVE_IN_GET_ID.get(packet)));
+            }
+        };
+    }
+
+    private static net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket wrap(PacketPlayInFlying packet) {
+        return new net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket() {
+
+            @Override
+            public double getX() {
+                return packet.x;
+            }
+
+            @Override
+            public double getY() {
+                return packet.y;
+            }
+
+            @Override
+            public double getZ() {
+                return packet.z;
+            }
+
+            @Override
+            public boolean onGround() {
+                return false;
+            }
+
+            @Override
+            public Object getHandle() {
+                return packet;
+            }
+
+            @Override
+            public void applyTo(net.cocoonmc.core.world.entity.Player player) {
+                MinecraftServer server = ((CraftServer) Bukkit.getServer()).getServer();
+                EntityPlayer serverPlayer = convertToVanilla(player);
+                server.b(() -> serverPlayer.setPosition(getX(), getY(), getZ()));
+            }
+
+            @Override
+            public net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket moveTo(double x, double y, double z, boolean onGround) {
+                if (packet.hasPos && packet.hasLook) {
+                    PacketPlayInFlying packet2 = new PacketPlayInFlying.PacketPlayInPositionLook();
+                    packet2.x = x;
+                    packet2.y = y;
+                    packet2.z = z;
+                    packet2.yaw = packet.yaw;
+                    packet2.pitch = packet.pitch;
+                    return wrap(packet2);
+                }
+                PacketPlayInFlying packet2 = new PacketPlayInFlying.PacketPlayInPosition();
+                packet2.x = x;
+                packet2.y = y;
+                packet2.z = z;
+                packet2.yaw = packet.yaw;
+                packet2.pitch = packet.pitch;
+                return wrap(packet2);
             }
         };
     }

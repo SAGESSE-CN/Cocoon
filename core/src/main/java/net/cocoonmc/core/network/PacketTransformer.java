@@ -1,10 +1,11 @@
 package net.cocoonmc.core.network;
 
-import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.network.protocol.ClientboundBlockUpdatePacket;
 import net.cocoonmc.core.network.protocol.ClientboundLevelChunkWithLightPacket;
+import net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket;
 import net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket;
 import net.cocoonmc.core.network.protocol.Packet;
+import net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket;
 import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.runtime.impl.PacketDataListener;
 
@@ -26,35 +27,37 @@ public class PacketTransformer {
         // noinspection unchecked
         Handler<Packet> packetHandler = (Handler<Packet>) handler;
         getOrCreate(type).add(packetHandler);
+        applying.clear();
     }
 
     public <T extends Packet> void unregister(Handler<T> handler, Class<T> type) {
         getOrCreate(type).remove(handler);
+        applying.clear();
     }
 
-    public void init() {
+    public void enable() {
         register(PacketDataListener::handleChunkUpdate, ClientboundLevelChunkWithLightPacket.class);
         register(PacketDataListener::handleBlockUpdate, ClientboundBlockUpdatePacket.class);
         register(PacketDataListener::handleSectionUpdate, ClientboundSectionBlocksUpdatePacket.class);
+        register(PacketDataListener::handlePlayerMove, ClientboundPlayerPositionPacket.class);
+        register(PacketDataListener::handlePlayerMove, ServerboundMovePlayerPacket.class);
     }
 
-    public void clear() {
+    public void disable() {
         registered.clear();
         applying.clear();
     }
 
     private Handler<Packet> build(Class<?> packetType) {
-        List<List<Handler<Packet>>> activatedHandlers = new ArrayList<>();
+        List<Handler<Packet>> activatedHandlers = new ArrayList<>();
         registered.forEach((type, handlers) -> {
             if (type.isAssignableFrom(packetType)) {
-                activatedHandlers.add(handlers);
+                activatedHandlers.addAll(handlers);
             }
         });
         return (packet, player) -> {
-            for (List<Handler<Packet>> handlers : activatedHandlers) {
-                for (Handler<Packet> handler : handlers) {
-                    packet = handler.apply(packet, player);
-                }
+            for (Handler<Packet> handler : activatedHandlers) {
+                packet = handler.apply(packet, player);
             }
             return packet;
         };
@@ -62,7 +65,6 @@ public class PacketTransformer {
 
     private List<Handler<Packet>> getOrCreate(Class<?> packetType) {
         return registered.computeIfAbsent(packetType, it -> {
-            applying.clear();
             return new ArrayList<>();
         });
     }

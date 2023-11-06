@@ -2,14 +2,16 @@ package net.cocoonmc.runtime.impl;
 
 import com.google.common.collect.Lists;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.AttributeKey;
 import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
+import net.cocoonmc.core.math.CollissionBox;
+import net.cocoonmc.core.math.Vector3d;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.ListTag;
 import net.cocoonmc.core.network.FriendlyByteBuf;
@@ -17,8 +19,10 @@ import net.cocoonmc.core.network.protocol.ClientboundBlockUpdatePacket;
 import net.cocoonmc.core.network.protocol.ClientboundBundlePacket;
 import net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket;
 import net.cocoonmc.core.network.protocol.ClientboundLevelChunkWithLightPacket;
+import net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket;
 import net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket;
 import net.cocoonmc.core.network.protocol.Packet;
+import net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket;
 import net.cocoonmc.core.utils.Pair;
 import net.cocoonmc.core.utils.ThrowableConsumer;
 import net.cocoonmc.core.world.entity.Player;
@@ -26,16 +30,19 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PacketDataListener implements Listener {
 
+    private static final ConcurrentHashMap<Integer, Pair<Vector3d, Vector3d>> OFFSETS = new ConcurrentHashMap<>();
+
     //private static final AttributeKey<Object> PACKET_KEY = AttributeKey.valueOf("cocoon_packet");
-    private static final AttributeKey<Player> SENDER_KEY = AttributeKey.valueOf("cocoon_sender");
+    private static final AttributeKey<Player> OWNER_KEY = AttributeKey.valueOf("cocoon_owner");
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(PlayerJoinEvent event) {
@@ -48,14 +55,14 @@ public class PacketDataListener implements Listener {
             if (handler != null) {
                 return; // already added.
             }
-            channel.attr(SENDER_KEY).set(player);
+            channel.attr(OWNER_KEY).set(player);
             pipeline.addBefore("packet_handler", Constants.PACKET_HANDLER_KEY, new WrappedPacketHandler());
             //pipeline.addBefore("encoder", Constants.PACKET_ENCODER_KEY, new WrappedPacketEncoder());
         });
     }
 
     public static Packet handleChunkUpdate(ClientboundLevelChunkWithLightPacket packet, Player player) {
-        ListTag tag = LevelData.getClientChunk(player.getLevel().getUUID(), packet.getX(), packet.getZ());
+        ListTag tag = LevelData.getClientChunk(player, packet.getX(), packet.getZ());
         if (tag == null) {
             return packet;
         }
@@ -65,7 +72,7 @@ public class PacketDataListener implements Listener {
     }
 
     public static Packet handleBlockUpdate(ClientboundBlockUpdatePacket packet, Player player) {
-        CompoundTag tag = LevelData.getClientBlock(player.getLevel().getUUID(), packet.getPos());
+        CompoundTag tag = LevelData.getClientBlock(player, packet.getPos());
         if (tag == null) {
             return packet;
         }
@@ -79,10 +86,9 @@ public class PacketDataListener implements Listener {
     }
 
     public static Packet handleSectionUpdate(ClientboundSectionBlocksUpdatePacket packet, Player player) {
-        UUID levelId = player.getLevel().getUUID();
         ArrayList<Pair<Integer, CompoundTag>> pairs = new ArrayList<>();
         for (Map.Entry<BlockPos, Integer> entry : packet.getChanges().entrySet()) {
-            CompoundTag tag = LevelData.getClientBlock(levelId, entry.getKey());
+            CompoundTag tag = LevelData.getClientBlock(player, entry.getKey());
             if (tag != null) {
                 pairs.add(Pair.of(entry.getValue(), tag));
             }
@@ -102,11 +108,65 @@ public class PacketDataListener implements Listener {
         return ClientboundBundlePacket.create(Lists.newArrayList(pre, packet));
     }
 
-    public static class WrappedPacketHandler extends ChannelOutboundHandlerAdapter {
+    public static Packet handlePlayerMove(ClientboundPlayerPositionPacket packet, Player player) {
+        Pair<Vector3d, Vector3d> pair = OFFSETS.get(player.getId());
+        if (pair == null) {
+            return packet;
+        }
+        Vector3d clientPos = pair.getFirst();
+        Vector3d lastPos = pair.getSecond();
+        Vector3d serverPos = player.getLocation();
+        if (!lastPos.equals(serverPos)) {
+            //Logs.debug("{} patch move out fail, server changed pos!", player.getUUID());
+            return packet;
+        }
+        //Logs.debug("{} patch move out {} => {} ", player.getUUID(), serverPos, clientPos);
+        return packet.moveTo(clientPos.getX(), clientPos.getY(), clientPos.getZ());
+    }
+
+    public static Packet handlePlayerMove(ServerboundMovePlayerPacket packet, Player player) {
+        Vector3d clientPos = new Vector3d(packet.getX(), packet.getY(), packet.getZ());
+        Pair<Vector3d, Vector3d> pair = OFFSETS.remove(player.getId());
+        CollissionBox box = LevelData.getClientBlockCollisions(player, clientPos);
+        if (box == null) {
+            if (pair != null && pair.getFirst().distanceTo(clientPos) <= 1) {
+                //Logs.debug("{} reset location {}", player.getUUID(), pair.getFirst());
+                packet.applyTo(player);
+            }
+            return packet;
+        }
+        Vector3d lastPos = player.getLocation();
+        if (pair != null && pair.getFirst().distanceTo(clientPos) > 1) {
+            //Logs.debug("{} patch move in fail, client move too fast!", player.getUUID(), clientPos);
+            return packet;
+        }
+        if (pair == null && lastPos.distanceTo(clientPos) > 1) {
+            //Logs.debug("{} patch move in fail, client move too fast!!", player.getUUID(), clientPos);
+            return packet;
+        }
+        OFFSETS.put(player.getId(), Pair.of(clientPos, lastPos));
+        //Logs.debug("{} patch move in {} => {}", player.getUUID(), clientPos, lastPos);
+        return packet.moveTo(lastPos.getX(), lastPos.getY(), lastPos.getZ(), packet.onGround());
+    }
+
+    public static class WrappedPacketHandler extends ChannelDuplexHandler {
+
+        @Override
+        public void channelRead(@NotNull ChannelHandlerContext ctx, @NotNull Object msg) throws Exception {
+            Player owner = ctx.channel().attr(OWNER_KEY).get();
+            if (owner != null) {
+                Packet oldPacket = Cocoon.API.NETWORK.convertTo(msg);
+                Packet newPacket = Cocoon.API.TRANSFORMER.transform(oldPacket, owner);
+                if (newPacket != oldPacket) {
+                    msg = newPacket.getHandle();
+                }
+            }
+            super.channelRead(ctx, msg);
+        }
 
         @Override
         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-            Player owner = ctx.channel().attr(SENDER_KEY).get();
+            Player owner = ctx.channel().attr(OWNER_KEY).get();
             if (owner != null) {
                 Packet oldPacket = Cocoon.API.NETWORK.convertTo(msg);
                 Packet newPacket = Cocoon.API.TRANSFORMER.transform(oldPacket, owner);

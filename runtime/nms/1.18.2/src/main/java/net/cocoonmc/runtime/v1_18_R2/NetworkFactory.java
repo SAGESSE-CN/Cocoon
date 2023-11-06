@@ -3,6 +3,7 @@ package net.cocoonmc.runtime.v1_18_R2;
 import io.netty.channel.Channel;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.nbt.CompoundTag;
+import net.cocoonmc.core.utils.PacketMap;
 import net.cocoonmc.runtime.INetworkFactory;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;
@@ -12,7 +13,10 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
 import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerConnectionListener;
 import net.minecraft.server.network.ServerPlayerConnection;
@@ -26,6 +30,17 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class NetworkFactory extends TransformFactory implements INetworkFactory {
+
+    private static final PacketMap<Packet<?>, net.cocoonmc.core.network.protocol.Packet> MAP = new PacketMap<>(it -> {
+        it.put(ClientboundLevelChunkWithLightPacket.class, NetworkFactory::wrap);
+        it.put(ClientboundBlockUpdatePacket.class, NetworkFactory::wrap);
+        it.put(ClientboundSectionBlocksUpdatePacket.class, NetworkFactory::wrap);
+        it.put(ClientboundCustomPayloadPacket.class, NetworkFactory::wrap);
+        it.put(ClientboundAddEntityPacket.class, NetworkFactory::wrap);
+        it.put(ClientboundPlayerPositionPacket.class, NetworkFactory::wrap);
+        it.put(ServerboundMovePlayerPacket.Pos.class, NetworkFactory::wrap);
+        it.put(ServerboundMovePlayerPacket.PosRot.class, NetworkFactory::wrap);
+    });
 
     @Override
     public void register(net.cocoonmc.core.world.entity.Player player, Consumer<Channel> handler) {
@@ -53,25 +68,10 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
 
     @Override
     public net.cocoonmc.core.network.protocol.Packet convertTo(Object packet) {
-        if (packet instanceof ClientboundLevelChunkWithLightPacket) {
-            return wrap((ClientboundLevelChunkWithLightPacket) packet);
-        }
-        if (packet instanceof ClientboundBlockUpdatePacket) {
-            return wrap((ClientboundBlockUpdatePacket) packet);
-        }
-        if (packet instanceof ClientboundSectionBlocksUpdatePacket) {
-            return wrap((ClientboundSectionBlocksUpdatePacket) packet);
-        }
-        if (packet instanceof ClientboundCustomPayloadPacket) {
-            return wrap((ClientboundCustomPayloadPacket) packet);
-        }
-        if (packet instanceof ClientboundAddEntityPacket) {
-            return wrap((ClientboundAddEntityPacket) packet);
-        }
-        return () -> packet;
+        return MAP.transform((Packet<?>) packet, () -> () -> packet);
     }
 
-    public net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket wrap(ClientboundCustomPayloadPacket packet) {
+    public static net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket wrap(ClientboundCustomPayloadPacket packet) {
         return new net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket() {
             @Override
             public net.cocoonmc.core.resources.ResourceLocation getName() {
@@ -163,6 +163,81 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
             @Override
             public Object getHandle() {
                 return packet;
+            }
+        };
+    }
+
+    private static net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket wrap(ClientboundPlayerPositionPacket packet) {
+        return new net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket() {
+
+            @Override
+            public double getX() {
+                return packet.getX();
+            }
+
+            @Override
+            public double getY() {
+                return packet.getY();
+            }
+
+            @Override
+            public double getZ() {
+                return packet.getZ();
+            }
+
+            @Override
+            public Object getHandle() {
+                return packet;
+            }
+
+            @Override
+            public net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket moveTo(double x, double y, double z) {
+                return wrap(new ClientboundPlayerPositionPacket(x, y, z, packet.getYRot(), packet.getXRot(), packet.getRelativeArguments(), packet.getId(), packet.requestDismountVehicle()));
+            }
+        };
+    }
+
+    private static net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket wrap(ServerboundMovePlayerPacket packet) {
+        return new net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket() {
+
+            @Override
+            public double getX() {
+                return packet.x;
+            }
+
+            @Override
+            public double getY() {
+                return packet.y;
+            }
+
+            @Override
+            public double getZ() {
+                return packet.z;
+            }
+
+            @Override
+            public boolean onGround() {
+                return packet.isOnGround();
+            }
+
+            @Override
+            public Object getHandle() {
+                return packet;
+            }
+
+            @Override
+            public void applyTo(net.cocoonmc.core.world.entity.Player player) {
+                MinecraftServer server = ((CraftServer) Bukkit.getServer()).getServer();
+                ServerPlayer serverPlayer = convertToVanilla(player);
+                server.submit(() -> serverPlayer.moveTo(getX(), getY(), getZ()));
+            }
+
+            @Override
+            public net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket moveTo(double x, double y, double z, boolean onGround) {
+                if (packet.hasPosition() && packet.hasRotation()) {
+                    return wrap(new ServerboundMovePlayerPacket.PosRot(x, y, z, packet.yRot, packet.xRot, onGround));
+                }
+                return wrap(new ServerboundMovePlayerPacket.Pos(x, y, z, onGround));
             }
         };
     }

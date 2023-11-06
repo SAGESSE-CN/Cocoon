@@ -151,6 +151,11 @@ tasks.register("parpreVariants") {
                     it.replaceAll(/(.*dependsOn.*(buildCore|buildRuntime).*)/, "")
                 }
             }
+            filesMatching("gradle.properties") {
+                filter {
+                    it.replaceAll(/(mod_version=).+/, /$1${version}/)
+                }
+            }
             // replace include project
             filesMatching("settings.gradle") {
                 def configs = allVersions.keySet().collect { "include('${it}')" }.join("\n")

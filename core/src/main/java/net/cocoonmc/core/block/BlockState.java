@@ -4,10 +4,15 @@ import com.google.common.collect.ImmutableMap;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.block.state.StateHolder;
 import net.cocoonmc.core.block.state.properties.Property;
+import net.cocoonmc.core.item.ItemStack;
+import net.cocoonmc.core.math.VoxelShape;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.Player;
+import net.cocoonmc.core.world.loot.LootContext;
+
+import java.util.List;
 
 public class BlockState extends StateHolder<Block, BlockState> {
 
@@ -41,6 +46,14 @@ public class BlockState extends StateHolder<Block, BlockState> {
 
     public Block getBlock() {
         return owner;
+    }
+
+    public List<ItemStack> getDrops(LootContext context) {
+        return getBlock().getDrops(this, context);
+    }
+
+    public VoxelShape getCollisionShape(Level level, BlockPos blockPos) {
+        return getBlock().getCollisionShape(level, blockPos, this);
     }
 
     public boolean hasBlockEntity() {

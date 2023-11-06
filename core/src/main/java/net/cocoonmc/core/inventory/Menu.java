@@ -15,7 +15,7 @@ import java.util.ArrayList;
 
 public abstract class Menu implements IAssociatedContainerProvider {
 
-    protected final Component title;
+    protected Component title;
     protected final MenuType<?> menuType;
     protected final ArrayList<Slot> slots = new ArrayList<>();
 

@@ -77,6 +77,10 @@ public class BukkitHelper {
     }
 
 
+    public static void runTask(Runnable task) {
+        Bukkit.getScheduler().runTask(Cocoon.getPlugin(), task);
+    }
+
 //    @Nullable
 //    public static BlockData getBlockDataFromTexture(Level level, BlockPos pos, String texture) {
 //        // fast check
@@ -162,7 +166,7 @@ public class BukkitHelper {
     }
 
     public static void dropItems(List<ItemStack> itemStacks, org.bukkit.World world, org.bukkit.Location location) {
-        Bukkit.getScheduler().runTask(Cocoon.getPlugin(), () -> itemStacks.forEach(it -> {
+        BukkitHelper.runTask(() -> itemStacks.forEach(it -> {
             if (!it.isEmpty()) {
                 world.dropItemNaturally(location, it.asBukkit());
             }

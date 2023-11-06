@@ -1,8 +1,17 @@
 package net.cocoonmc.core.utils;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 public class ObjectHelper {
+
+    @SafeVarargs
+    public static <T> ArrayList<T> map(T... objects) {
+        ArrayList<T> results = new ArrayList<>(objects.length);
+        Collections.addAll(results, objects);
+        return results;
+    }
 
     // "<%s: 0x%x; arg1 = arg2; ...; argN-1 = argN>"
     public static String makeDescription(Object obj, Object... arguments) {

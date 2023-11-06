@@ -68,7 +68,7 @@ public class ContainerHelper {
     }
 
     public static void drop(org.bukkit.inventory.ItemStack itemStack, Player player, boolean bl2) {
-        Bukkit.getScheduler().runTask(Cocoon.getPlugin(), () -> {
+        BukkitHelper.runTask(() -> {
             player.asBukkit().getWorld().dropItem(player.asBukkit().getLocation(), itemStack);
 //            if (bl2) {
 //                itemEntity.setThrower(player.getUUID());

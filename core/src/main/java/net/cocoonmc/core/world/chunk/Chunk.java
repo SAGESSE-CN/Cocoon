@@ -6,6 +6,8 @@ import net.cocoonmc.core.block.BlockEntity;
 import net.cocoonmc.core.block.BlockEntitySupplier;
 import net.cocoonmc.core.block.BlockState;
 import net.cocoonmc.core.block.Blocks;
+import net.cocoonmc.core.math.CollissionBox;
+import net.cocoonmc.core.math.VoxelShape;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.network.FriendlyByteBuf;
 import net.cocoonmc.core.utils.BukkitHelper;
@@ -18,7 +20,6 @@ import net.cocoonmc.runtime.impl.TagPersistentData;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,6 +34,7 @@ public class Chunk {
     private final ConcurrentHashMap<BlockPos, BlockState> allStates = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<BlockPos, BlockEntity> allEntities = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<BlockPos, CompoundTag> allUpdateTags = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<BlockPos, VoxelShape> allCollissionShaps = new ConcurrentHashMap<>();
 
     private boolean isSaved = false;
     private boolean isLoaded = false;
@@ -102,6 +104,7 @@ public class Chunk {
 
     public void setBlockDirty(BlockPos pos, BlockState state, int flags) {
         allUpdateTags.remove(pos);
+        allCollissionShaps.remove(pos);
         LevelData.updateStates(this, pos);
     }
 
@@ -196,6 +199,7 @@ public class Chunk {
             if (blockEntity != null) {
                 allEntities.put(pos, blockEntity);
                 allUpdateTags.remove(pos);
+                allCollissionShaps.remove(pos);
                 blockEntity.setLevel(level);
                 if (entityTag != null) {
                     blockEntity.readFromNBT(entityTag);
@@ -262,11 +266,16 @@ public class Chunk {
         allStates.forEach((pos, state) -> {
             if (!allUpdateTags.containsKey(pos)) {
                 CompoundTag tag = generateClientBlockTag(pos, state);
-                Logs.debug("{} generate block {} => {}", level.getName(), pos, tag);
+                //Logs.debug("{} generate block {} => {}", level.getName(), pos, tag);
                 allUpdateTags.put(pos, tag);
             }
+            if (!allCollissionShaps.containsKey(pos)) {
+                VoxelShape shape = state.getCollisionShape(level, pos);
+                //Logs.debug("{} generate collission shape {} => {}", level.getName(), pos, shape);
+                allCollissionShaps.put(pos, shape);
+            }
         });
-        LevelData.updateClientChunk(key, allUpdateTags);
+        LevelData.updateClientChunk(key, allUpdateTags, allCollissionShaps);
     }
 
     private CompoundTag generateClientBlockTag(BlockPos pos, BlockState state) {
@@ -303,6 +312,11 @@ public class Chunk {
         if (entity != null) {
             return entity.getUpdateTag();
         }
+        return null;
+    }
+
+    @Nullable
+    private CollissionBox generateCollission(BlockPos pos) {
         return null;
     }
 }

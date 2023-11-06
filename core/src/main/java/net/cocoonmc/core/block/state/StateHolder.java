@@ -24,6 +24,15 @@ public class StateHolder<O, S> {
         this.values = values;
     }
 
+
+    public <T extends Comparable<T>> Optional<T> getOptionalValue(Property<T> property) {
+        Comparable<?> entry = values.get(property);
+        if (entry == null) {
+            return Optional.empty();
+        }
+        return Optional.of(property.getValueClass().cast(entry));
+    }
+
     public <T extends Comparable<T>> T getValue(Property<T> property) {
         Comparable<?> entry = values.get(property);
         if (entry == null) {

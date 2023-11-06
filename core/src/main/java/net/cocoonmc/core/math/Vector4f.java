@@ -1,0 +1,233 @@
+package net.cocoonmc.core.math;
+
+import net.cocoonmc.core.utils.MathHelper;
+
+@SuppressWarnings("unused")
+public class Vector4f {
+
+    public static final Vector4f ZERO = new Vector4f(0, 0, 0, 0);
+
+    private float x;
+    private float y;
+    private float z;
+    private float w;
+
+    public Vector4f() {
+    }
+
+    public Vector4f(float x, float y, float z, float w) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
+    }
+
+    public Vector4f(Vector4f pos) {
+        this(pos.x, pos.y, pos.z, pos.w);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other != null && this.getClass() == other.getClass()) {
+            Vector4f vector4f = (Vector4f) other;
+            if (Float.compare(vector4f.x, this.x) != 0) {
+                return false;
+            } else if (Float.compare(vector4f.y, this.y) != 0) {
+                return false;
+            } else if (Float.compare(vector4f.z, this.z) != 0) {
+                return false;
+            } else {
+                return Float.compare(vector4f.w, this.w) == 0;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int i = Float.floatToIntBits(this.x);
+        i = 31 * i + Float.floatToIntBits(this.y);
+        i = 31 * i + Float.floatToIntBits(this.z);
+        return 31 * i + Float.floatToIntBits(this.w);
+    }
+
+    public float x() {
+        return this.x;
+    }
+
+    public float y() {
+        return this.y;
+    }
+
+    public float z() {
+        return this.z;
+    }
+
+    public float w() {
+        return this.w;
+    }
+
+    public void setX(float x) {
+        this.x = x;
+    }
+
+    public void setY(float y) {
+        this.y = y;
+    }
+
+    public void setZ(float z) {
+        this.z = z;
+    }
+
+    public void setW(float w) {
+        this.w = w;
+    }
+
+    public void set(float x, float y, float z, float w) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
+    }
+
+    public void add(float tx, float ty, float tz, float tw) {
+        x += tx;
+        y += ty;
+        z += tz;
+        w += tw;
+    }
+
+    public void add(Vector4f pos) {
+        x += pos.x;
+        y += pos.y;
+        z += pos.z;
+        w += pos.w;
+    }
+
+    public void subtract(float tx, float ty, float tz, float tw) {
+        x -= tx;
+        y -= ty;
+        z -= tz;
+        w += tw;
+    }
+
+    public void subtract(Vector4f pos) {
+        x -= pos.x;
+        y -= pos.y;
+        z -= pos.z;
+        w -= pos.w;
+    }
+
+    public void scale(float scale) {
+        x *= scale;
+        y *= scale;
+        z *= scale;
+        w *= scale;
+    }
+
+    public void scale(float sx, float sy, float sz, float sw) {
+        x *= sx;
+        y *= sy;
+        z *= sz;
+        w *= sw;
+    }
+
+    public void transform(Matrix4f matrix) {
+        float[] floats = {x, y, z, w};
+        matrix.multiply(floats);
+        set(floats[0], floats[1], floats[2], floats[3]);
+    }
+
+    public void transform(Quaternionf q) {
+        Quaternionf quaternion = new Quaternionf(q);
+        quaternion.mul(new Quaternionf(x, y, z, 0.0F));
+        Quaternionf quaternion1 = new Quaternionf(q);
+        quaternion1.conj();
+        quaternion.mul(quaternion1);
+        set(quaternion.x(), quaternion.y(), quaternion.z(), w);
+    }
+
+    public float dot(Vector4f pos) {
+        return x * pos.x + y * pos.y + z * pos.z + w * pos.w;
+    }
+
+    public boolean normalize() {
+        float f = x * x + y * y + z * z + w * w;
+        if ((double) f < 1.0E-5D) {
+            return false;
+        }
+        float f1 = MathHelper.fastInvSqrt(f);
+        x *= f1;
+        y *= f1;
+        z *= f1;
+        w *= f1;
+        return true;
+    }
+
+    public Vector4f scaling(float scale) {
+        Vector4f ret = copy();
+        ret.scale(scale);
+        return ret;
+    }
+
+    public Vector4f scaling(float sx, float sy, float sz, float sw) {
+        Vector4f ret = copy();
+        ret.scale(sx, sy, sz, sw);
+        return ret;
+    }
+
+    public Vector4f adding(float tx, float ty, float tz, float tw) {
+        Vector4f ret = copy();
+        ret.add(tx, ty, tz, tw);
+        return ret;
+    }
+
+    public Vector4f adding(Vector4f pos) {
+        Vector4f ret = copy();
+        ret.add(pos);
+        return ret;
+    }
+
+    public Vector4f subtracting(float tx, float ty, float tz, float tw) {
+        Vector4f ret = copy();
+        ret.subtract(tx, ty, tz, tw);
+        return ret;
+    }
+
+    public Vector4f subtracting(Vector4f pos) {
+        Vector4f ret = copy();
+        ret.subtract(pos);
+        return ret;
+    }
+
+    public Vector4f transforming(Matrix4f mat) {
+        Vector4f ret = copy();
+        ret.transform(mat);
+        return ret;
+    }
+
+    public Vector4f transforming(Quaternionf value) {
+        Vector4f ret = copy();
+        ret.transform(value);
+        return ret;
+    }
+
+    public Vector4f normalizing() {
+        Vector4f ret = copy();
+        ret.normalize();
+        return ret;
+    }
+
+    public Vector4f copy() {
+        return new Vector4f(x, y, z, w);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("(%g %g %g %g)", x, y, z, w);
+    }
+}
+

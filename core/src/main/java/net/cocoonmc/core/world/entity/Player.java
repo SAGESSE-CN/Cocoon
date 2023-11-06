@@ -4,6 +4,7 @@ import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.Direction;
 import net.cocoonmc.core.inventory.Menu;
 import net.cocoonmc.core.item.ItemStack;
+import net.cocoonmc.core.math.Vector3d;
 import net.cocoonmc.core.network.Component;
 import net.cocoonmc.core.utils.ObjectHelper;
 import net.cocoonmc.core.world.InteractionHand;
@@ -113,6 +114,18 @@ public class Player extends LivingEntity {
         return Cocoon.API.MENU.getActivedMenu(this);
     }
 
+    public void setLocation(Vector3d location) {
+        org.bukkit.Location loc = player.getLocation().clone();
+        loc.setX(loc.getX());
+        loc.setY(loc.getY());
+        loc.setZ(loc.getZ());
+        player.teleport(loc);
+    }
+
+    public Vector3d getLocation() {
+        return Vector3d.of(player.getLocation());
+    }
+
     public Level getLevel() {
         return Level.of(player.getWorld());
     }
@@ -123,6 +136,10 @@ public class Player extends LivingEntity {
 
     public Inventory getInventory() {
         return player.getInventory();
+    }
+
+    public Inventory getEnderInventory() {
+        return player.getEnderChest();
     }
 
     @Override

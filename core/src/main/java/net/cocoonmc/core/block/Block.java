@@ -1,24 +1,27 @@
 package net.cocoonmc.core.block;
 
+import com.google.common.collect.Lists;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.block.state.StateDefinition;
 import net.cocoonmc.core.item.Item;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.item.context.BlockPlaceContext;
+import net.cocoonmc.core.math.VoxelShape;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.utils.ObjectHelper;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.Level;
-import net.cocoonmc.core.world.entity.LivingEntity;
 import net.cocoonmc.core.world.entity.Player;
+import net.cocoonmc.core.world.loot.LootContext;
 import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerProvider;
 import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 
 public class Block implements IAssociatedContainerProvider {
@@ -71,6 +74,14 @@ public class Block implements IAssociatedContainerProvider {
     @Nullable
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         return defaultBlockState();
+    }
+
+    public List<ItemStack> getDrops(BlockState blockState, LootContext context) {
+        return Lists.newArrayList(asItem().getDefaultInstance());
+    }
+
+    public VoxelShape getCollisionShape(Level level, BlockPos blockPos, BlockState blockState) {
+        return VoxelShape.BLOCK;
     }
 
     public ResourceLocation getRegistryName() {
@@ -151,6 +162,7 @@ public class Block implements IAssociatedContainerProvider {
         boolean noDrops = false;
         boolean noOcclusion = false;
         boolean noCollission = false;
+        boolean dynamicShape = false;
 
         public Properties noDrops() {
             this.noDrops = true;
@@ -169,6 +181,11 @@ public class Block implements IAssociatedContainerProvider {
 
         public Properties isInteractable() {
             this.isInteractable = true;
+            return this;
+        }
+
+        public Properties dymanicShape() {
+            this.dynamicShape = true;
             return this;
         }
 

@@ -6,6 +6,11 @@ plugins {
     id "com.github.johnrengelman.processes" version "0.3.0" apply false
 }
 
+if (version != "unspecified") {
+    rootProject.mod_version = version
+    rootProject.plugin_version = version
+}
+
 group = 'net.cocoonmc'
 version = rootProject.plugin_version
 
