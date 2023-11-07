@@ -15,6 +15,7 @@ import net.cocoonmc.core.math.Vector3d;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.ListTag;
 import net.cocoonmc.core.network.FriendlyByteBuf;
+import net.cocoonmc.core.network.protocol.ClientboundAddEntityPacket;
 import net.cocoonmc.core.network.protocol.ClientboundBlockUpdatePacket;
 import net.cocoonmc.core.network.protocol.ClientboundBundlePacket;
 import net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket;
@@ -115,27 +116,37 @@ public class PacketDataListener implements Listener {
         }
         Vector3d clientPos = pair.getFirst();
         Vector3d lastPos = pair.getSecond();
-        Vector3d serverPos = player.getLocation();
+        Vector3d serverPos = packet.getPos();
         if (!lastPos.equals(serverPos)) {
             //Logs.debug("{} patch move out fail, server changed pos!", player.getUUID());
             return packet;
         }
         //Logs.debug("{} patch move out {} => {} ", player.getUUID(), serverPos, clientPos);
-        return packet.moveTo(clientPos.getX(), clientPos.getY(), clientPos.getZ());
+        return packet.setPos(clientPos);
     }
 
     public static Packet handlePlayerMove(ServerboundMovePlayerPacket packet, Player player) {
-        Vector3d clientPos = new Vector3d(packet.getX(), packet.getY(), packet.getZ());
-        Pair<Vector3d, Vector3d> pair = OFFSETS.remove(player.getId());
+        int playerId = player.getId();
+        Vector3d clientPos = packet.getPos();
+        Pair<Vector3d, Vector3d> pair = OFFSETS.get(playerId);
+        if (pair != null && pair.getFirst().equals(clientPos)) {
+            //Logs.debug("{} not location changes, keep last pos {}", player.getUUID(), pair.getSecond());
+            return packet.setPos(pair.getSecond());
+        }
+        Vector3d lastPos = player.getLocation();
+        if (pair == null && lastPos.equals(clientPos)) {
+            //Logs.debug("{} not location changes, apply the client pos {}", player.getUUID(), clientPos);
+            return packet;
+        }
         CollissionBox box = LevelData.getClientBlockCollisions(player, clientPos);
         if (box == null) {
+            OFFSETS.remove(playerId);
             if (pair != null && pair.getFirst().distanceTo(clientPos) <= 1) {
                 //Logs.debug("{} reset location {}", player.getUUID(), pair.getFirst());
                 packet.applyTo(player);
             }
             return packet;
         }
-        Vector3d lastPos = player.getLocation();
         if (pair != null && pair.getFirst().distanceTo(clientPos) > 1) {
             //Logs.debug("{} patch move in fail, client move too fast!", player.getUUID(), clientPos);
             return packet;
@@ -144,9 +155,24 @@ public class PacketDataListener implements Listener {
             //Logs.debug("{} patch move in fail, client move too fast!!", player.getUUID(), clientPos);
             return packet;
         }
-        OFFSETS.put(player.getId(), Pair.of(clientPos, lastPos));
+        OFFSETS.put(playerId, Pair.of(clientPos, lastPos));
         //Logs.debug("{} patch move in {} => {}", player.getUUID(), clientPos, lastPos);
-        return packet.moveTo(lastPos.getX(), lastPos.getY(), lastPos.getZ(), packet.onGround());
+        return packet.setPos(lastPos);
+    }
+
+    public static Packet handleAddEntity(ClientboundAddEntityPacket packet, Player player) {
+        int entityId = packet.getId();
+        CompoundTag tag = LevelData.getClientEntity(player, entityId);
+        if (tag == null) {
+            return packet;
+        }
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.directBuffer());
+        buf.writeVarInt(4); // add entity
+        buf.writeVarInt(entityId);
+        buf.writeNbt(tag);
+        Packet pre = ClientboundCustomPayloadPacket.create(buf);
+        Logs.debug("{} patch entity {} => {}", player.getUUID(), entityId, tag);
+        return ClientboundBundlePacket.create(Lists.newArrayList(pre, packet));
     }
 
     public static class WrappedPacketHandler extends ChannelDuplexHandler {

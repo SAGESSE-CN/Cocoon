@@ -1,10 +1,10 @@
 package net.cocoonmc.core.world.entity;
 
 import net.cocoonmc.Cocoon;
+import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.Direction;
 import net.cocoonmc.core.inventory.Menu;
 import net.cocoonmc.core.item.ItemStack;
-import net.cocoonmc.core.math.Vector3d;
 import net.cocoonmc.core.network.Component;
 import net.cocoonmc.core.utils.ObjectHelper;
 import net.cocoonmc.core.world.InteractionHand;
@@ -19,23 +19,27 @@ import java.lang.reflect.Method;
 
 public class Player extends LivingEntity {
 
-    private final org.bukkit.entity.Player player;
+    private org.bukkit.entity.Player delegate;
 
-    public Player(org.bukkit.entity.Player player) {
-        super(player);
-        this.player = player;
+    public Player(EntityType<?> entityType, Level level) {
+        super(entityType, level);
     }
 
     public static Player of(org.bukkit.entity.Player player) {
-        return Cocoon.API.CACHE.computeIfAbsent(player, ConstantKeys.PLAYER_KEY, Player::new);
+        return Cocoon.API.CACHE.computeIfAbsent(player, ConstantKeys.PLAYER_KEY, it -> {
+            Level level = Level.of(it.getWorld());
+            Player entity = EntityTypes.PLAYER.create(level, BlockPos.ZERO, null);
+            entity.setDelegate(it);
+            return entity;
+        });
     }
 
     public void addChannel(String channel) {
         try {
-            Class<? extends CommandSender> senderClass = player.getClass();
+            Class<? extends CommandSender> senderClass = delegate.getClass();
             Method addChannel = senderClass.getDeclaredMethod("addChannel", String.class);
             addChannel.setAccessible(true);
-            addChannel.invoke(player, channel);
+            addChannel.invoke(delegate, channel);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -46,11 +50,11 @@ public class Player extends LivingEntity {
     }
 
     public void sendMessage(String message) {
-        player.sendMessage(message);
+        delegate.sendMessage(message);
     }
 
     public void sendMessage(Component message) {
-        player.spigot().sendMessage(message.getContents());
+        delegate.spigot().sendMessage(message.getContents());
     }
 
     public void setItem(InteractionHand hand, ItemStack itemStack) {
@@ -58,11 +62,11 @@ public class Player extends LivingEntity {
     }
 
     public void setItemSlot(EquipmentSlot equipmentSlot, ItemStack itemStack) {
-        player.getInventory().setItem(equipmentSlot, itemStack.asBukkit());
+        delegate.getInventory().setItem(equipmentSlot, itemStack.asBukkit());
     }
 
     public ItemStack getItemBySlot(EquipmentSlot equipmentSlot) {
-        return ItemStack.of(player.getInventory().getItem(equipmentSlot));
+        return ItemStack.of(delegate.getInventory().getItem(equipmentSlot));
     }
 
     public boolean hasItemInSlot(EquipmentSlot equipmentSlot) {
@@ -99,52 +103,53 @@ public class Player extends LivingEntity {
 
 
     public GameMode getGameMode() {
-        return player.getGameMode();
+        return delegate.getGameMode();
     }
 
     public String getDisplayName() {
-        return player.getDisplayName();
+        return delegate.getDisplayName();
     }
 
     public Direction getDirection() {
-        return Direction.by(player.getFacing());
+        return Direction.by(delegate.getFacing());
     }
 
     public Menu getActivedMenu() {
         return Cocoon.API.MENU.getActivedMenu(this);
     }
 
-    public void setLocation(Vector3d location) {
-        org.bukkit.Location loc = player.getLocation().clone();
-        loc.setX(loc.getX());
-        loc.setY(loc.getY());
-        loc.setZ(loc.getZ());
-        player.teleport(loc);
-    }
-
-    public Vector3d getLocation() {
-        return Vector3d.of(player.getLocation());
-    }
-
+    @Override
     public Level getLevel() {
-        return Level.of(player.getWorld());
+        return Level.of(delegate.getWorld());
+    }
+
+    public boolean isSneaking() {
+        return delegate.isSneaking();
     }
 
     public boolean isSecondaryUseActive() {
-        return player.isSneaking();
+        return delegate.isSneaking();
     }
 
     public Inventory getInventory() {
-        return player.getInventory();
+        return delegate.getInventory();
     }
 
     public Inventory getEnderInventory() {
-        return player.getEnderChest();
+        return delegate.getEnderChest();
+    }
+
+    @Override
+    public void setDelegate(org.bukkit.entity.Entity delegate) {
+        super.setDelegate(delegate);
+        if (delegate instanceof org.bukkit.entity.Player) {
+            this.delegate = (org.bukkit.entity.Player) delegate;
+        }
     }
 
     @Override
     public org.bukkit.entity.Player asBukkit() {
-        return player;
+        return delegate;
     }
 
     @Override

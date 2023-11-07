@@ -8,7 +8,9 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -27,6 +29,10 @@ public class RuntimeHelper {
             return ((ForgeRegistry<?>) ForgeRegistries.BLOCK_ENTITY_TYPES).getID(rl);
         }
         return 0;
+    }
+
+    public static EntityType<?> getEntityType(ResourceLocation rl) {
+        return ForgeRegistries.ENTITY_TYPES.getValue(rl);
     }
 
     public static ResourceLocation getBlockEntityKey(ChunkAccess chunk, BlockPos pos) {
@@ -72,5 +78,9 @@ public class RuntimeHelper {
 
     public static ClientboundCustomPayloadPacket buildCustomPayloadPacket(ResourceLocation id, FriendlyByteBuf buf) {
         return new ClientboundCustomPayloadPacket(id, buf);
+    }
+
+    public static ClientboundSetEntityDataPacket buildSetEntityDataPacket(FriendlyByteBuf buf) {
+        return new ClientboundSetEntityDataPacket(buf);
     }
 }

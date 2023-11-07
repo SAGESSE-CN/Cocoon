@@ -2,6 +2,7 @@ package net.cocoonmc.runtime.v1_16_R3;
 
 import io.netty.channel.Channel;
 import net.cocoonmc.core.BlockPos;
+import net.cocoonmc.core.math.Vector3d;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.utils.PacketMap;
 import net.cocoonmc.core.utils.ReflectHelper;
@@ -19,6 +20,7 @@ import net.minecraft.server.v1_16_R3.PacketListener;
 import net.minecraft.server.v1_16_R3.PacketPlayInFlying;
 import net.minecraft.server.v1_16_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_16_R3.PacketPlayOutCustomPayload;
+import net.minecraft.server.v1_16_R3.PacketPlayOutEntityMetadata;
 import net.minecraft.server.v1_16_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_16_R3.PacketPlayOutMultiBlockChange;
 import net.minecraft.server.v1_16_R3.PacketPlayOutPosition;
@@ -30,11 +32,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class NetworkFactory extends TransformFactory implements INetworkFactory {
 
-    private static final ReflectHelper.Member<Integer> ADD_ENTITY_GET_ID = ReflectHelper.getMemberField(PacketPlayOutSpawnEntity.class, "a");
+    private static final ReflectHelper.Member<Integer> ENTITY_ADD_GET_ID = ReflectHelper.getMemberField(PacketPlayOutSpawnEntity.class, "a");
+    private static final ReflectHelper.Member<UUID> ENTITY_ADD_GET_UUID = ReflectHelper.getMemberField(PacketPlayOutSpawnEntity.class, "b");
+    private static final ReflectHelper.Member<Integer> ENTITY_SET_GET_ID = ReflectHelper.getMemberField(PacketPlayOutEntityMetadata.class, "a");
+
     private static final ReflectHelper.Member<BlockPosition> CHANGE_GET_POS = ReflectHelper.getMemberField(PacketPlayOutBlockChange.class, "a");
 
     private static final ReflectHelper.Member<Integer> CHUNK_GET_X = ReflectHelper.getMemberField(PacketPlayOutMapChunk.class, "a");
@@ -58,6 +64,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         it.put(PacketPlayOutMultiBlockChange.class, NetworkFactory::wrap);
         it.put(PacketPlayOutCustomPayload.class, NetworkFactory::wrap);
         it.put(PacketPlayOutSpawnEntity.class, NetworkFactory::wrap);
+        it.put(PacketPlayOutEntityMetadata.class, NetworkFactory::wrap);
         it.put(PacketPlayOutPosition.class, NetworkFactory::wrap);
         it.put(PacketPlayInFlying.PacketPlayInPosition.class, NetworkFactory::wrap);
         it.put(PacketPlayInFlying.PacketPlayInPositionLook.class, NetworkFactory::wrap);
@@ -178,8 +185,28 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         return new net.cocoonmc.core.network.protocol.ClientboundAddEntityPacket() {
 
             @Override
-            public int getEntityId() {
-                return ADD_ENTITY_GET_ID.get(packet);
+            public int getId() {
+                return ENTITY_ADD_GET_ID.get(packet);
+            }
+
+            @Override
+            public UUID getUUID() {
+                return ENTITY_ADD_GET_UUID.get(packet);
+            }
+
+            @Override
+            public Object getHandle() {
+                return packet;
+            }
+        };
+    }
+
+    private static net.cocoonmc.core.network.protocol.ClientboundSetEntityDataPacket wrap(PacketPlayOutEntityMetadata packet) {
+        return new net.cocoonmc.core.network.protocol.ClientboundSetEntityDataPacket() {
+
+            @Override
+            public int getId() {
+                return ENTITY_SET_GET_ID.get(packet);
             }
 
             @Override
@@ -193,28 +220,26 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         return new net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket() {
 
             @Override
-            public double getX() {
-                return MOVE_IN_GET_X.get(packet);
+            public net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket setPos(Vector3d pos) {
+                double x = pos.getX();
+                double y = pos.getY();
+                double z = pos.getZ();
+                float yRot = MOVE_IN_GET_YR.get(packet);
+                float xRot = MOVE_IN_GET_XR.get(packet);
+                return wrap(new PacketPlayOutPosition(x, y, z, yRot, xRot, MOVE_IN_GET_FLAGS.get(packet), MOVE_IN_GET_ID.get(packet)));
             }
 
             @Override
-            public double getY() {
-                return MOVE_IN_GET_Y.get(packet);
-            }
-
-            @Override
-            public double getZ() {
-                return MOVE_IN_GET_Z.get(packet);
+            public Vector3d getPos() {
+                double x = MOVE_IN_GET_X.get(packet);
+                double y = MOVE_IN_GET_Y.get(packet);
+                double z = MOVE_IN_GET_Z.get(packet);
+                return new Vector3d(x, y, z);
             }
 
             @Override
             public Object getHandle() {
                 return packet;
-            }
-
-            @Override
-            public net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket moveTo(double x, double y, double z) {
-                return wrap(new PacketPlayOutPosition(x, y, z, MOVE_IN_GET_YR.get(packet), MOVE_IN_GET_XR.get(packet), MOVE_IN_GET_FLAGS.get(packet), MOVE_IN_GET_ID.get(packet)));
             }
         };
     }
@@ -223,39 +248,10 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         return new net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket() {
 
             @Override
-            public double getX() {
-                return packet.x;
-            }
-
-            @Override
-            public double getY() {
-                return packet.y;
-            }
-
-            @Override
-            public double getZ() {
-                return packet.z;
-            }
-
-            @Override
-            public boolean onGround() {
-                return false;
-            }
-
-            @Override
-            public Object getHandle() {
-                return packet;
-            }
-
-            @Override
-            public void applyTo(net.cocoonmc.core.world.entity.Player player) {
-                MinecraftServer server = ((CraftServer) Bukkit.getServer()).getServer();
-                EntityPlayer serverPlayer = convertToVanilla(player);
-                server.b(() -> serverPlayer.setPosition(getX(), getY(), getZ()));
-            }
-
-            @Override
-            public net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket moveTo(double x, double y, double z, boolean onGround) {
+            public net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket setPos(Vector3d pos) {
+                double x = pos.getX();
+                double y = pos.getY();
+                double z = pos.getZ();
                 if (packet.hasPos && packet.hasLook) {
                     PacketPlayInFlying packet2 = new PacketPlayInFlying.PacketPlayInPositionLook();
                     packet2.x = x;
@@ -272,6 +268,24 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
                 packet2.yaw = packet.yaw;
                 packet2.pitch = packet.pitch;
                 return wrap(packet2);
+            }
+
+            @Override
+            public Vector3d getPos() {
+                return new Vector3d(packet.x, packet.y, packet.z);
+            }
+
+            @Override
+            public Object getHandle() {
+                return packet;
+            }
+
+            @Override
+            public void applyTo(net.cocoonmc.core.world.entity.Player player) {
+                Vector3d pos = getPos();
+                MinecraftServer server = ((CraftServer) Bukkit.getServer()).getServer();
+                EntityPlayer serverPlayer = convertToVanilla(player);
+                server.b(() -> serverPlayer.setPosition(pos.getX(), pos.getY(), pos.getZ()));
             }
         };
     }

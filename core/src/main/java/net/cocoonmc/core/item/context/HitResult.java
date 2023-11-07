@@ -1,14 +1,14 @@
 package net.cocoonmc.core.item.context;
 
-import net.cocoonmc.core.math.Vector3f;
+import net.cocoonmc.core.math.Vector3d;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 
 public abstract class HitResult {
 
-    protected final Vector3f location;
+    protected final Vector3d location;
 
-    protected HitResult(Vector3f location) {
+    protected HitResult(Vector3d location) {
         this.location = location;
     }
 
@@ -22,7 +22,7 @@ public abstract class HitResult {
 
     public abstract Type getType();
 
-    public Vector3f getLocation() {
+    public Vector3d getLocation() {
         return this.location;
     }
 

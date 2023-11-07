@@ -1,6 +1,8 @@
 package net.cocoonmc.core.network;
 
+import net.cocoonmc.core.network.protocol.ClientboundAddEntityPacket;
 import net.cocoonmc.core.network.protocol.ClientboundBlockUpdatePacket;
+import net.cocoonmc.core.network.protocol.ClientboundBundlePacket;
 import net.cocoonmc.core.network.protocol.ClientboundLevelChunkWithLightPacket;
 import net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket;
 import net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket;
@@ -36,9 +38,11 @@ public class PacketTransformer {
     }
 
     public void enable() {
+        register(this::unpack, ClientboundBundlePacket.class);
         register(PacketDataListener::handleChunkUpdate, ClientboundLevelChunkWithLightPacket.class);
         register(PacketDataListener::handleBlockUpdate, ClientboundBlockUpdatePacket.class);
         register(PacketDataListener::handleSectionUpdate, ClientboundSectionBlocksUpdatePacket.class);
+        register(PacketDataListener::handleAddEntity, ClientboundAddEntityPacket.class);
         register(PacketDataListener::handlePlayerMove, ClientboundPlayerPositionPacket.class);
         register(PacketDataListener::handlePlayerMove, ServerboundMovePlayerPacket.class);
     }
@@ -48,6 +52,26 @@ public class PacketTransformer {
         applying.clear();
     }
 
+    private Packet unpack(ClientboundBundlePacket packet, Player player) {
+        int changedPackets = 0;
+        List<Packet> newPackets = new ArrayList<>();
+        for (Packet oldPacket : packet.getPackets()) {
+            Packet newPacket = transform(oldPacket, player);
+            if (newPacket != oldPacket) {
+                changedPackets += 1;
+                if (newPacket instanceof ClientboundBundlePacket) {
+                    newPackets.addAll(((ClientboundBundlePacket) newPacket).getPackets());
+                    continue;
+                }
+            }
+            newPackets.add(newPacket);
+        }
+        if (changedPackets != 0) {
+            return packet.setPackets(newPackets);
+        }
+        return packet;
+    }
+
     private Handler<Packet> build(Class<?> packetType) {
         List<Handler<Packet>> activatedHandlers = new ArrayList<>();
         registered.forEach((type, handlers) -> {
@@ -55,11 +79,14 @@ public class PacketTransformer {
                 activatedHandlers.addAll(handlers);
             }
         });
-        return (packet, player) -> {
+        return (packetIn, player) -> {
             for (Handler<Packet> handler : activatedHandlers) {
-                packet = handler.apply(packet, player);
+                Packet packetOut = handler.apply(packetIn, player);
+                if (packetOut != packetIn) {
+                    return packetOut;
+                }
             }
-            return packet;
+            return packetIn;
         };
     }
 

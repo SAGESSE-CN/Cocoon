@@ -1,11 +1,11 @@
 package net.cocoonmc.core.math;
 
-public class Cursor3D {
+import net.cocoonmc.core.BlockPos;
+import org.jetbrains.annotations.NotNull;
 
-    public static final int TYPE_INSIDE = 0;
-    public static final int TYPE_FACE = 1;
-    public static final int TYPE_EDGE = 2;
-    public static final int TYPE_CORNER = 3;
+import java.util.Iterator;
+
+public class Cursor3D implements Iterable<BlockPos> {
 
     private final int originX;
     private final int originY;
@@ -14,10 +14,6 @@ public class Cursor3D {
     private final int height;
     private final int depth;
     private final int end;
-    private int index;
-    private int x;
-    private int y;
-    private int z;
 
     public Cursor3D(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
         this.originX = minX;
@@ -29,42 +25,32 @@ public class Cursor3D {
         this.end = this.width * this.height * this.depth;
     }
 
-    public boolean advance() {
-        if (this.index == this.end) {
-            return false;
-        }
-        this.x = this.index % this.width;
-        int i = this.index / this.width;
-        this.y = i % this.height;
-        this.z = i / this.height;
-        ++this.index;
-        return true;
-    }
+    @NotNull
+    @Override
+    public Iterator<BlockPos> iterator() {
+        return new Iterator<BlockPos>() {
+            int index = 0;
+            int x = 0;
+            int y = 0;
+            int z = 0;
+            BlockPos.Mutable pos = new BlockPos.Mutable(0, 0, 0);
 
-    public int nextX() {
-        return this.originX + this.x;
-    }
+            @Override
+            public boolean hasNext() {
+                return index < end;
+            }
 
-    public int nextY() {
-        return this.originY + this.y;
-    }
-
-    public int nextZ() {
-        return this.originZ + this.z;
-    }
-
-    public int getNextType() {
-        int i = 0;
-        if (this.x == 0 || this.x == this.width - 1) {
-            ++i;
-        }
-        if (this.y == 0 || this.y == this.height - 1) {
-            ++i;
-        }
-        if (this.z == 0 || this.z == this.depth - 1) {
-            ++i;
-        }
-        return i;
+            @Override
+            public BlockPos next() {
+                x = index % width;
+                int i = index / width;
+                y = i % height;
+                z = i / height;
+                ++index;
+                pos.set(originX + x, originY + y, originZ + z);
+                return pos;
+            }
+        };
     }
 }
 

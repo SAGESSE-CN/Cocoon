@@ -3,7 +3,7 @@ package net.cocoonmc.core.item.context;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.Direction;
 import net.cocoonmc.core.item.ItemStack;
-import net.cocoonmc.core.math.Vector3f;
+import net.cocoonmc.core.math.Vector3d;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.Player;
@@ -54,7 +54,7 @@ public class UseOnContext {
         return hitResult.getDirection();
     }
 
-    public Vector3f getClickLocation() {
+    public Vector3d getClickLocation() {
         return hitResult.getLocation();
     }
 

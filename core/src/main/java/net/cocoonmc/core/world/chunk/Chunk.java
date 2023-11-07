@@ -13,20 +13,22 @@ import net.cocoonmc.core.network.FriendlyByteBuf;
 import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.utils.ObjectHelper;
 import net.cocoonmc.core.world.Level;
+import net.cocoonmc.core.world.entity.Entity;
+import net.cocoonmc.runtime.impl.ConstantKeys;
 import net.cocoonmc.runtime.impl.Constants;
 import net.cocoonmc.runtime.impl.LevelData;
 import net.cocoonmc.runtime.impl.Logs;
 import net.cocoonmc.runtime.impl.TagPersistentData;
-import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class Chunk {
 
-    private static final NamespacedKey CACHE_KEY = BukkitHelper.getKey("cocoon", "chunk");
-
+    private final org.bukkit.Chunk chunk;
     private final org.bukkit.persistence.PersistentDataContainer container;
 
     private final Level level;
@@ -44,6 +46,7 @@ public class Chunk {
         this.key = new ChunkPos(level.getUUID(), chunk.getX(), chunk.getZ());
         this.level = level;
         this.container = chunk.getPersistentDataContainer();
+        this.chunk = chunk;
     }
 
     public static Chunk of(org.bukkit.Chunk chunk) {
@@ -58,6 +61,7 @@ public class Chunk {
     public void load() {
         if (!isLoaded) {
             loadAllBlocks();
+            loadAllEntities();
             generateClientBlockTags();
         }
     }
@@ -98,11 +102,11 @@ public class Chunk {
         if (!newState.is(oldState.getBlock())) {
             newState.onPlace(level, pos, oldState, false);
         }
-        setDirty();
         setBlockDirty(pos, newState, 0);
     }
 
     public void setBlockDirty(BlockPos pos, BlockState state, int flags) {
+        setDirty();
         allUpdateTags.remove(pos);
         allCollissionShaps.remove(pos);
         LevelData.updateStates(this, pos);
@@ -157,12 +161,23 @@ public class Chunk {
         isDirty = true;
     }
 
+
+    private void loadAllEntities() {
+        int entityCounter = 0;
+        for (Entity entity : Arrays.stream(chunk.getEntities()).filter(BukkitHelper::hasCustomEntityType).map(Entity::of).collect(Collectors.toList())) {
+            entityCounter += 1;
+        }
+        if (entityCounter != 0) {
+            Logs.debug("{} load entities: {}", this, entityCounter);
+        }
+    }
+
     private void loadAllBlocks() {
         allStates.clear();
         allEntities.clear();
         allUpdateTags.clear();
         isLoaded = true;
-        FriendlyByteBuf buf = container.get(CACHE_KEY, TagPersistentData.DEFAULT);
+        FriendlyByteBuf buf = container.get(ConstantKeys.CACHE_KEY, TagPersistentData.DEFAULT);
         if (buf != null) {
             load(buf);
             isSaved = true;
@@ -175,14 +190,14 @@ public class Chunk {
         if (allStates.isEmpty()) {
             if (isSaved) {
                 Logs.debug("{} clear", this);
-                container.remove(CACHE_KEY);
+                container.remove(ConstantKeys.CACHE_KEY);
                 isSaved = false;
             }
             return;
         }
         FriendlyByteBuf buf = new FriendlyByteBuf();
         save(buf);
-        container.set(CACHE_KEY, TagPersistentData.DEFAULT, buf);
+        container.set(ConstantKeys.CACHE_KEY, TagPersistentData.DEFAULT, buf);
         Logs.debug("{} save blocks: {}", this, allStates.size());
         isSaved = true;
     }

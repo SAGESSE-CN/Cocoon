@@ -1,18 +1,13 @@
 package net.cocoonmc.core.network.protocol;
 
+import net.cocoonmc.core.math.Vector3d;
 import net.cocoonmc.core.world.entity.Player;
 
 public interface ServerboundMovePlayerPacket extends Packet {
 
-    double getX();
+    ServerboundMovePlayerPacket setPos(Vector3d pos);
 
-    double getY();
-
-    double getZ();
-
-    boolean onGround();
+    Vector3d getPos();
 
     void applyTo(Player player);
-
-    ServerboundMovePlayerPacket moveTo(double x, double y, double z, boolean onGround);
 }

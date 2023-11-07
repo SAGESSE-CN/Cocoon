@@ -1,12 +1,10 @@
 package net.cocoonmc.core.network.protocol;
 
+import net.cocoonmc.core.math.Vector3d;
+
 public interface ClientboundPlayerPositionPacket extends Packet {
 
-    double getX();
+    Vector3d getPos();
 
-    double getY();
-
-    double getZ();
-
-    ClientboundPlayerPositionPacket moveTo(double x, double y, double z);
+    ClientboundPlayerPositionPacket setPos(Vector3d pos);
 }

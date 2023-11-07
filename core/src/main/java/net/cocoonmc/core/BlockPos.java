@@ -109,6 +109,71 @@ public class BlockPos {
         return new org.bukkit.Location(null, x, y, z);
     }
 
+    public static class Mutable extends BlockPos {
+
+        private int x;
+        private int y;
+        private int z;
+
+        public Mutable(int x, int y, int z) {
+            super(0, 0, 0);
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public void set(int x, int y, int z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public void setX(int x) {
+            this.x = x;
+        }
+
+        @Override
+        public int getX() {
+            return x;
+        }
+
+        public void setY(int y) {
+            this.y = y;
+        }
+
+        @Override
+        public int getY() {
+            return y;
+        }
+
+        public void setZ(int z) {
+            this.z = z;
+        }
+
+        @Override
+        public int getZ() {
+            return z;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof BlockPos)) return false;
+            BlockPos pos = (BlockPos)o;
+            return x == pos.getX() && y == pos.getY() && z == pos.getZ();
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(x, y, z);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("(%d, %d, %d)", x, y, z);
+        }
+    }
+
 
     static {
         PACKED_X_LENGTH = 1 + MathHelper.log2(MathHelper.smallestEncompassingPowerOfTwo(30000000));

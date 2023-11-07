@@ -29,6 +29,8 @@ public class PacketHelper {
             .put(1, PacketHelper::handleBlockChange)
             .put(2, PacketHelper::handleBlockData)
             .put(3, PacketHelper::handleSectionUpdate)
+            .put(4, PacketHelper::handleAddEntity)
+            .put(5, PacketHelper::handleSetEntityData)
             .build();
 
     public static boolean test(ResourceLocation id) {
@@ -96,6 +98,19 @@ public class PacketHelper {
         ResourceLocation type = payload.readResourceLocation();
         CompoundTag tag = payload.readNbt();
         Packet<ClientGamePacketListener> newPacket = RuntimeHelper.buildBlockEntityDataPacket(pos, type, tag);
+        Minecraft.getInstance().execute(() -> {
+            newPacket.handle(packetListener);
+        });
+    }
+
+    private static void handleAddEntity(ClientGamePacketListener packetListener, FriendlyByteBuf payload) {
+        int entityId = payload.readVarInt();
+        CompoundTag tag = payload.readNbt();
+        EntityHelper.PENDING_NEW_ENTITIES.put(entityId, tag);
+    }
+
+    private static void handleSetEntityData(ClientGamePacketListener packetListener, FriendlyByteBuf payload) {
+        Packet<ClientGamePacketListener> newPacket = RuntimeHelper.buildSetEntityDataPacket(payload);
         Minecraft.getInstance().execute(() -> {
             newPacket.handle(packetListener);
         });

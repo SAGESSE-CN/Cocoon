@@ -8,16 +8,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Stack;
 
-public class ChunkDataPlaceTask {
+public class BlockPlaceTask {
 
-    private static final Stack<ChunkDataPlaceTask> STACK = new Stack<>();
+    private static final Stack<BlockPlaceTask> STACK = new Stack<>();
 
     private final Block wrapper;
     private final BlockState blockState;
     private final CompoundTag entityTag;
     private final BlockPlaceContext context;
 
-    public ChunkDataPlaceTask(Block wrapper, BlockState blockState, @Nullable CompoundTag entityTag, BlockPlaceContext context) {
+    public BlockPlaceTask(Block wrapper, BlockState blockState, @Nullable CompoundTag entityTag, BlockPlaceContext context) {
         this.wrapper = wrapper;
         this.blockState = blockState;
         this.entityTag = entityTag;
@@ -25,7 +25,7 @@ public class ChunkDataPlaceTask {
     }
 
     @Nullable
-    public static ChunkDataPlaceTask last() {
+    public static BlockPlaceTask last() {
         if (!STACK.isEmpty()) {
             return STACK.lastElement();
         }
@@ -33,7 +33,7 @@ public class ChunkDataPlaceTask {
     }
 
     public static void push(Block wrapper, BlockState blockState, @Nullable CompoundTag entityTag, BlockPlaceContext context) {
-        STACK.push(new ChunkDataPlaceTask(wrapper, blockState, entityTag, context));
+        STACK.push(new BlockPlaceTask(wrapper, blockState, entityTag, context));
     }
 
     public static void pop(Block wrapper) {

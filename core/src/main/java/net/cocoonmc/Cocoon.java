@@ -15,6 +15,7 @@ import net.cocoonmc.runtime.impl.BlockDataListener;
 import net.cocoonmc.runtime.impl.CacheFactory;
 import net.cocoonmc.runtime.impl.ChunkDataListener;
 import net.cocoonmc.runtime.impl.Constants;
+import net.cocoonmc.runtime.impl.EntityDataListener;
 import net.cocoonmc.runtime.impl.ItemDataListener;
 import net.cocoonmc.runtime.impl.LevelData;
 import net.cocoonmc.runtime.impl.PacketDataListener;
@@ -40,6 +41,7 @@ public class Cocoon {
     private void registerEvents() {
         this.manager.registerEvents(new ItemDataListener(), plugin);
         this.manager.registerEvents(new BlockDataListener(), plugin);
+        this.manager.registerEvents(new EntityDataListener(), plugin);
         this.manager.registerEvents(new ChunkDataListener(), plugin);
         this.manager.registerEvents(new PacketDataListener(), plugin);
         this.messenger.registerOutgoingPluginChannel(plugin, Constants.NETWORK_KEY);

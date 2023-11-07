@@ -1,6 +1,10 @@
 package net.cocoonmc.core.network.protocol;
 
+import java.util.UUID;
+
 public interface ClientboundAddEntityPacket extends Packet {
 
-    int getEntityId();
+    int getId();
+
+    UUID getUUID();
 }

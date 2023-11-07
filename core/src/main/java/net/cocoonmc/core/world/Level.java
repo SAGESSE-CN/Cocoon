@@ -7,6 +7,7 @@ import net.cocoonmc.core.block.BlockState;
 import net.cocoonmc.core.utils.ObjectHelper;
 import net.cocoonmc.core.world.chunk.Chunk;
 import net.cocoonmc.core.world.entity.Entity;
+import net.cocoonmc.runtime.impl.EntityPlaceTask;
 import net.cocoonmc.runtime.impl.LevelData;
 import net.cocoonmc.runtime.impl.Logs;
 import org.jetbrains.annotations.Nullable;
@@ -43,14 +44,28 @@ public class Level {
     }
 
     public void save() {
-        int counter = 0;
+        int chunkCounter = 0;
         for (Chunk chunk : chunks.values()) {
             if (chunk.isDirty()) {
                 chunk.save();
-                counter += 1;
+                chunkCounter += 1;
             }
         }
-        Logs.debug("{} save {} chunks", getName(), counter);
+        Logs.debug("{} save {} chunks", getName(), chunkCounter);
+    }
+
+    public void addFreshEntity(Entity entity) {
+        org.bukkit.entity.Entity entity1 = entity.asBukkit();
+        org.bukkit.entity.EntityType entityType1 = entity.getType().asBukkit();
+        if (entity1 != null || entityType1 == null) {
+            return;
+        }
+        EntityPlaceTask.push(this, entity);
+        world.spawnEntity(entity.getLocation().asBukkit(), entityType1);
+        EntityPlaceTask.pop(this, entity);
+    }
+
+    public void removeEntity(Entity entity) {
     }
 
     public void sendBlockUpdated(BlockPos pos, BlockState oldState, BlockState newState, int flags) {

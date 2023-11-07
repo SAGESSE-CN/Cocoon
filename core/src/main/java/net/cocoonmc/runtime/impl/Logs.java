@@ -17,8 +17,7 @@ public class Logs extends Logger {
     }
 
     public static void debug(String message, Object... params) {
-        //LOGGER.finer(_format(message, params));
-        LOGGER.info(_format(message, params));
+        LOGGER.finer(_format(message, params));
     }
 
     public static void info(String message, Object... params) {

@@ -104,7 +104,7 @@ public class BlockDataListener implements Listener {
 
 
     private void setBlockIfNeeded(org.bukkit.block.Block block) {
-        ChunkDataPlaceTask task = ChunkDataPlaceTask.last();
+        BlockPlaceTask task = BlockPlaceTask.last();
         if (task != null && block.getType().equals(task.getDelegate().asBukkit())) {
             Chunk chunk = Chunk.of(block);
             BlockPos blockPos = BlockPos.of(block);

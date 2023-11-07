@@ -7,7 +7,7 @@ import net.cocoonmc.core.item.Item;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.item.context.BlockHitResult;
 import net.cocoonmc.core.item.context.UseOnContext;
-import net.cocoonmc.core.math.Vector3f;
+import net.cocoonmc.core.math.Vector3d;
 import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
@@ -15,18 +15,13 @@ import net.cocoonmc.core.world.InteractionResultHolder;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.LivingEntity;
 import net.cocoonmc.core.world.entity.Player;
-import org.bukkit.GameMode;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
-import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
@@ -35,7 +30,6 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.LoomInventory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class ItemDataListener implements Listener {
@@ -60,7 +54,7 @@ public class ItemDataListener implements Listener {
                 return;
             }
             // order: useOnFirst -> block.use -> useOn
-            Vector3f loc = Vector3f.of(event.getClickedBlock().getLocation());
+            Vector3d loc = Vector3d.of(BukkitHelper.getClickedLocation(event));
             Direction dir = Direction.by(event.getBlockFace());
             BlockHitResult hitResult = BlockHitResult.hitting(loc, dir, blockPos, false);
             UseOnContext context = new UseOnContext(level, player, hand, itemStack, hitResult);

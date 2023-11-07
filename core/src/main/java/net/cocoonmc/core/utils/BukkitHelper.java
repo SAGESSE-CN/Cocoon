@@ -9,19 +9,29 @@ import net.cocoonmc.core.item.Item;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.item.Items;
 import net.cocoonmc.core.item.context.BlockPlaceContext;
-import net.cocoonmc.core.item.context.UseOnContext;
 import net.cocoonmc.core.nbt.CompoundTag;
+import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.Level;
-import net.cocoonmc.runtime.impl.ChunkDataPlaceTask;
+import net.cocoonmc.core.world.entity.EntityType;
+import net.cocoonmc.runtime.impl.BlockPlaceTask;
+import net.cocoonmc.runtime.impl.ConstantKeys;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockFace;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.UUID;
 
 public class BukkitHelper {
+
+    public static final UUID INVALID_UUID = new UUID(0, 0);
+
+    private static final ReflectHelper.Member<Vector> GET_CLICKED_LOCATION = ReflectHelper.getMemberField(PlayerInteractEvent.class, "clickedPosistion");
 
     private static final Direction[] FACE_TO_DIRECTION = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.UP, Direction.DOWN};
     private static final BlockFace[] DIRECTION_TO_FACE = {BlockFace.DOWN, BlockFace.UP, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST};
@@ -29,9 +39,9 @@ public class BukkitHelper {
 
     public static InteractionResult placeBlock(Block wrapper, BlockState blockState, @Nullable CompoundTag entityTag, BlockPlaceContext context) {
         ItemStack wrapperStack = new ItemStack(wrapper.asItem());
-        ChunkDataPlaceTask.push(wrapper, blockState, entityTag, context);
+        BlockPlaceTask.push(wrapper, blockState, entityTag, context);
         InteractionResult result = Cocoon.API.ITEM.useOn(context.getPlayer(), wrapperStack, context);
-        ChunkDataPlaceTask.pop(wrapper);
+        BlockPlaceTask.pop(wrapper);
         if (wrapperStack.isEmpty()) {
             context.getItemInHand().shrink(1);
         }
@@ -144,6 +154,23 @@ public class BukkitHelper {
 //        }
 //    }
 
+    public static boolean hasCustomEntityType(org.bukkit.entity.Entity entity) {
+        return entity.getPersistentDataContainer().has(ConstantKeys.ENTITY_TYPE_KEY, PersistentDataType.STRING);
+    }
+
+    public static void setCustomEntityType(org.bukkit.entity.Entity entity, EntityType<?> entityType) {
+        entity.getPersistentDataContainer().set(ConstantKeys.ENTITY_TYPE_KEY, PersistentDataType.STRING, entityType.getRegistryName().toString());
+    }
+
+    public static EntityType<?> getCustomEntityType(org.bukkit.entity.Entity entity) {
+        String value = entity.getPersistentDataContainer().get(ConstantKeys.ENTITY_TYPE_KEY, PersistentDataType.STRING);
+        if (value != null) {
+            ResourceLocation rl = new ResourceLocation(value);
+            return EntityType.byKey(rl);
+        }
+        return null;
+    }
+
     public static void replaceDrops(List<ItemStack> dropItems, Block block) {
         Item oldItem = block.getDelegate().asItem();
         Item newItem = block.asItem();
@@ -181,6 +208,16 @@ public class BukkitHelper {
         return DIRECTION_TO_FACE[direction.ordinal()];
     }
 
+
+    public static org.bukkit.Location getClickedLocation(PlayerInteractEvent event) {
+        org.bukkit.block.Block block = event.getClickedBlock();
+        org.bukkit.Location loc = block.getLocation();
+        Vector vector = GET_CLICKED_LOCATION.get(event);
+        if (vector != null) {
+            return loc.clone().add(vector.getX(), vector.getY(), vector.getZ());
+        }
+        return loc;
+    }
 
     public static boolean isRedirectedBlock(org.bukkit.block.Block block) {
         Level level = Level.of(block.getWorld());

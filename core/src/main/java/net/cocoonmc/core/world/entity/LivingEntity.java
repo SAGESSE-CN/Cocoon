@@ -1,26 +1,40 @@
 package net.cocoonmc.core.world.entity;
 
 import net.cocoonmc.Cocoon;
+import net.cocoonmc.core.BlockPos;
+import net.cocoonmc.core.world.Level;
 import net.cocoonmc.runtime.impl.ConstantKeys;
 
 public class LivingEntity extends Entity {
 
-    private final org.bukkit.entity.LivingEntity livingEntity;
+    private org.bukkit.entity.LivingEntity delegate;
 
-    public LivingEntity(org.bukkit.entity.LivingEntity livingEntity) {
-        super(livingEntity);
-        this.livingEntity = livingEntity;
+    public LivingEntity(EntityType<?> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public static LivingEntity of(org.bukkit.entity.LivingEntity livingEntity) {
-        if (livingEntity instanceof org.bukkit.entity.Player) {
-            return Player.of((org.bukkit.entity.Player) livingEntity);
+    public static LivingEntity of(org.bukkit.entity.LivingEntity entity) {
+        if (entity instanceof org.bukkit.entity.Player) {
+            return Player.of((org.bukkit.entity.Player) entity);
         }
-        return Cocoon.API.CACHE.computeIfAbsent(livingEntity, ConstantKeys.LIVING_ENTITY_KEY, LivingEntity::new);
+        return Cocoon.API.CACHE.computeIfAbsent(entity, ConstantKeys.LIVING_ENTITY_KEY, it -> {
+            EntityType<LivingEntity> entityType = EntityTypes.findEntityType(it);
+            LivingEntity entity1 = entityType.create(Level.of(it.getWorld()), BlockPos.ZERO, null);
+            entity1.setDelegate(it);
+            return entity1;
+        });
+    }
+
+    @Override
+    public void setDelegate(org.bukkit.entity.Entity delegate) {
+        super.setDelegate(delegate);
+        if (delegate instanceof org.bukkit.entity.LivingEntity) {
+            this.delegate = (org.bukkit.entity.LivingEntity) delegate;
+        }
     }
 
     @Override
     public org.bukkit.entity.LivingEntity asBukkit() {
-        return livingEntity;
+        return delegate;
     }
 }

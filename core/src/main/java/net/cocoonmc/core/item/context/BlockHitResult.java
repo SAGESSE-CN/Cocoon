@@ -2,7 +2,7 @@ package net.cocoonmc.core.item.context;
 
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.Direction;
-import net.cocoonmc.core.math.Vector3f;
+import net.cocoonmc.core.math.Vector3d;
 
 public class BlockHitResult extends HitResult {
 
@@ -11,15 +11,15 @@ public class BlockHitResult extends HitResult {
     private final boolean miss;
     private final boolean inside;
 
-    public static BlockHitResult miss(Vector3f location, Direction dir, BlockPos pos) {
+    public static BlockHitResult miss(Vector3d location, Direction dir, BlockPos pos) {
         return new BlockHitResult(true, location, dir, pos, false);
     }
 
-    public static BlockHitResult hitting(Vector3f location, Direction dir, BlockPos pos, boolean inside) {
+    public static BlockHitResult hitting(Vector3d location, Direction dir, BlockPos pos, boolean inside) {
         return new BlockHitResult(false, location, dir, pos, inside);
     }
 
-    public BlockHitResult(boolean miss, Vector3f location, Direction dir, BlockPos pos, boolean inside) {
+    public BlockHitResult(boolean miss, Vector3d location, Direction dir, BlockPos pos, boolean inside) {
         super(location);
         this.miss = miss;
         this.direction = dir;

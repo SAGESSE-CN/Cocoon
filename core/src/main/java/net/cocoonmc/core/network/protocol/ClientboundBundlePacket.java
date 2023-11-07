@@ -19,5 +19,9 @@ public interface ClientboundBundlePacket extends Packet {
         };
     }
 
+    default ClientboundBundlePacket setPackets(List<Packet> packets) {
+        return create(packets);
+    }
+
     List<Packet> getPackets();
 }

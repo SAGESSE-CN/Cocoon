@@ -26,12 +26,6 @@ public class Vector3d {
         return new Vector3d(loc.getX(), loc.getY(), loc.getZ());
     }
 
-//    double d7 = d0 - this.firstGoodX;
-//    double d8 = d1 - this.firstGoodY;
-//    double d9 = d2 - this.firstGoodZ;
-//    double d10 = this.player.getDeltaMovement().lengthSqr();
-//    double d11 = d7 * d7 + d8 * d8 + d9 * d9;
-
     public double distanceTo(Vector3d pos) {
         return distanceTo(pos.x, pos.y, pos.z);
     }

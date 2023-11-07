@@ -100,7 +100,7 @@ public class TransformFactory {
         }
     }
 
-    public static Vec3 convertToVanilla(net.cocoonmc.core.math.Vector3f vector) {
+    public static Vec3 convertToVanilla(net.cocoonmc.core.math.Vector3d vector) {
         return new Vec3(vector.getX(), vector.getY(), vector.getZ());
     }
 

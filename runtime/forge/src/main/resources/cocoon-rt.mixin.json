@@ -6,6 +6,7 @@
   "client": [
     "ClientLevelMixin",
     "ClientLevelChunkMixin",
+    "ClientLevelEntityMixin",
     "FriendlyByteBufMixin",
     "ItemStackMixin",
     "NetworkMixin"

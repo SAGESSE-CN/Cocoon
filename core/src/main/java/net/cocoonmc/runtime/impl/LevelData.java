@@ -10,19 +10,19 @@ import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.ListTag;
 import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.utils.MathHelper;
+import net.cocoonmc.core.utils.Pair;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.chunk.Chunk;
 import net.cocoonmc.core.world.chunk.ChunkPos;
+import net.cocoonmc.core.world.entity.EntityType;
 import net.cocoonmc.core.world.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -32,6 +32,7 @@ public class LevelData {
 
     private static ConcurrentHashMap<UUID, Level> LEVELS = new ConcurrentHashMap<>();
     private static ConcurrentHashMap<ChunkPos, ClientInfo> CLIENT_INFOS = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<Pair<UUID, Integer>, CompoundTag> CLIENT_ENTITIES = new ConcurrentHashMap<>();
 
     private static UpdateTask UPDATE_STATE_TASK;
     private static UpdateNeighborTask UPDATE_NEIGHBOR_TASK;
@@ -129,6 +130,22 @@ public class LevelData {
 //        }
 //    }
 
+    public static void updateClientEntityType(Level level, int entityId, EntityType<?> entityType) {
+        if (entityType == null) {
+            CLIENT_ENTITIES.remove(Pair.of(level.getUUID(), entityId));
+        } else {
+            CompoundTag tag = CompoundTag.newInstance();
+            tag.putString("type", entityType.getRegistryName().toString());
+            CLIENT_ENTITIES.put(Pair.of(level.getUUID(), entityId), tag);
+        }
+    }
+
+    @Nullable
+    public static CompoundTag getClientEntity(Player player, int entityId) {
+        return CLIENT_ENTITIES.get(Pair.of(player.getLevel().getUUID(), entityId));
+    }
+
+
     @Nullable
     public static ListTag getClientChunk(Player player, int x, int z) {
         ClientInfo info = CLIENT_INFOS.get(new ChunkPos(player.getLevel().getUUID(), x, z));
@@ -149,14 +166,26 @@ public class LevelData {
 
     @Nullable
     public static CollissionBox getClientBlockCollisions(Player player, Vector3d loc) {
-        int x = MathHelper.floor(loc.getX() + 0.3 - 1E-7);
-        int y = MathHelper.floor(loc.getY());
-        int z = MathHelper.floor(loc.getZ() + 0.3 - 1E-7);
+        double width = 0.6;
+        double height = 1.8;
+
+        int minX = MathHelper.floor(loc.getX() - width * 0.5);
+        int minY = MathHelper.floor(loc.getY());
+        int minZ = MathHelper.floor(loc.getZ() - width * 0.5);
+        int maxX = MathHelper.floor(loc.getX() + width * 0.5);
+        int maxY = MathHelper.floor(loc.getY() + height);
+        int maxZ = MathHelper.floor(loc.getZ() + width * 0.5);
+
         UUID level = player.getLevel().getUUID();
-        BlockPos pos = new BlockPos(x, y, z);
-        ClientInfo info = CLIENT_INFOS.get(new ChunkPos(level, pos));
-        if (info != null) {
-            return info.collissionShaps.get(pos);
+        Cursor3D cursor = new Cursor3D(minX, minY, minZ, maxX, maxY, maxZ);
+        for (BlockPos pos : cursor) {
+            ClientInfo info = CLIENT_INFOS.get(new ChunkPos(level, pos));
+            if (info != null) {
+                CollissionBox box = info.collissionShaps.get(pos);
+                if (box != null) {
+                    return box;
+                }
+            }
         }
         return null;
     }
