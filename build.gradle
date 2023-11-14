@@ -26,7 +26,7 @@ tasks.register("buildCore", Jar) {
 }
 
 tasks.register("buildRuntime") {
-    dependsOn ":runtime:forge:buildFatJar"
+    dependsOn ":runtime:client:buildFatJar"
 }
 
 

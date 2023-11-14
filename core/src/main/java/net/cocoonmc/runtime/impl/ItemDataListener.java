@@ -13,6 +13,7 @@ import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.InteractionResultHolder;
 import net.cocoonmc.core.world.Level;
+import net.cocoonmc.core.world.entity.Entity;
 import net.cocoonmc.core.world.entity.LivingEntity;
 import net.cocoonmc.core.world.entity.Player;
 import org.bukkit.event.Event;
@@ -22,10 +23,12 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.LoomInventory;
@@ -114,6 +117,27 @@ public class ItemDataListener implements Listener {
         }
     }
 
+    @EventHandler(ignoreCancelled = true)
+    public void onInteractEntity2(PlayerInteractAtEntityEvent event) {
+        onInteractEntity(event);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onAttackEntity(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof org.bukkit.entity.Player)) {
+            return;
+        }
+        Entity entity = Entity.of(event.getEntity());
+        Player player = Player.of((org.bukkit.entity.Player) event.getDamager());
+        ItemStack itemStack = player.getMainHandItem();
+        if (itemStack.getItem().attackLivingEntity(itemStack, player, entity) != InteractionResult.PASS) {
+            event.setCancelled(true);
+        }
+    }
+
+//    @EventHandler(ignoreCancelled = true)
+//    public void onAttackEntity2(EntityDamageByBlockEvent event) {
+//    }
 
     @EventHandler(ignoreCancelled = true)
     public void onCraft(CraftItemEvent event) {

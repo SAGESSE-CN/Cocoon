@@ -1,0 +1,32 @@
+{
+	"schemaVersion": 1,
+	"id": "cocoon_rt",
+	"version": "${version}",
+	"name": "Cocoon Runtime Library",
+	"description": "A Cocoon Runtime Library",
+	"authors": [
+		"SAGESSE"
+	],
+	"contact": {
+		"homepage": "https://github.com/SAGESSE-CN/Cocoon/",
+		"sources": "https://github.com/SAGESSE-CN/Cocoon/"
+	},
+	"license": "MIT",
+	"icon": "icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"client": [
+			"net.cocoonmc.runtime.client.CocoonFabric"
+		]
+	},
+	"mixins": [
+		"cocoon-rt.mixin.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.14.21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}

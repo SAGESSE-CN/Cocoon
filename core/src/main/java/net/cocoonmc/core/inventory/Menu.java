@@ -4,11 +4,11 @@ import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.network.Component;
 import net.cocoonmc.core.network.FriendlyByteBuf;
+import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerProvider;
-import net.cocoonmc.runtime.impl.Constants;
 import org.bukkit.inventory.Inventory;
 
 import java.util.ArrayList;
@@ -61,13 +61,12 @@ public abstract class Menu implements IAssociatedContainerProvider {
         serialize(additionalData);
         // create a fml open container package.
         FriendlyByteBuf buffer = new FriendlyByteBuf();
-        buffer.writeByte(0);  // open container
+        buffer.writeVarInt(6);  // open container
         buffer.writeResourceLocation(getType().getRegistryName());
         buffer.writeVarInt(windowId);
         buffer.writeComponent(title);
-        buffer.writeByteArray(additionalData.array());
-        // send to player.
-        player.asBukkit().sendPluginMessage(Cocoon.getPlugin(), Constants.NETWORK_KEY, buffer.array());
+        buffer.writeBytes(additionalData.array());
+        BukkitHelper.sendCustomPacket(player.asBukkit(), buffer);
     }
 
     public void handleCloseWindowPacket(int windowId) {

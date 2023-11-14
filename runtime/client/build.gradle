@@ -1,0 +1,344 @@
+apply plugin: "dev.architectury.loom"
+
+sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+
+group = rootProject.group
+version = rootProject.mod_version
+
+archivesBaseName = "${rootProject.archivesBaseName}-rt"
+
+def loomPlatform = project.properties["loom.platform"]
+def forgeMixinConfigs = ["${archivesBaseName}.mixin.json"]
+def fabricMixinConfigs = ["${archivesBaseName}.mixin.json"]
+def allVersions = [:]
+
+// build fat jar only in command line.
+if (gradle.startParameter.taskNames.contains("buildRuntime")) {
+    def targets = project.file("versions").listFiles().findAll { it.isDirectory() }.collect { it.name }
+    allVersions = targets.collectEntries {
+        def (major, minor, patch) = it.tokenize('-')[1].tokenize('.')
+        return [it, "${major}${minor.padLeft(2, '0')}${(patch ?: '').padLeft(2, '0')}"]
+    }
+    forgeMixinConfigs = allVersions.values().collect { "v${it}/forge/${archivesBaseName}.mixin.json" }.unique()
+    fabricMixinConfigs = allVersions.values().collect { "v${it}/fabric/${archivesBaseName}.mixin.json" }.unique()
+}
+
+loom {
+    // use this if you are using the official mojang mappings
+    // and want loom to stop warning you about their license
+    silentMojangMappingsLicense()
+
+    // since loom 0.10, you are **required** to use the
+    // "forge" block to configure forge-specific features,
+    // such as the mixinConfigs array or datagen
+    if (loomPlatform == "forge") {
+        forge {
+            // specify the mixin configs used in this mod
+            // this will be added to the jar manifest as well!
+            mixinConfigs = forgeMixinConfigs
+        }
+    }
+
+    mixin {
+        defaultRefmapName.set("${archivesBaseName}-refmap.json")
+    }
+}
+
+repositories {
+    // Add repositories to retrieve artifacts from in here.
+    // You should only use this when depending on other mods because
+    // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+    // See https://docs.gradle.org/current/userguide/declaring_repositories.html
+    // for more information about repositories.
+}
+
+dependencies {
+    // to change the versions see the gradle.properties file
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+    // choose what mappings you want to use here
+    // leave this uncommented if you want to use
+    // mojang's official mappings, or feel free
+    // to add your own mappings here (how about
+    // mojmap layered with parchment, for example?)
+    mappings loom.officialMojangMappings()
+
+    // uncomment this if you want to use yarn mappings
+    // mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+
+    // your forge dependency, this is **required** when using Forge Loom in forge mode!
+    if (loomPlatform == "forge") {
+        it.forge "net.minecraftforge:forge:${project.forge_version}"
+    }
+    if (loomPlatform == "fabric") {
+        it.modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
+        it.modApi "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    }
+
+    // additional dependencies can be specified using loom's regular format
+    // specifying a "mod" dependency (like modImplementation or modApi)
+    // will cause loom to remap the file to your specified mappings
+
+    // in this example, we'll be adding JEI as a dependency
+    // according to their developer example on GitHub
+    // see: https://github.com/mezz/JustEnoughItems/wiki/Getting-Started
+    // compile against the JEI API but do not include it at runtime
+    // don't worry about loom "not finding a forge mod" here,
+    // JEI's api just doesn't have any class with an @Mod annotation
+    // modCompileOnly "mezz.jei:jei-1.16.5:${jei_version}:api"
+    // at runtime, use the full JEI jar
+    // modRuntimeOnly "mezz.jei:jei-1.16.5:${jei_version}"
+}
+
+processResources {
+    // define properties that can be used during resource processing
+    inputs.property "version", project.version
+    inputs.property "mcVersion", project.minecraft_version
+    inputs.property "mixins", fabricMixinConfigs
+
+    // this will replace the property "${version}" in your mods.toml
+    // with the version you've defined in your gradle.properties
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
+    }
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+        filter {
+            it.replaceAll(/("cocoon-rt\.mixin\.json")/, fabricMixinConfigs.collect { '"' + it + '"' }.join(","))
+        }
+    }
+
+    // replace to valid mixin.
+    filesMatching("${archivesBaseName}.mixin.json") {
+        var mixins = ""
+        sourceSets.each {
+            it.allSource.each {
+                if (it.path.matches(/.*\/mixin\/[^\/]*.java$/)) {
+                    def val = it.name.replaceAll(/(.+)\.(.+?)$/, /"$1"/)
+                    if (!mixins.isEmpty()) {
+                        mixins += ", "
+                    }
+                    mixins += val
+                }
+            }
+        }
+        def results = ""
+        it.filter {
+            if (results.isEmpty()) {
+                results += it
+                return ""
+            } else {
+                results += "\n"
+                results += it
+                return null
+            }
+        }
+        it.filter {
+            results = results.replaceAll(/(?sim)("client"\s*:\s*\[\s*)(.+?)(\s*\])/, /$1/ + mixins + /$3/)
+            results = results.replaceAll(/(?sim)("minVersion")/, /"refmap": "${archivesBaseName}-refmap.json"/ + ",\n  " + /$1/)
+            return results
+        }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    // ensure that the encoding is set to UTF-8, no matter what the system default is
+    // this fixes some edge cases with special characters not displaying correctly
+    // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
+    // If Javadoc is generated, this must be specified in that task too.
+    options.encoding = "UTF-8"
+
+    // The Minecraft launcher currently installs Java 8 for users, so your mod probably wants to target Java 8 too
+    // JDK 9 introduced a new way of specifying this that will make sure no newer classes or methods are used.
+    // We'll use that if it's available, but otherwise we'll use the older option.
+    if (JavaVersion.current().isJava9Compatible()) {
+        options.release = 8
+    }
+}
+
+tasks.register("parpreVariants") {
+    doLast {
+        // copy the project configs.
+        copy {
+            from "../../build.gradle"
+            from "../../gradle.properties"
+            from "../../settings.gradle"
+            into "build/generated/variants/"
+            // replace build
+            filesMatching("build.gradle") {
+                filter {
+                    it.replaceAll(/(.*dependsOn.*(buildCore|buildRuntime).*)/, "")
+                }
+            }
+            filesMatching("gradle.properties") {
+                filter {
+                    it.replaceAll(/(mod_version=).+/, /$1${version}/)
+                }
+            }
+            // replace include project
+            filesMatching("settings.gradle") {
+                def configs = allVersions.keySet().collect { "include('${it}')" }.join("\n")
+                filter {
+                    def val = it as String
+                    val = val.replaceAll(/(.*include.*)/, configs)
+                    if (val.contains("include")) {
+                        configs = ""
+                    }
+                    return val
+                }
+            }
+            duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        }
+        // copy and replace all version
+        allVersions.each {
+            def target = it.key as String
+            def platform = target.tokenize('-')[0]
+            def version = it.value as String
+            delete "build/generated/variants/${target}/src"
+            copy {
+                // copy source
+                from "."
+                into "build/generated/variants/${target}"
+                exclude "build"
+                // replace package
+                filesMatching("src/**") {
+                    filter {
+                        it.replaceAll(/(net\.cocoonmc\.runtime\.client)/, /$1.v${version}.${platform}/)
+                    }
+                }
+                // replace the supported version
+                filesMatching("**/ConfigHelper.java") {
+                    def nextVersion = ""
+                    for (String v2 : allVersions.values()) {
+                        if (v2 > version && nextVersion < v2) {
+                            nextVersion = v2
+                        }
+                    }
+                    filter {
+                        def val = it as String
+                        val = val.replaceAll(/(String supportedVersion) = ""/, /$1 = "${version}"/)
+                        val = val.replaceAll(/(String nextSupportedVersion) = ""/, /$1 = "${nextVersion}"/)
+                        return val
+                    }
+                }
+                duplicatesStrategy = DuplicatesStrategy.INCLUDE
+            }
+        }
+    }
+}
+
+tasks.register("buildVariants", GradleBuild) {
+    dependsOn "parpreVariants"
+    dir = project.file("build/generated/variants")
+    tasks = ["build"]
+}
+
+tasks.register("mergeVariants") {
+    dependsOn "build"
+    dependsOn "buildVariants"
+    doLast {
+        def name = "${archivesBaseName}-${version}"
+        // clean before the copy
+        delete "build/libs/${name}"
+        // copy thin jar into fat jar.
+        allVersions.each {
+            def target = it.key as String
+            def platform = target.tokenize('-')[0]
+            def version = it.value as String
+            copy {
+                from zipTree("build/generated/variants/${target}/build/libs/${name}.jar")
+                into "build/libs/${name}"
+                //exclude "**/CocoonForge.java"
+                //exclude "**/CocoonForge.class"
+                rename(/(${archivesBaseName}\.mixin\.json)/, /v${version}\/${platform}\/$1/)
+                rename(/(${archivesBaseName}-refmap\.json)/, /v${version}\/${platform}\/$1/)
+                filesMatching("${archivesBaseName}.mixin.json") {
+                    filter {
+                        it.replaceAll(/(${archivesBaseName}-refmap\.json)/, /v${version}\/${platform}\/$1/)
+                    }
+                }
+                duplicatesStrategy = DuplicatesStrategy.INCLUDE
+            }
+        }
+        // copy base jar into fat jar.
+        copy {
+            from zipTree("build/libs/${name}.jar")
+            into "build/libs/${name}/"
+            duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        }
+    }
+}
+
+tasks.register("createFatJar", Jar) {
+    dependsOn "mergeVariants"
+    def name = "${archivesBaseName}-${version}"
+    from files("build/libs/${name}")
+    manifest {
+        from "build/libs/${name}/META-INF/MANIFEST.MF"
+    }
+    destinationDirectory.set(new File(rootProject.buildDir, "libs"))
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.register("buildFatJar") {
+    dependsOn "createFatJar"
+    doLast {
+        //delete "build"
+    }
+}
+
+allVersions.keySet().each { target ->
+    // switch source to target
+    tasks.register("prepareVariant-${target}", GradleBuild) {
+        dependsOn "parpreVariants"
+        dir = project.file("build/generated/variants/${target}/versions/${target}")
+    }
+    buildVariants.configure {
+        dependsOn "prepareVariant-${target}"
+    }
+}
+
+java {
+    // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+    // if it is present.
+    // If you remove this line, sources will not be generated.
+    withSourcesJar()
+}
+
+jar {
+    from "api"
+    manifest {
+        attributes([
+                "Specification-Title"     : "Cocoon",
+                "Specification-Vendor"    : "SAGESSE",
+                "Specification-Version"   : "1",
+                "Implementation-Title"    : project.name,
+                "Implementation-Version"  : version,
+                "Implementation-Vendor"   : "SAGESSE",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+// configure the maven publication
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            // add all the jars that should be included when publishing to maven
+            artifact(remapJar) {
+                builtBy remapJar
+            }
+            artifact(sourcesJar) {
+                builtBy remapSourcesJar
+            }
+        }
+    }
+
+    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+    repositories {
+        // Add repositories to publish to here.
+        // Notice: This block does NOT have the same function as the block in the top level.
+        // The repositories here will be used for publishing your artifact, not for
+        // retrieving dependencies.
+    }
+}

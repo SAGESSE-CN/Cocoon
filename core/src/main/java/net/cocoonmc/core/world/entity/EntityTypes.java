@@ -3,8 +3,12 @@ package net.cocoonmc.core.world.entity;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.utils.BukkitHelper;
 
+import java.util.HashMap;
+
 @SuppressWarnings("unused")
 public class EntityTypes {
+
+    private static final HashMap<org.bukkit.entity.EntityType, EntityType<?>> TYPE_TO_TYPES = new HashMap<>();
 
     public static final EntityType<Entity> DROPPED_ITEM = register(Entity::new, org.bukkit.entity.EntityType.DROPPED_ITEM);
     public static final EntityType<Entity> EXPERIENCE_ORB = register(Entity::new, org.bukkit.entity.EntityType.EXPERIENCE_ORB);
@@ -135,31 +139,41 @@ public class EntityTypes {
     private static final EntityType<LivingEntity> UNKNOWN2 = registerUnknown(LivingEntity::new);
 
 
+    @SuppressWarnings("unchecked")
     public static EntityType<Entity> findEntityType(org.bukkit.entity.Entity entity) {
         EntityType<?> entityType = BukkitHelper.getCustomEntityType(entity);
         if (entityType != null) {
-            // noinspection unchecked
+            return (EntityType<Entity>) entityType;
+        }
+        entityType = TYPE_TO_TYPES.get(entity.getType());
+        if (entityType != null) {
             return (EntityType<Entity>) entityType;
         }
         return UNKNOWN1;
     }
 
+    @SuppressWarnings("unchecked")
     public static EntityType<LivingEntity> findEntityType(org.bukkit.entity.LivingEntity entity) {
         EntityType<?> entityType = BukkitHelper.getCustomEntityType(entity);
         if (entityType != null) {
-            // noinspection unchecked
+            return (EntityType<LivingEntity>) entityType;
+        }
+        entityType = TYPE_TO_TYPES.get(entity.getType());
+        if (entityType != null) {
             return (EntityType<LivingEntity>) entityType;
         }
         return UNKNOWN2;
     }
 
     public static <T extends Entity> EntityType<T> register(EntityType.Factory<T> factory, org.bukkit.entity.EntityType entityType) {
-        return EntityType.register(new ResourceLocation("minecraft", entityType.getName()), new EntityType<>(factory) {
+        EntityType<T> newType = EntityType.register(new ResourceLocation("minecraft", entityType.getName()), new EntityType<>(factory) {
             @Override
             public org.bukkit.entity.EntityType asBukkit() {
                 return entityType;
             }
         });
+        TYPE_TO_TYPES.put(entityType, newType);
+        return newType;
     }
 
     public static <T extends Entity> EntityType<T> registerUnknown(EntityType.Factory<T> factory) {

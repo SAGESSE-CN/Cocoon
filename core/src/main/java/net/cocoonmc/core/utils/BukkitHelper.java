@@ -10,12 +10,14 @@ import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.item.Items;
 import net.cocoonmc.core.item.context.BlockPlaceContext;
 import net.cocoonmc.core.nbt.CompoundTag;
+import net.cocoonmc.core.network.FriendlyByteBuf;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.EntityType;
 import net.cocoonmc.runtime.impl.BlockPlaceTask;
 import net.cocoonmc.runtime.impl.ConstantKeys;
+import net.cocoonmc.runtime.impl.Constants;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockFace;
@@ -86,6 +88,10 @@ public class BukkitHelper {
         return new NamespacedKey(namespace, path);
     }
 
+
+    public static void sendCustomPacket(org.bukkit.entity.Player player, FriendlyByteBuf buffer) {
+        player.sendPluginMessage(Cocoon.getPlugin(), Constants.NETWORK_KEY, buffer.array());
+    }
 
     public static void runTask(Runnable task) {
         Bukkit.getScheduler().runTask(Cocoon.getPlugin(), task);

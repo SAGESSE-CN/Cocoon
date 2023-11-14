@@ -24,6 +24,7 @@ import net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket;
 import net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket;
 import net.cocoonmc.core.network.protocol.Packet;
 import net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket;
+import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.utils.Pair;
 import net.cocoonmc.core.utils.ThrowableConsumer;
 import net.cocoonmc.core.world.entity.Player;
@@ -31,6 +32,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -49,7 +51,7 @@ public class PacketDataListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         // add a new packet handler into player connection.
         Player player = Player.of(event.getPlayer());
-        player.addChannel("cocoon:play");
+        player.addChannel(Constants.NETWORK_KEY);
         Cocoon.API.NETWORK.register(player, channel -> {
             ChannelPipeline pipeline = channel.pipeline();
             ChannelHandler handler = pipeline.get(Constants.PACKET_HANDLER_KEY);
@@ -58,8 +60,24 @@ public class PacketDataListener implements Listener {
             }
             channel.attr(OWNER_KEY).set(player);
             pipeline.addBefore("packet_handler", Constants.PACKET_HANDLER_KEY, new WrappedPacketHandler());
-            //pipeline.addBefore("encoder", Constants.PACKET_ENCODER_KEY, new WrappedPacketEncoder());
+            // send init packet.
+            FriendlyByteBuf buffer = new FriendlyByteBuf();
+            buffer.writeVarInt(0);  // init
+            buffer.writeVarInt(0x01); // options
+            channel.write(ClientboundCustomPayloadPacket.create(buffer).getHandle());
         });
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onLogin(PlayerLoginEvent event) {
+//        // add a new packet handler into player connection.
+//        Player player = Player.of(event.getPlayer());
+//        player.addChannel(Constants.NETWORK_KEY);
+//        // send init packet.
+//        FriendlyByteBuf buffer = new FriendlyByteBuf();
+//        buffer.writeVarInt(0);  // init
+//        buffer.writeVarInt(0x01); // options
+//        BukkitHelper.sendCustomPacket(event.getPlayer(), buffer);
     }
 
     public static Packet handleChunkUpdate(ClientboundLevelChunkWithLightPacket packet, Player player) {

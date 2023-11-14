@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "package": "net.cocoonmc.runtime.client.mixin",
+  "plugin": "net.cocoonmc.runtime.client.helper.ConfigHelper",
+  "compatibilityLevel": "JAVA_8",
+  "client": [
+    "ClientLevelMixin",
+    "ClientLevelChunkMixin",
+    "ClientLevelEntityMixin",
+    "FriendlyByteBufMixin",
+    "ItemStackMixin",
+    "NetworkMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "minVersion": "0.8"
+}

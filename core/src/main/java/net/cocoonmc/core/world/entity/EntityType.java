@@ -7,6 +7,7 @@ import net.cocoonmc.core.world.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 public class EntityType<T extends Entity> {
 
@@ -41,6 +42,19 @@ public class EntityType<T extends Entity> {
             return delegate.asBukkit();
         }
         return null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EntityType<?>)) return false;
+        EntityType<?> that = (EntityType<?>) o;
+        return Objects.equals(registryName, that.registryName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(registryName);
     }
 
     public static EntityType<?> byKey(ResourceLocation registryName) {
