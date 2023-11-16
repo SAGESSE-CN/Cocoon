@@ -10,14 +10,13 @@ import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.item.Items;
 import net.cocoonmc.core.item.context.BlockPlaceContext;
 import net.cocoonmc.core.nbt.CompoundTag;
-import net.cocoonmc.core.network.FriendlyByteBuf;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.EntityType;
+import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.runtime.impl.BlockPlaceTask;
 import net.cocoonmc.runtime.impl.ConstantKeys;
-import net.cocoonmc.runtime.impl.Constants;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockFace;
@@ -26,6 +25,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -88,10 +89,6 @@ public class BukkitHelper {
         return new NamespacedKey(namespace, path);
     }
 
-
-    public static void sendCustomPacket(org.bukkit.entity.Player player, FriendlyByteBuf buffer) {
-        player.sendPluginMessage(Cocoon.getPlugin(), Constants.NETWORK_KEY, buffer.array());
-    }
 
     public static void runTask(Runnable task) {
         Bukkit.getScheduler().runTask(Cocoon.getPlugin(), task);
@@ -194,11 +191,19 @@ public class BukkitHelper {
         }
     }
 
-    public static void dropItems(List<ItemStack> itemStacks, org.bukkit.block.Block block) {
+    public static void dropItem(ItemStack itemStack, Player player) {
+        dropItems(Collections.singleton(itemStack), player.asBukkit());
+    }
+
+    public static void dropItems(Collection<ItemStack> itemStacks, org.bukkit.block.Block block) {
         dropItems(itemStacks, block.getWorld(), block.getLocation());
     }
 
-    public static void dropItems(List<ItemStack> itemStacks, org.bukkit.World world, org.bukkit.Location location) {
+    public static void dropItems(Collection<ItemStack> itemStacks, org.bukkit.entity.Entity entity) {
+        dropItems(itemStacks, entity.getWorld(), entity.getLocation());
+    }
+
+    public static void dropItems(Collection<ItemStack> itemStacks, org.bukkit.World world, org.bukkit.Location location) {
         BukkitHelper.runTask(() -> itemStacks.forEach(it -> {
             if (!it.isEmpty()) {
                 world.dropItemNaturally(location, it.asBukkit());

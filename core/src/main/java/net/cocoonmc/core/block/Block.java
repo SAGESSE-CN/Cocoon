@@ -13,6 +13,8 @@ import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.Level;
+import net.cocoonmc.core.world.entity.Entity;
+import net.cocoonmc.core.world.entity.LivingEntity;
 import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.core.world.loot.LootContext;
 import net.cocoonmc.runtime.IAssociatedContainer;
@@ -62,6 +64,14 @@ public class Block implements IAssociatedContainerProvider {
     }
 
     public void onNeighborChanged(Level level, BlockPos pos, BlockState state, BlockPos sourcePos, Block sourceBlock, boolean bl) {
+    }
+
+    public boolean isBed(Level level, BlockPos pos, BlockState state, @Nullable Entity entity) {
+        return false;
+    }
+
+    public boolean isLadder(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity entity) {
+        return false;
     }
 
     public boolean canSurvive(BlockState blockState, Level level, BlockPos blockPos) {
@@ -124,7 +134,7 @@ public class Block implements IAssociatedContainerProvider {
         if (properties.material != null) {
             return properties.material.isInteractable();
         }
-        return properties.isInteractable;
+        return false;
     }
 
     @Override
@@ -158,7 +168,6 @@ public class Block implements IAssociatedContainerProvider {
 
         Block delegate;
         Material material;
-        boolean isInteractable = false;
         boolean noDrops = false;
         boolean noOcclusion = false;
         boolean noCollission = false;
@@ -176,11 +185,6 @@ public class Block implements IAssociatedContainerProvider {
 
         public Properties noCollission() {
             this.noCollission = true;
-            return this;
-        }
-
-        public Properties isInteractable() {
-            this.isInteractable = true;
             return this;
         }
 

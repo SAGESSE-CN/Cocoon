@@ -1,23 +1,26 @@
 package net.cocoonmc.runtime.impl;
 
 import net.cocoonmc.Cocoon;
-import org.bukkit.Bukkit;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Logs extends Logger {
+public class Logs {
 
-    private static final Logger LOGGER = new Logs();
+    private static final Logger LOGGER = getLogger();
 
-    private Logs() {
-        super(Cocoon.class.getSimpleName(), null);
-        this.setParent(Bukkit.getServer().getLogger());
-        this.setLevel(Level.ALL);
+    private static Logger getLogger() {
+        Logger logger = Cocoon.getPlugin().getLogger();
+        logger.setLevel(Level.ALL);
+        return logger;
+    }
+
+    public static void trace(String message, Object... params) {
+        LOGGER.fine(_format(message, params));
     }
 
     public static void debug(String message, Object... params) {
-        LOGGER.finer(_format(message, params));
+        LOGGER.config(_format(message, params));
     }
 
     public static void info(String message, Object... params) {

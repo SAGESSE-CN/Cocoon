@@ -26,7 +26,7 @@ logoFile = "icon.png"
 credits = "" #optional
 authors = "SAGESSE"
 description = '''
-A Cocoon Runtime Library
+A bukkit and mod compatibility plugin
 '''
 
 [[dependencies.cocoon_rt]]

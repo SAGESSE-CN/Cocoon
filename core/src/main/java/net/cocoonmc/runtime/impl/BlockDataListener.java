@@ -8,7 +8,6 @@ import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.chunk.Chunk;
 import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.core.world.loot.LootContext;
-import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -87,7 +86,6 @@ public class BlockDataListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockRedstone(BlockRedstoneEvent event) {
         updateBlockNeighboursIfNeeded(event.getBlock(), 0);
-        Logs.debug("{}", event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -150,7 +148,7 @@ public class BlockDataListener implements Listener {
         // we not need cancel this event, but block can't drop items.
         event.setDropItems(false);
         Player player = Player.of(event.getPlayer());
-        if (player.getGameMode().equals(GameMode.CREATIVE)) {
+        if (player.isCreative()) {
             return;
         }
         LootContext context = new LootContext();

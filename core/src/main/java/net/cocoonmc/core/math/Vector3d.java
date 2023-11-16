@@ -22,6 +22,10 @@ public class Vector3d {
         return new Vector3d(loc.getX(), loc.getY(), loc.getZ());
     }
 
+    public static Vector3d of(org.bukkit.util.Vector loc) {
+        return new Vector3d(loc.getX(), loc.getY(), loc.getZ());
+    }
+
     public static Vector3d of(BlockPos loc) {
         return new Vector3d(loc.getX(), loc.getY(), loc.getZ());
     }

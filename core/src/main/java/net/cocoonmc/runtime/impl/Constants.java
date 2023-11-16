@@ -15,6 +15,4 @@ public class Constants {
 
     public static final String PACKET_HANDLER_KEY = "cocoon_packet_handler";
     public static final String PACKET_ENCODER_KEY = "cocoon_packet_encoder";
-
-    public static final String NETWORK_KEY =  "cocoon:play";
 }

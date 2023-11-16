@@ -17,6 +17,7 @@ import org.bukkit.inventory.Inventory;
 
 import java.lang.reflect.Method;
 
+@SuppressWarnings("unused")
 public class Player extends LivingEntity {
 
     private org.bukkit.entity.Player delegate;
@@ -129,6 +130,14 @@ public class Player extends LivingEntity {
 
     public boolean isSecondaryUseActive() {
         return delegate.isSneaking();
+    }
+
+    public boolean isCreative() {
+        return delegate.getGameMode() == GameMode.CREATIVE;
+    }
+
+    public boolean isSpectator() {
+        return delegate.getGameMode() == GameMode.SPECTATOR;
     }
 
     public Inventory getInventory() {

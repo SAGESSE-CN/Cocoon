@@ -12,17 +12,12 @@ import org.bukkit.NamespacedKey;
 
 public class ConstantKeys {
 
-    //public static final SimpleAssociatedKey<BlockData> BLOCK_DATA_KEY = SimpleAssociatedKey.of(BlockData.class);
-    public static final SimpleAssociatedKey<Chunk> CHUNK_DATA_KEY = SimpleAssociatedKey.of(Chunk.class);
-
     public static final SimpleAssociatedKey<Entity> ENTITY_KEY = SimpleAssociatedKey.of(Entity.class);
     public static final SimpleAssociatedKey<LivingEntity> LIVING_ENTITY_KEY = SimpleAssociatedKey.of(LivingEntity.class);
     public static final SimpleAssociatedKey<Player> PLAYER_KEY = SimpleAssociatedKey.of(Player.class);
 
-    public static final SimpleAssociatedKey<Level> LEVEL_KEY = SimpleAssociatedKey.of(Level.class);
-
     public static final NamespacedKey CACHE_KEY = BukkitHelper.getKey("cocoon", "chunk");
     public static final NamespacedKey ENTITY_TYPE_KEY = BukkitHelper.getKey("cocoon", "type");
 
-    public static final ResourceLocation NETWORK_KEY = new ResourceLocation(Constants.NETWORK_KEY);
+    public static final ResourceLocation NETWORK_KEY = new ResourceLocation("cocoon", "play");
 }

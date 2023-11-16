@@ -130,6 +130,10 @@ public class Chunk {
         return key.getZ();
     }
 
+    public String getName() {
+        return String.format("%s(%d, %d)", level.getName(), key.getX(), key.getZ());
+    }
+
     public Level getLevel() {
         return level;
     }
@@ -168,7 +172,7 @@ public class Chunk {
             entityCounter += 1;
         }
         if (entityCounter != 0) {
-            Logs.debug("{} load entities: {}", this, entityCounter);
+            Logs.debug("{} load entities: {}", getName(), entityCounter);
         }
     }
 
@@ -181,7 +185,7 @@ public class Chunk {
         if (buf != null) {
             load(buf);
             isSaved = true;
-            Logs.debug("{} load blocks: {}", this, allStates.size());
+            Logs.debug("{} load blocks: {}", getName(), allStates.size());
         }
     }
 
@@ -189,7 +193,7 @@ public class Chunk {
         isDirty = false;
         if (allStates.isEmpty()) {
             if (isSaved) {
-                Logs.debug("{} clear", this);
+                Logs.debug("{} clear", getName());
                 container.remove(ConstantKeys.CACHE_KEY);
                 isSaved = false;
             }
@@ -198,7 +202,7 @@ public class Chunk {
         FriendlyByteBuf buf = new FriendlyByteBuf();
         save(buf);
         container.set(ConstantKeys.CACHE_KEY, TagPersistentData.DEFAULT, buf);
-        Logs.debug("{} save blocks: {}", this, allStates.size());
+        Logs.debug("{} save blocks: {}", getName(), allStates.size());
         isSaved = true;
     }
 
@@ -285,7 +289,10 @@ public class Chunk {
                 allUpdateTags.put(pos, tag);
             }
             if (!allCollissionShaps.containsKey(pos)) {
-                VoxelShape shape = state.getCollisionShape(level, pos);
+                VoxelShape shape = VoxelShape.EMPTY;;
+                if (!state.isLadder(level, pos, null)) {
+                    shape = state.getCollisionShape(level, pos);
+                }
                 //Logs.debug("{} generate collission shape {} => {}", level.getName(), pos, shape);
                 allCollissionShaps.put(pos, shape);
             }

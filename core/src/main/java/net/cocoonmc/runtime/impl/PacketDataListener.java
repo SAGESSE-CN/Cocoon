@@ -24,7 +24,6 @@ import net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket;
 import net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket;
 import net.cocoonmc.core.network.protocol.Packet;
 import net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket;
-import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.utils.Pair;
 import net.cocoonmc.core.utils.ThrowableConsumer;
 import net.cocoonmc.core.world.entity.Player;
@@ -39,19 +38,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class PacketDataListener implements Listener {
 
     private static final ConcurrentHashMap<Integer, Pair<Vector3d, Vector3d>> OFFSETS = new ConcurrentHashMap<>();
 
-    //private static final AttributeKey<Object> PACKET_KEY = AttributeKey.valueOf("cocoon_packet");
     private static final AttributeKey<Player> OWNER_KEY = AttributeKey.valueOf("cocoon_owner");
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(PlayerJoinEvent event) {
         // add a new packet handler into player connection.
         Player player = Player.of(event.getPlayer());
-        player.addChannel(Constants.NETWORK_KEY);
         Cocoon.API.NETWORK.register(player, channel -> {
             ChannelPipeline pipeline = channel.pipeline();
             ChannelHandler handler = pipeline.get(Constants.PACKET_HANDLER_KEY);
@@ -68,24 +66,12 @@ public class PacketDataListener implements Listener {
         });
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onLogin(PlayerLoginEvent event) {
-//        // add a new packet handler into player connection.
-//        Player player = Player.of(event.getPlayer());
-//        player.addChannel(Constants.NETWORK_KEY);
-//        // send init packet.
-//        FriendlyByteBuf buffer = new FriendlyByteBuf();
-//        buffer.writeVarInt(0);  // init
-//        buffer.writeVarInt(0x01); // options
-//        BukkitHelper.sendCustomPacket(event.getPlayer(), buffer);
-    }
-
     public static Packet handleChunkUpdate(ClientboundLevelChunkWithLightPacket packet, Player player) {
         ListTag tag = LevelData.getClientChunk(player, packet.getX(), packet.getZ());
         if (tag == null) {
             return packet;
         }
-        //Logs.debug("{} patch chunk ({},{})", player.getLevel().getName(), packet.getX(), packet.getZ());
+        Logs.trace("{} patch chunk ({},{})", player.getLevel().getName(), packet.getX(), packet.getZ());
         packet.getHeightmaps().put(Constants.CHUNK_REDIRECTED_KEY, tag);
         return packet;
     }
@@ -100,7 +86,7 @@ public class PacketDataListener implements Listener {
         buf.writeVarInt(packet.getStateId());
         buf.writeNbt(tag);
         Packet pre = ClientboundCustomPayloadPacket.create(buf);
-        //Logs.debug("{} patch block {} => {}", player.getLevel().getName(), packet.getPos(), tag);
+        Logs.trace("{} patch block {} => {}", player.getLevel().getName(), packet.getPos(), tag);
         return ClientboundBundlePacket.create(Lists.newArrayList(pre, packet));
     }
 
@@ -123,7 +109,7 @@ public class PacketDataListener implements Listener {
             buf.writeNbt(pair.getSecond());
         }
         Packet pre = ClientboundCustomPayloadPacket.create(buf);
-        //Logs.debug("{} patch section {}", player.getLevel().getName(), pairs.stream().map(Pair::getSecond).collect(Collectors.toList()));
+        Logs.trace("{} patch section {}", player.getLevel().getName(), pairs.stream().map(Pair::getSecond).collect(Collectors.toList()));
         return ClientboundBundlePacket.create(Lists.newArrayList(pre, packet));
     }
 
@@ -136,10 +122,10 @@ public class PacketDataListener implements Listener {
         Vector3d lastPos = pair.getSecond();
         Vector3d serverPos = packet.getPos();
         if (!lastPos.equals(serverPos)) {
-            //Logs.debug("{} patch move out fail, server changed pos!", player.getUUID());
+            Logs.trace("{} patch move out fail, server changed pos!", player.getUUID());
             return packet;
         }
-        //Logs.debug("{} patch move out {} => {} ", player.getUUID(), serverPos, clientPos);
+        Logs.trace("{} patch move out {} => {} ", player.getUUID(), serverPos, clientPos);
         return packet.setPos(clientPos);
     }
 
@@ -148,33 +134,33 @@ public class PacketDataListener implements Listener {
         Vector3d clientPos = packet.getPos();
         Pair<Vector3d, Vector3d> pair = OFFSETS.get(playerId);
         if (pair != null && pair.getFirst().equals(clientPos)) {
-            //Logs.debug("{} not location changes, keep last pos {}", player.getUUID(), pair.getSecond());
+            //Logs.trace("{} not location changes, keep last pos {}", player.getUUID(), pair.getSecond());
             return packet.setPos(pair.getSecond());
         }
         Vector3d lastPos = player.getLocation();
         if (pair == null && lastPos.equals(clientPos)) {
-            //Logs.debug("{} not location changes, apply the client pos {}", player.getUUID(), clientPos);
+            //Logs.trace("{} not location changes, apply the client pos {}", player.getUUID(), clientPos);
             return packet;
         }
         CollissionBox box = LevelData.getClientBlockCollisions(player, clientPos);
         if (box == null) {
             OFFSETS.remove(playerId);
             if (pair != null && pair.getFirst().distanceTo(clientPos) <= 1) {
-                //Logs.debug("{} reset location {}", player.getUUID(), pair.getFirst());
+                Logs.trace("{} reset location {}", player.getUUID(), pair.getFirst());
                 packet.applyTo(player);
             }
             return packet;
         }
         if (pair != null && pair.getFirst().distanceTo(clientPos) > 1) {
-            //Logs.debug("{} patch move in fail, client move too fast!", player.getUUID(), clientPos);
+            Logs.trace("{} patch move in fail, client move too fast!", player.getUUID(), clientPos);
             return packet;
         }
         if (pair == null && lastPos.distanceTo(clientPos) > 1) {
-            //Logs.debug("{} patch move in fail, client move too fast!!", player.getUUID(), clientPos);
+            Logs.trace("{} patch move in fail, client move too fast!!", player.getUUID(), clientPos);
             return packet;
         }
         OFFSETS.put(playerId, Pair.of(clientPos, lastPos));
-        //Logs.debug("{} patch move in {} => {}", player.getUUID(), clientPos, lastPos);
+        Logs.trace("{} patch move in {} => {}", player.getUUID(), clientPos, lastPos);
         return packet.setPos(lastPos);
     }
 
@@ -189,7 +175,7 @@ public class PacketDataListener implements Listener {
         buf.writeVarInt(entityId);
         buf.writeNbt(tag);
         Packet pre = ClientboundCustomPayloadPacket.create(buf);
-        Logs.debug("{} patch entity {} => {}", player.getUUID(), entityId, tag);
+        Logs.trace("{} patch entity {} => {}", player.getUUID(), entityId, tag);
         return ClientboundBundlePacket.create(Lists.newArrayList(pre, packet));
     }
 

@@ -3,7 +3,7 @@
 	"id": "cocoon_rt",
 	"version": "${version}",
 	"name": "Cocoon Runtime Library",
-	"description": "A Cocoon Runtime Library",
+	"description": "A bukkit and mod compatibility plugin",
 	"authors": [
 		"SAGESSE"
 	],

@@ -118,7 +118,7 @@ public class ItemDataListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onInteractEntity2(PlayerInteractAtEntityEvent event) {
+    public void onInteractEntityAt(PlayerInteractAtEntityEvent event) {
         onInteractEntity(event);
     }
 
@@ -136,7 +136,7 @@ public class ItemDataListener implements Listener {
     }
 
 //    @EventHandler(ignoreCancelled = true)
-//    public void onAttackEntity2(EntityDamageByBlockEvent event) {
+//    public void onAttackEntityBy(EntityDamageByBlockEvent event) {
 //    }
 
     @EventHandler(ignoreCancelled = true)

@@ -14,14 +14,12 @@ import net.cocoonmc.runtime.ITagFactory;
 import net.cocoonmc.runtime.impl.BlockDataListener;
 import net.cocoonmc.runtime.impl.CacheFactory;
 import net.cocoonmc.runtime.impl.ChunkDataListener;
-import net.cocoonmc.runtime.impl.Constants;
 import net.cocoonmc.runtime.impl.EntityDataListener;
 import net.cocoonmc.runtime.impl.ItemDataListener;
 import net.cocoonmc.runtime.impl.LevelData;
 import net.cocoonmc.runtime.impl.PacketDataListener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.plugin.messaging.Messenger;
 
 public class Cocoon {
 
@@ -30,12 +28,10 @@ public class Cocoon {
 
     private final JavaPlugin plugin;
     private final PluginManager manager;
-    private final Messenger messenger;
 
     private Cocoon() {
         this.plugin = JavaPlugin.getProvidingPlugin(Cocoon.class);
         this.manager = plugin.getServer().getPluginManager();
-        this.messenger = plugin.getServer().getMessenger();
     }
 
     private void registerEvents() {
@@ -44,10 +40,9 @@ public class Cocoon {
         this.manager.registerEvents(new EntityDataListener(), plugin);
         this.manager.registerEvents(new ChunkDataListener(), plugin);
         this.manager.registerEvents(new PacketDataListener(), plugin);
-        this.messenger.registerOutgoingPluginChannel(plugin, Constants.NETWORK_KEY);
     }
 
-    public static void enable() {
+    public static void onEnable() {
         Items.init();
         Blocks.init();
         LevelData.open();
@@ -55,7 +50,7 @@ public class Cocoon {
         API.TRANSFORMER.enable();
     }
 
-    public static void disable() {
+    public static void onDisable() {
         API.TRANSFORMER.disable();
     }
 

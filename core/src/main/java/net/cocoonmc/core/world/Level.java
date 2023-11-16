@@ -12,15 +12,15 @@ import net.cocoonmc.runtime.impl.LevelData;
 import net.cocoonmc.runtime.impl.Logs;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
 public class Level {
 
     private final org.bukkit.World world;
-    private final HashMap<Long, Chunk> chunks = new HashMap<>();
+    private final ConcurrentHashMap<Long, Chunk> chunks = new ConcurrentHashMap<>();
 
     private final UUID uuid;
     private final String name;

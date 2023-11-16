@@ -1,0 +1,7 @@
+name: cocoon
+version: '${version}'
+main: net.cocoonmc.runtime.impl.CocoonPluginImpl
+api-version: 1.16
+depend: [ ]
+authors: [ SAGESSE ]
+description: A bukkit and mod compatibility plugin

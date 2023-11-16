@@ -9,8 +9,11 @@ import net.cocoonmc.core.math.VoxelShape;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.Level;
+import net.cocoonmc.core.world.entity.Entity;
+import net.cocoonmc.core.world.entity.LivingEntity;
 import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.core.world.loot.LootContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -42,6 +45,14 @@ public class BlockState extends StateHolder<Block, BlockState> {
 
     public boolean canSurvive(Level level, BlockPos blockPos) {
         return getBlock().canSurvive(this, level, blockPos);
+    }
+
+    public boolean isBed(Level level, BlockPos pos, @Nullable Entity entity) {
+        return getBlock().isBed(level, pos, this, entity);
+    }
+
+    public boolean isLadder(Level level, BlockPos pos, @Nullable LivingEntity entity) {
+        return getBlock().isLadder(level, pos, this, entity);
     }
 
     public Block getBlock() {

@@ -39,11 +39,11 @@ public class PacketHelper {
         if (packetListener == null) {
             return;
         }
-        if (instance.isSameThread()) {
+//        if (instance.isSameThread()) {
             packet.handle(packetListener);
-        } else {
-            instance.execute(() -> packet.handle(packetListener));
-        }
+//        } else {
+//            instance.execute(() -> packet.handle(packetListener));
+//        }
     }
 
     public static void handle(Connection connection, FriendlyByteBuf payload) {

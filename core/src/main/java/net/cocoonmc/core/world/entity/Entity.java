@@ -7,14 +7,19 @@ import net.cocoonmc.core.math.Vector3f;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.utils.ObjectHelper;
+import net.cocoonmc.core.utils.SimpleAssociatedStorage;
+import net.cocoonmc.core.world.InteractionHand;
+import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.Level;
+import net.cocoonmc.runtime.IAssociatedContainer;
+import net.cocoonmc.runtime.IAssociatedContainerProvider;
 import net.cocoonmc.runtime.impl.ConstantKeys;
 import net.cocoonmc.runtime.impl.LevelData;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.UUID;
 
-public class Entity {
+public class Entity implements IAssociatedContainerProvider {
 
     private int id;
     private UUID uuid = BukkitHelper.INVALID_UUID;
@@ -24,7 +29,9 @@ public class Entity {
 
     private Vector3d location = Vector3d.ZERO;
     private Vector3f bodyRot = Vector3f.ZERO;
+
     private org.bukkit.entity.Entity delegate;
+    private final SimpleAssociatedStorage storage = new SimpleAssociatedStorage();
 
     public Entity(EntityType<?> entityType, Level level) {
         this.entityType = entityType;
@@ -41,6 +48,10 @@ public class Entity {
             entity1.setDelegate(it);
             return entity1;
         });
+    }
+
+    public InteractionResult interactAt(Player player, Vector3d position, InteractionHand interactionHand) {
+        return InteractionResult.PASS;
     }
 
     public double distanceTo(Entity entity) {
@@ -145,6 +156,11 @@ public class Entity {
         if (entityType.getDelegate() != null) {
             LevelData.updateClientEntityType(level, id, entityType);
         }
+    }
+
+    @Override
+    public IAssociatedContainer getAssociatedContainer() {
+        return storage;
     }
 
     public org.bukkit.entity.Entity asBukkit() {
