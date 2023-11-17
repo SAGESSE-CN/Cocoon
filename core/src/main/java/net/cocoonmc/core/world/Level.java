@@ -61,7 +61,7 @@ public class Level {
             return;
         }
         EntityPlaceTask.push(this, entity);
-        world.spawnEntity(entity.getLocation().asBukkit(), entityType1);
+        world.spawnEntity(entity.getPosition().asBukkit(), entityType1);
         EntityPlaceTask.pop(this, entity);
     }
 

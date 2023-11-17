@@ -17,6 +17,7 @@ public class ConstantKeys {
     public static final SimpleAssociatedKey<Player> PLAYER_KEY = SimpleAssociatedKey.of(Player.class);
 
     public static final NamespacedKey CACHE_KEY = BukkitHelper.getKey("cocoon", "chunk");
+    public static final NamespacedKey ENTITY_TAG_KEY = BukkitHelper.getKey("cocoon", "tag");
     public static final NamespacedKey ENTITY_TYPE_KEY = BukkitHelper.getKey("cocoon", "type");
 
     public static final ResourceLocation NETWORK_KEY = new ResourceLocation("cocoon", "play");

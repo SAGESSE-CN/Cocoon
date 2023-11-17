@@ -22,11 +22,10 @@ public class EntityPlaceTask {
     }
 
     public void apply(org.bukkit.entity.Entity entityIn) {
-        Vector3f bodyRot = entity.getBodyRot();
         Level level = Level.of(entityIn.getWorld());
         entity.setLevel(level);
         entity.setDelegate(entityIn);
-        entityIn.setRotation(bodyRot.getY(), bodyRot.getX());
+        entity.sendToBukkit();
         BukkitHelper.setCustomEntityType(entityIn, entity.getType());
     }
 

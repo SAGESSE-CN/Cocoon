@@ -22,6 +22,7 @@ import net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket;
 import net.cocoonmc.core.network.protocol.ClientboundLevelChunkWithLightPacket;
 import net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket;
 import net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket;
+import net.cocoonmc.core.network.protocol.ClientboundSetEntityDataPacket;
 import net.cocoonmc.core.network.protocol.Packet;
 import net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket;
 import net.cocoonmc.core.utils.Pair;
@@ -31,7 +32,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -137,7 +137,7 @@ public class PacketDataListener implements Listener {
             //Logs.trace("{} not location changes, keep last pos {}", player.getUUID(), pair.getSecond());
             return packet.setPos(pair.getSecond());
         }
-        Vector3d lastPos = player.getLocation();
+        Vector3d lastPos = player.getPosition();
         if (pair == null && lastPos.equals(clientPos)) {
             //Logs.trace("{} not location changes, apply the client pos {}", player.getUUID(), clientPos);
             return packet;
@@ -176,6 +176,17 @@ public class PacketDataListener implements Listener {
         buf.writeNbt(tag);
         Packet pre = ClientboundCustomPayloadPacket.create(buf);
         Logs.trace("{} patch entity {} => {}", player.getUUID(), entityId, tag);
+        return ClientboundBundlePacket.create(Lists.newArrayList(pre, packet));
+    }
+
+    public static Packet handleSetEntityData(ClientboundSetEntityDataPacket packet, Player player) {
+        int entityId = packet.getId();
+        FriendlyByteBuf data = LevelData.getClientEntityData(player, entityId);
+        if (data == null) {
+            return packet;
+        }
+        Packet pre = ClientboundCustomPayloadPacket.create(new FriendlyByteBuf(data.duplicate()));
+        Logs.trace("{} patch entity data {} => {}", player.getUUID(), entityId, data.readableBytes());
         return ClientboundBundlePacket.create(Lists.newArrayList(pre, packet));
     }
 

@@ -8,6 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -29,5 +30,9 @@ public class RuntimeHelper {
 
     public static ClientboundCustomPayloadPacket buildCustomPayloadPacket(ResourceLocation id, FriendlyByteBuf buf) {
         return new ClientboundCustomPayloadPacket(id, buf);
+    }
+
+    public static ClientboundSetEntityDataPacket buildSetEntityDataPacket(FriendlyByteBuf buf) {
+        return new ClientboundSetEntityDataPacket(buf);
     }
 }

@@ -10,6 +10,7 @@ import net.cocoonmc.core.utils.ObjectHelper;
 import net.cocoonmc.core.world.InteractionHand;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.runtime.impl.ConstantKeys;
+import net.cocoonmc.runtime.impl.LevelData;
 import org.bukkit.GameMode;
 import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.EquipmentSlot;
@@ -29,9 +30,10 @@ public class Player extends LivingEntity {
     public static Player of(org.bukkit.entity.Player player) {
         return Cocoon.API.CACHE.computeIfAbsent(player, ConstantKeys.PLAYER_KEY, it -> {
             Level level = Level.of(it.getWorld());
-            Player entity = EntityTypes.PLAYER.create(level, BlockPos.ZERO, null);
-            entity.setDelegate(it);
-            return entity;
+            Player entity1 = EntityTypes.PLAYER.create(level, BlockPos.ZERO, null);
+            entity1.setDelegate(it);
+            LevelData.loadEntityTag(entity1);
+            return entity1;
         });
     }
 

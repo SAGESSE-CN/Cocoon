@@ -6,6 +6,7 @@ import net.cocoonmc.core.network.protocol.ClientboundBundlePacket;
 import net.cocoonmc.core.network.protocol.ClientboundLevelChunkWithLightPacket;
 import net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket;
 import net.cocoonmc.core.network.protocol.ClientboundSectionBlocksUpdatePacket;
+import net.cocoonmc.core.network.protocol.ClientboundSetEntityDataPacket;
 import net.cocoonmc.core.network.protocol.Packet;
 import net.cocoonmc.core.network.protocol.ServerboundMovePlayerPacket;
 import net.cocoonmc.core.world.entity.Player;
@@ -43,6 +44,7 @@ public class PacketTransformer {
         register(PacketDataListener::handleBlockUpdate, ClientboundBlockUpdatePacket.class);
         register(PacketDataListener::handleSectionUpdate, ClientboundSectionBlocksUpdatePacket.class);
         register(PacketDataListener::handleAddEntity, ClientboundAddEntityPacket.class);
+        register(PacketDataListener::handleSetEntityData, ClientboundSetEntityDataPacket.class);
         register(PacketDataListener::handlePlayerMove, ClientboundPlayerPositionPacket.class);
         register(PacketDataListener::handlePlayerMove, ServerboundMovePlayerPacket.class);
     }

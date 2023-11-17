@@ -8,6 +8,7 @@
     "ClientLevelChunkMixin",
     "ClientLevelEntityMixin",
     "FriendlyByteBufMixin",
+    "EntityDataMixin",
     "ItemStackMixin",
     "NetworkMixin"
   ],

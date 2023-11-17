@@ -4,6 +4,9 @@ import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.math.Vector3d;
 import net.cocoonmc.core.math.Vector3f;
+import net.cocoonmc.core.nbt.CompoundTag;
+import net.cocoonmc.core.network.syncher.EntityDataAccessor;
+import net.cocoonmc.core.network.syncher.SynchedEntityData;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.utils.ObjectHelper;
@@ -25,9 +28,10 @@ public class Entity implements IAssociatedContainerProvider {
     private UUID uuid = BukkitHelper.INVALID_UUID;
 
     protected Level level;
+    protected final SynchedEntityData entityData;
     protected final EntityType<?> entityType;
 
-    private Vector3d location = Vector3d.ZERO;
+    private Vector3d position = Vector3d.ZERO;
     private Vector3f bodyRot = Vector3f.ZERO;
 
     private org.bukkit.entity.Entity delegate;
@@ -35,7 +39,9 @@ public class Entity implements IAssociatedContainerProvider {
 
     public Entity(EntityType<?> entityType, Level level) {
         this.entityType = entityType;
+        this.entityData = new SynchedEntityData(this);
         this.level = level;
+        this.defineSynchedData();
     }
 
     public static Entity of(org.bukkit.entity.Entity entity) {
@@ -46,8 +52,22 @@ public class Entity implements IAssociatedContainerProvider {
             EntityType<Entity> entityType = EntityTypes.findEntityType(it);
             Entity entity1 = entityType.create(Level.of(it.getWorld()), BlockPos.ZERO, null);
             entity1.setDelegate(it);
+            LevelData.loadEntityTag(entity1);
             return entity1;
         });
+    }
+
+    public void addAdditionalSaveData(CompoundTag tag) {
+    }
+
+    public void readAdditionalSaveData(CompoundTag tag) {
+    }
+
+
+    protected void defineSynchedData() {
+    }
+
+    public void onSyncedDataUpdated(EntityDataAccessor<?> dataParameter) {
     }
 
     public InteractionResult interactAt(Player player, Vector3d position, InteractionHand interactionHand) {
@@ -100,6 +120,10 @@ public class Entity implements IAssociatedContainerProvider {
         return getUUID().toString();
     }
 
+    public SynchedEntityData getEntityData() {
+        return entityData;
+    }
+
     public EntityType<?> getType() {
         return entityType;
     }
@@ -112,9 +136,9 @@ public class Entity implements IAssociatedContainerProvider {
         return level;
     }
 
-    public void setLocation(Vector3d location) {
+    public void setPosition(Vector3d position) {
         if (this.delegate == null) {
-            this.location = location;
+            this.position = position;
             return;
         }
         org.bukkit.Location loc = delegate.getLocation().clone();
@@ -124,9 +148,9 @@ public class Entity implements IAssociatedContainerProvider {
         delegate.teleport(loc);
     }
 
-    public Vector3d getLocation() {
+    public Vector3d getPosition() {
         if (this.delegate == null) {
-            return this.location;
+            return this.position;
         }
         return Vector3d.of(delegate.getLocation());
     }
@@ -148,12 +172,10 @@ public class Entity implements IAssociatedContainerProvider {
 
     public void setDelegate(org.bukkit.entity.Entity delegate) {
         this.delegate = delegate;
-        if (delegate != null) {
-            this.id = delegate.getEntityId();
-            this.uuid = delegate.getUniqueId();
-            this.location = Vector3d.of(delegate.getLocation());
-        }
-        if (entityType.getDelegate() != null) {
+        this.id = delegate.getEntityId();
+        this.uuid = delegate.getUniqueId();
+        this.position = Vector3d.of(delegate.getLocation());
+        if (this.entityType.getDelegate() != null) {
             LevelData.updateClientEntityType(level, id, entityType);
         }
     }
@@ -165,6 +187,10 @@ public class Entity implements IAssociatedContainerProvider {
 
     public org.bukkit.entity.Entity asBukkit() {
         return delegate;
+    }
+
+    public void sendToBukkit() {
+        delegate.setRotation(bodyRot.getY(), bodyRot.getX());
     }
 
     @Override

@@ -1,5 +1,6 @@
 package net.cocoonmc.core.utils;
 
+import io.netty.buffer.Unpooled;
 import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.Direction;
@@ -10,6 +11,8 @@ import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.item.Items;
 import net.cocoonmc.core.item.context.BlockPlaceContext;
 import net.cocoonmc.core.nbt.CompoundTag;
+import net.cocoonmc.core.network.FriendlyByteBuf;
+import net.cocoonmc.core.network.syncher.SynchedEntityData;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.world.InteractionResult;
 import net.cocoonmc.core.world.Level;
@@ -165,6 +168,16 @@ public class BukkitHelper {
         entity.getPersistentDataContainer().set(ConstantKeys.ENTITY_TYPE_KEY, PersistentDataType.STRING, entityType.getRegistryName().toString());
     }
 
+    @Nullable
+    public static CompoundTag readCustomEntityTag(org.bukkit.entity.Entity entity) {
+        return entity.getPersistentDataContainer().get(ConstantKeys.ENTITY_TAG_KEY, PersistentDataHelper.COMPOUND_TAG);
+    }
+
+    public static void saveCustomEntityTag(org.bukkit.entity.Entity entity, CompoundTag tag) {
+        entity.getPersistentDataContainer().set(ConstantKeys.ENTITY_TAG_KEY, PersistentDataHelper.COMPOUND_TAG, tag);
+    }
+
+
     public static EntityType<?> getCustomEntityType(org.bukkit.entity.Entity entity) {
         String value = entity.getPersistentDataContainer().get(ConstantKeys.ENTITY_TYPE_KEY, PersistentDataType.STRING);
         if (value != null) {
@@ -217,6 +230,19 @@ public class BukkitHelper {
 
     public static org.bukkit.block.BlockFace convertToBukkit(Direction direction) {
         return DIRECTION_TO_FACE[direction.ordinal()];
+    }
+
+    @Nullable
+    public static FriendlyByteBuf convertToBytes(int entityId, List<SynchedEntityData.DataItem<?>> items) {
+        if (items == null || items.isEmpty()) {
+            return null;
+        }
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.directBuffer());
+        buf.writeVarInt(5);  // set data
+        buf.writeVarInt(entityId);
+        buf.writeVarInt(items.size());
+        items.forEach(it -> it.write(buf));
+        return buf;
     }
 
 

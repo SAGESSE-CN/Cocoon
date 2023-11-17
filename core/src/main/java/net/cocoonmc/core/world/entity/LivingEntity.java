@@ -4,6 +4,7 @@ import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.runtime.impl.ConstantKeys;
+import net.cocoonmc.runtime.impl.LevelData;
 
 public class LivingEntity extends Entity {
 
@@ -21,6 +22,7 @@ public class LivingEntity extends Entity {
             EntityType<LivingEntity> entityType = EntityTypes.findEntityType(it);
             LivingEntity entity1 = entityType.create(Level.of(it.getWorld()), BlockPos.ZERO, null);
             entity1.setDelegate(it);
+            LevelData.loadEntityTag(entity1);
             return entity1;
         });
     }

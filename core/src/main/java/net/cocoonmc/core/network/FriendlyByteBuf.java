@@ -87,6 +87,19 @@ public class FriendlyByteBuf extends ByteBuf {
         return i;
     }
 
+    public long readVarLong() {
+        byte b;
+        long l = 0L;
+        int i = 0;
+        do {
+            b = this.readByte();
+            l |= (long) (b & 0x7F) << i++ * 7;
+            if (i <= 10) continue;
+            throw new RuntimeException("VarLong too big");
+        } while ((b & 0x80) == 128);
+        return l;
+    }
+
     public FriendlyByteBuf writeUUID(UUID uUID) {
         writeLong(uUID.getMostSignificantBits());
         writeLong(uUID.getLeastSignificantBits());
@@ -114,6 +127,17 @@ public class FriendlyByteBuf extends ByteBuf {
 
         writeByte(i);
         return this;
+    }
+
+    public FriendlyByteBuf writeVarLong(long l) {
+        while (true) {
+            if ((l & 0xFFFFFFFFFFFFFF80L) == 0L) {
+                this.writeByte((int) l);
+                return this;
+            }
+            this.writeByte((int) (l & 0x7FL) | 0x80);
+            l >>>= 7;
+        }
     }
 
     public String readUtf(int i) {

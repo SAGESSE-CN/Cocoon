@@ -44,13 +44,13 @@ public class MathHelper {
     }
 
     public static int floor(double d) {
-        int i = (int)d;
-        return d < (double)i ? i - 1 : i;
+        int i = (int) d;
+        return d < (double) i ? i - 1 : i;
     }
 
     public static int ceil(double d) {
-        int i = (int)d;
-        return d > (double)i ? i + 1 : i;
+        int i = (int) d;
+        return d > (double) i ? i + 1 : i;
     }
 
     public static float fastInvSqrt(float v) {
@@ -99,12 +99,53 @@ public class MathHelper {
         // sin(x)^2 + cos(x)^2 = 1
         float cos = sqrt(1.0f - sin * sin);
         float a = angle + PI_D2;
-        float b = a - (int)(a / PI_M2) * PI_M2;
+        float b = a - (int) (a / PI_M2) * PI_M2;
         if (b < 0.0)
             b = PI_M2 + b;
         if (b >= PI)
             return -cos;
         return cos;
+    }
+
+    public static int wrapDegrees(int i) {
+        int j = i % 360;
+        if (j >= 180) {
+            j -= 360;
+        }
+        if (j < -180) {
+            j += 360;
+        }
+        return j;
+    }
+
+    public static float wrapDegrees(float f) {
+        float g = f % 360.0f;
+        if (g >= 180.0f) {
+            g -= 360.0f;
+        }
+        if (g < -180.0f) {
+            g += 360.0f;
+        }
+        return g;
+    }
+
+    public static double wrapDegrees(double d) {
+        double e = d % 360.0;
+        if (e >= 180.0) {
+            e -= 360.0;
+        }
+        if (e < -180.0) {
+            e += 360.0;
+        }
+        return e;
+    }
+
+    public static double toDegrees(double angrad) {
+        return Math.toDegrees(angrad);
+    }
+
+    public static double toRadians(double value) {
+        return Math.toRadians((value + 360) % 360);
     }
 
     static {

@@ -13,6 +13,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -27,7 +28,15 @@ public class PacketHelper {
 
     private static final ResourceLocation COCOON_PLAY = new ResourceLocation("cocoon", "play");
 
-    private static final ImmutableMap<Integer, BiConsumer<Connection, FriendlyByteBuf>> HANDLERS = ImmutableMap.<Integer, BiConsumer<Connection, FriendlyByteBuf>>builder().put(0, PacketHelper::handleInit).put(1, PacketHelper::handleBlockChange).put(2, PacketHelper::handleBlockData).put(3, PacketHelper::handleSectionUpdate).put(4, PacketHelper::handleAddEntity).put(5, PacketHelper::handleSetEntityData).put(6, PacketHelper::handleOpenWindow).build();
+    private static final ImmutableMap<Integer, BiConsumer<Connection, FriendlyByteBuf>> HANDLERS = ImmutableMap.<Integer, BiConsumer<Connection, FriendlyByteBuf>>builder()
+            .put(0, PacketHelper::handleInit)
+            .put(1, PacketHelper::handleBlockChange)
+            .put(2, PacketHelper::handleBlockData)
+            .put(3, PacketHelper::handleSectionUpdate)
+            .put(4, PacketHelper::handleAddEntity)
+            .put(5, PacketHelper::handleSetEntityData)
+            .put(6, PacketHelper::handleOpenWindow)
+            .build();
 
     public static boolean test(ResourceLocation id) {
         return id.equals(COCOON_PLAY);
@@ -39,11 +48,7 @@ public class PacketHelper {
         if (packetListener == null) {
             return;
         }
-//        if (instance.isSameThread()) {
-            packet.handle(packetListener);
-//        } else {
-//            instance.execute(() -> packet.handle(packetListener));
-//        }
+        packet.handle(packetListener);
     }
 
     public static void handle(Connection connection, FriendlyByteBuf payload) {
@@ -148,7 +153,26 @@ public class PacketHelper {
     }
 
     private static void handleSetEntityData(Connection connection, FriendlyByteBuf payload) {
-//        send(RuntimeHelper.buildSetEntityDataPacket(payload));
+        int entityId = payload.readVarInt();
+        EntityHelper.DataList dataList = EntityHelper.createDataList(payload);
+        if (dataList.isEmpty()) {
+            return;
+        }
+        Minecraft.getInstance().execute(() -> {
+            Entity entity = Optional.ofNullable(Minecraft.getInstance().level).map(it -> it.getEntity(entityId)).orElse(null);
+            if (entity == null) {
+                return;
+            }
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer(payload.readableBytes()));
+            buf.writeVarInt(entityId);
+            for (EntityHelper.DataValue it : dataList.freeze(entity)) {
+                buf.writeByte(it.getId());
+                buf.writeVarInt(it.getSerializerId());
+                buf.writeBytes(it.getValue());
+            }
+            buf.writeByte(255);
+            send(RuntimeHelper.buildSetEntityDataPacket(buf));
+        });
     }
 }
 

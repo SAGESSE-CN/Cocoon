@@ -8,12 +8,16 @@ import net.cocoonmc.core.math.Vector3d;
 import net.cocoonmc.core.math.VoxelShape;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.ListTag;
+import net.cocoonmc.core.network.FriendlyByteBuf;
+import net.cocoonmc.core.network.syncher.SynchedEntityData;
 import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.utils.MathHelper;
+import net.cocoonmc.core.utils.PacketHelper;
 import net.cocoonmc.core.utils.Pair;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.chunk.Chunk;
 import net.cocoonmc.core.world.chunk.ChunkPos;
+import net.cocoonmc.core.world.entity.Entity;
 import net.cocoonmc.core.world.entity.EntityType;
 import net.cocoonmc.core.world.entity.Player;
 import org.jetbrains.annotations.Nullable;
@@ -33,9 +37,11 @@ public class LevelData {
     private static ConcurrentHashMap<UUID, Level> LEVELS = new ConcurrentHashMap<>();
     private static ConcurrentHashMap<ChunkPos, ClientInfo> CLIENT_INFOS = new ConcurrentHashMap<>();
     private static ConcurrentHashMap<Pair<UUID, Integer>, CompoundTag> CLIENT_ENTITIES = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<Pair<UUID, Integer>, FriendlyByteBuf> CLIENT_ENTITIE_DATAS = new ConcurrentHashMap<>();
 
-    private static UpdateTask UPDATE_STATE_TASK;
-    private static UpdateNeighborTask UPDATE_NEIGHBOR_TASK;
+    private static boolean DISABLE_SAVE_ENTITY_TAG = false;
+
+    private static UpdateBatchTask UPDATE_BATCH_TASK;
 
     public static Level get(org.bukkit.World world) {
         return LevelData.LEVELS.computeIfAbsent(world.getUID(), it -> new Level(world));
@@ -50,31 +56,33 @@ public class LevelData {
         LEVELS.clear();
     }
 
+    public static void loadEntityTag(Entity entity) {
+        CompoundTag entityTag = BukkitHelper.readCustomEntityTag(entity.asBukkit());
+        if (entityTag != null) {
+            DISABLE_SAVE_ENTITY_TAG = true;
+            //Logs.debug("{} load entity tag: {}", entity.getId(), entityTag);
+            entity.readAdditionalSaveData(entityTag);
+            DISABLE_SAVE_ENTITY_TAG = false;
+        }
+    }
+
+    public static void updateEntityTag(Entity entity) {
+        loop().entityTask.add(entity, !DISABLE_SAVE_ENTITY_TAG);
+    }
 
     public static void updateStates(Chunk chunk, BlockPos pos) {
-        if (UPDATE_STATE_TASK == null) {
-            beginUpdates();
-        }
-        if (UPDATE_STATE_TASK != null) {
-            UPDATE_STATE_TASK.add(chunk, pos);
-        }
+        loop().stateTask.add(chunk, pos);
     }
 
     public static void updateNeighbourShapes(Level level, BlockPos sourcePos, Block sourceBlock, int flags) {
-        if (UPDATE_NEIGHBOR_TASK == null) {
-            beginUpdates();
-        }
-        if (UPDATE_NEIGHBOR_TASK != null) {
-            UPDATE_NEIGHBOR_TASK.add(level, sourcePos, sourceBlock);
-        }
+        loop().neighborTask.add(level, sourcePos, sourceBlock);
     }
 
     public static void beginUpdates() {
-        if (UPDATE_STATE_TASK != null) {
+        if (UPDATE_BATCH_TASK != null) {
             return;
         }
-        UPDATE_STATE_TASK = new UpdateTask();
-        UPDATE_NEIGHBOR_TASK = new UpdateNeighborTask();
+        UPDATE_BATCH_TASK = new UpdateBatchTask();
         BukkitHelper.runTask(LevelData::endUpdates);
     }
 
@@ -83,24 +91,26 @@ public class LevelData {
     }
 
     public static void commit(Runnable r) {
-        if (UPDATE_STATE_TASK != null) {
-            UPDATE_STATE_TASK.commitTasks.add(r);
+        if (UPDATE_BATCH_TASK != null) {
+            UPDATE_BATCH_TASK.stateTask.commitTasks.add(r);
         } else {
             r.run();
         }
     }
 
     private static void flush() {
-        UpdateTask task1 = UPDATE_STATE_TASK;
-        UpdateNeighborTask task2 = UPDATE_NEIGHBOR_TASK;
-        UPDATE_STATE_TASK = null;
-        UPDATE_NEIGHBOR_TASK = null;
-        if (task1 != null) {
-            task1.execute();
+        UpdateBatchTask batchTask = UPDATE_BATCH_TASK;
+        UPDATE_BATCH_TASK = null;
+        if (batchTask != null) {
+            batchTask.execute();
         }
-        if (task2 != null) {
-            task2.execute();
+    }
+
+    private static UpdateBatchTask loop() {
+        if (UPDATE_BATCH_TASK == null) {
+            beginUpdates();
         }
+        return UPDATE_BATCH_TASK;
     }
 
     public static void updateClientChunk(ChunkPos key, Map<BlockPos, CompoundTag> blocks, Map<BlockPos, VoxelShape> collissionShaps) {
@@ -145,6 +155,10 @@ public class LevelData {
         return CLIENT_ENTITIES.get(Pair.of(player.getLevel().getUUID(), entityId));
     }
 
+    @Nullable
+    public static FriendlyByteBuf getClientEntityData(Player player, int entityId) {
+        return CLIENT_ENTITIE_DATAS.get(Pair.of(player.getLevel().getUUID(), entityId));
+    }
 
     @Nullable
     public static ListTag getClientChunk(Player player, int x, int z) {
@@ -221,6 +235,19 @@ public class LevelData {
         }
     }
 
+    public static class UpdateBatchTask {
+
+        UpdateTask stateTask = new UpdateTask();
+        UpdateNeighborTask neighborTask = new UpdateNeighborTask();
+        UpdateEntityTask entityTask = new UpdateEntityTask();
+
+        public void execute() {
+            stateTask.execute();
+            neighborTask.execute();
+            entityTask.execute();
+        }
+    }
+
     public static class UpdateTask {
 
         LinkedHashSet<UpdateInfo> pending = new LinkedHashSet<>();
@@ -235,9 +262,7 @@ public class LevelData {
                 });
             });
             chunks.forEach(Chunk::freeze);
-            commitTasks.forEach(it -> {
-                it.run();
-            });
+            commitTasks.forEach(Runnable::run);
         }
 
         public void add(Chunk chunk, BlockPos pos) {
@@ -250,6 +275,9 @@ public class LevelData {
         private LinkedHashMap<Level, LinkedHashMap<BlockPos, Block>> pending = new LinkedHashMap<>();
 
         public void execute() {
+            if (pending.isEmpty()) {
+                return;
+            }
             NeighborUpdater updater = new NeighborUpdater();
             pending.forEach((level, tasks) -> tasks.forEach((pos, block) -> {
                 //
@@ -259,6 +287,52 @@ public class LevelData {
 
         public void add(Level level, BlockPos sourcePos, Block sourceBlock) {
             pending.computeIfAbsent(level, it -> new LinkedHashMap<>()).put(sourcePos, sourceBlock);
+        }
+    }
+
+    public static class UpdateEntityTask {
+
+        private final HashSet<Integer> savingIds = new HashSet<>();
+        private final ArrayList<Entity> saving = new ArrayList<>();
+
+        private final HashSet<Integer> pendingIds = new HashSet<>();
+        private final ArrayList<Entity> pending = new ArrayList<>();
+
+        public void execute() {
+            saving.forEach(it -> {
+                CompoundTag tag = CompoundTag.newInstance();
+                it.addAdditionalSaveData(tag);
+                BukkitHelper.saveCustomEntityTag(it.asBukkit(), tag);
+                //Logs.debug("{} save entity tag", it.getId());
+            });
+            pending.forEach(it -> {
+                //Logs.debug("{} generate entity patch", it.getId());
+                int entityId = it.getId();
+                SynchedEntityData entityData = it.getEntityData();
+                FriendlyByteBuf dirtyValues = BukkitHelper.convertToBytes(entityId, entityData.getDirtyValues());
+                if (dirtyValues != null) {
+                    PacketHelper.sendToTracking(ConstantKeys.NETWORK_KEY, dirtyValues, it);
+                }
+                FriendlyByteBuf changedValue = BukkitHelper.convertToBytes(entityId, entityData.getChangedValues());
+                if (changedValue != null) {
+                    CLIENT_ENTITIE_DATAS.put(Pair.of(it.getLevel().getUUID(), entityId), changedValue);
+                } else {
+                    CLIENT_ENTITIE_DATAS.remove(Pair.of(it.getLevel().getUUID(), entityId));
+                }
+            });
+        }
+
+        public void add(Entity entity, boolean allowsSave) {
+            int entityId = entity.getId();
+            if (pendingIds.add(entityId)) {
+                pending.add(entity);
+            }
+            if (!allowsSave) {
+                return;
+            }
+            if (savingIds.add(entityId)) {
+                saving.add(entity);
+            }
         }
     }
 }

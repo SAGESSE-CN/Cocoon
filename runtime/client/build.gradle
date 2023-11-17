@@ -1,16 +1,20 @@
 apply plugin: "dev.architectury.loom"
 
-sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
-
 group = rootProject.group
 version = rootProject.mod_version
 
 archivesBaseName = "${rootProject.archivesBaseName}-rt"
 
+def javaVersion = project.java_version as int;
 def loomPlatform = project.properties["loom.platform"]
+
 def forgeMixinConfigs = ["${archivesBaseName}.mixin.json"]
 def fabricMixinConfigs = ["${archivesBaseName}.mixin.json"]
 def allVersions = [:]
+
+sourceCompatibility = javaVersion
+sourceCompatibility = javaVersion
+
 
 // build fat jar only in command line.
 if (gradle.startParameter.taskNames.contains("buildRuntime")) {
@@ -148,11 +152,10 @@ tasks.withType(JavaCompile) {
     // If Javadoc is generated, this must be specified in that task too.
     options.encoding = "UTF-8"
 
-    // The Minecraft launcher currently installs Java 8 for users, so your mod probably wants to target Java 8 too
-    // JDK 9 introduced a new way of specifying this that will make sure no newer classes or methods are used.
-    // We'll use that if it's available, but otherwise we'll use the older option.
-    if (JavaVersion.current().isJava9Compatible()) {
-        options.release = 8
+    if (javaVersion <= 8) {
+        // in minecraft 1.16, it must use --release flags, to resolve:
+        // java.lang.NoSuchMethodError: java.nio.ByteBuffer.rewind()Ljava/nio/ByteBuffer;
+        options.release = javaVersion
     }
 }
 

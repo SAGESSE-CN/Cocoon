@@ -12,13 +12,13 @@ import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.network.FriendlyByteBuf;
 import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.utils.ObjectHelper;
+import net.cocoonmc.core.utils.PersistentDataHelper;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.Entity;
 import net.cocoonmc.runtime.impl.ConstantKeys;
 import net.cocoonmc.runtime.impl.Constants;
 import net.cocoonmc.runtime.impl.LevelData;
 import net.cocoonmc.runtime.impl.Logs;
-import net.cocoonmc.runtime.impl.TagPersistentData;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -181,7 +181,7 @@ public class Chunk {
         allEntities.clear();
         allUpdateTags.clear();
         isLoaded = true;
-        FriendlyByteBuf buf = container.get(ConstantKeys.CACHE_KEY, TagPersistentData.DEFAULT);
+        FriendlyByteBuf buf = container.get(ConstantKeys.CACHE_KEY, PersistentDataHelper.BYTE_BUFFER);
         if (buf != null) {
             load(buf);
             isSaved = true;
@@ -201,7 +201,7 @@ public class Chunk {
         }
         FriendlyByteBuf buf = new FriendlyByteBuf();
         save(buf);
-        container.set(ConstantKeys.CACHE_KEY, TagPersistentData.DEFAULT, buf);
+        container.set(ConstantKeys.CACHE_KEY, PersistentDataHelper.BYTE_BUFFER, buf);
         Logs.debug("{} save blocks: {}", getName(), allStates.size());
         isSaved = true;
     }

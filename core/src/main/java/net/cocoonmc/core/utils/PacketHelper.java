@@ -28,5 +28,4 @@ public class PacketHelper {
             Cocoon.API.NETWORK.sendTo(packet, (Player) entity);
         }
     }
-
 }
