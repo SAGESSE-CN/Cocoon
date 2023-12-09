@@ -8,8 +8,6 @@ import net.cocoonmc.core.utils.PacketMap;
 import net.cocoonmc.runtime.INetworkFactory;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
@@ -35,7 +33,7 @@ import java.util.function.Consumer;
 
 public class NetworkFactory extends TransformFactory implements INetworkFactory {
 
-    private static final PacketMap<Packet<?>, net.cocoonmc.core.network.protocol.Packet> MAP = new PacketMap<>(it -> {
+    private static final PacketMap<Object, net.cocoonmc.core.network.protocol.Packet> MAP = new PacketMap<>(it -> {
         it.put(ClientboundLevelChunkWithLightPacket.class, NetworkFactory::wrap);
         it.put(ClientboundBlockUpdatePacket.class, NetworkFactory::wrap);
         it.put(ClientboundSectionBlocksUpdatePacket.class, NetworkFactory::wrap);
@@ -83,7 +81,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
 
     @Override
     public net.cocoonmc.core.network.protocol.Packet convertTo(Object packet) {
-        return MAP.transform((Packet<?>) packet, () -> () -> packet);
+        return MAP.transform(packet, () -> () -> packet);
     }
 
     public static net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket wrap(ClientboundCustomPayloadPacket packet) {
@@ -259,9 +257,9 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         };
     }
 
-    private static Packet<ClientGamePacketListener> unwrap(net.cocoonmc.core.network.protocol.Packet packet) {
+    private static <T> T unwrap(net.cocoonmc.core.network.protocol.Packet packet) {
         // noinspection unchecked
-        return (Packet<ClientGamePacketListener>) packet.getHandle();
+        return (T) packet.getHandle();
     }
 
     @Nullable

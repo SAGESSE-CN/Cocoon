@@ -225,7 +225,11 @@ public class BukkitHelper {
     }
 
     public static Direction convertToCocoon(org.bukkit.block.BlockFace face) {
-        return FACE_TO_DIRECTION[face.ordinal()];
+        int ordinal = face.ordinal();
+        if (ordinal < FACE_TO_DIRECTION.length) {
+            return FACE_TO_DIRECTION[ordinal];
+        }
+        return Direction.NORTH;
     }
 
     public static org.bukkit.block.BlockFace convertToBukkit(Direction direction) {

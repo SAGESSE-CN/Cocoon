@@ -14,9 +14,7 @@ import net.minecraft.server.v1_16_R3.MinecraftKey;
 import net.minecraft.server.v1_16_R3.MinecraftServer;
 import net.minecraft.server.v1_16_R3.NBTTagCompound;
 import net.minecraft.server.v1_16_R3.NetworkManager;
-import net.minecraft.server.v1_16_R3.Packet;
 import net.minecraft.server.v1_16_R3.PacketDataSerializer;
-import net.minecraft.server.v1_16_R3.PacketListener;
 import net.minecraft.server.v1_16_R3.PacketPlayInFlying;
 import net.minecraft.server.v1_16_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_16_R3.PacketPlayOutCustomPayload;
@@ -59,7 +57,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
     private static final ReflectHelper.Member<MinecraftKey> CUSTOM_GET_NAME = ReflectHelper.getMemberField(PacketPlayOutCustomPayload.class, "r");
     private static final ReflectHelper.Member<PacketDataSerializer> CUSTOM_GET_PAYLOAD = ReflectHelper.getMemberField(PacketPlayOutCustomPayload.class, "s");
 
-    private static final PacketMap<Packet<?>, net.cocoonmc.core.network.protocol.Packet> MAP = new PacketMap<>(it -> {
+    private static final PacketMap<Object, net.cocoonmc.core.network.protocol.Packet> MAP = new PacketMap<>(it -> {
         it.put(PacketPlayOutMapChunk.class, NetworkFactory::wrap);
         it.put(PacketPlayOutBlockChange.class, NetworkFactory::wrap);
         it.put(PacketPlayOutMultiBlockChange.class, NetworkFactory::wrap);
@@ -107,7 +105,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
 
     @Override
     public net.cocoonmc.core.network.protocol.Packet convertTo(Object packet) {
-        return MAP.transform((Packet<?>) packet, () -> () -> packet);
+        return MAP.transform(packet, () -> () -> packet);
     }
 
     public static net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket wrap(PacketPlayOutCustomPayload packet) {
@@ -300,9 +298,9 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         };
     }
 
-    private Packet<PacketListener> unwrap(net.cocoonmc.core.network.protocol.Packet packet) {
+    private <T> T unwrap(net.cocoonmc.core.network.protocol.Packet packet) {
         // noinspection unchecked
-        return (Packet<PacketListener>) packet.getHandle();
+        return (T) packet.getHandle();
     }
 
     @Nullable

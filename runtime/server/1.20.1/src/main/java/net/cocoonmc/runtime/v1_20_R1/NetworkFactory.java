@@ -37,10 +37,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class NetworkFactory extends TransformFactory implements INetworkFactory {
 
-    private static final PacketMap<Packet<?>, net.cocoonmc.core.network.protocol.Packet> MAP = new PacketMap<>(it -> {
+    private static final PacketMap<Object, net.cocoonmc.core.network.protocol.Packet> MAP = new PacketMap<>(it -> {
         it.put(ClientboundLevelChunkWithLightPacket.class, NetworkFactory::wrap);
         it.put(ClientboundBlockUpdatePacket.class, NetworkFactory::wrap);
         it.put(ClientboundSectionBlocksUpdatePacket.class, NetworkFactory::wrap);
@@ -89,7 +90,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
 
     @Override
     public net.cocoonmc.core.network.protocol.Packet convertTo(Object packet) {
-        return MAP.transform((Packet<?>) packet, () -> () -> packet);
+        return MAP.transform(packet, () -> () -> packet);
     }
 
     public static net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket wrap(ClientboundCustomPayloadPacket packet) {
@@ -116,7 +117,8 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
 
             @Override
             public net.cocoonmc.core.network.protocol.ClientboundBundlePacket setPackets(List<net.cocoonmc.core.network.protocol.Packet> packets) {
-                return wrap(new ClientboundBundlePacket(packets.stream().map(NetworkFactory::unwrap).collect(Collectors.toList())));
+                Stream<Packet<ClientGamePacketListener>> stream = packets.stream().map(NetworkFactory::unwrap);
+                return wrap(new ClientboundBundlePacket(stream.collect(Collectors.toList())));
             }
 
             @Override
@@ -285,10 +287,9 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         };
     }
 
-
-    private static Packet<ClientGamePacketListener> unwrap(net.cocoonmc.core.network.protocol.Packet packet) {
+    private static <T> T unwrap(net.cocoonmc.core.network.protocol.Packet packet) {
         // noinspection unchecked
-        return (Packet<ClientGamePacketListener>) packet.getHandle();
+        return (T) packet.getHandle();
     }
 
     @Nullable

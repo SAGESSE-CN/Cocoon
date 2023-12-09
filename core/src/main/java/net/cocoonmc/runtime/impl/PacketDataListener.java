@@ -194,29 +194,37 @@ public class PacketDataListener implements Listener {
 
         @Override
         public void channelRead(@NotNull ChannelHandlerContext ctx, @NotNull Object msg) throws Exception {
-            Player owner = ctx.channel().attr(OWNER_KEY).get();
-            if (owner != null) {
-                Packet oldPacket = Cocoon.API.NETWORK.convertTo(msg);
-                Packet newPacket = Cocoon.API.TRANSFORMER.transform(oldPacket, owner);
-                if (newPacket != oldPacket) {
-                    msg = newPacket.getHandle();
+            try {
+                Player owner = ctx.channel().attr(OWNER_KEY).get();
+                if (owner != null) {
+                    Packet oldPacket = Cocoon.API.NETWORK.convertTo(msg);
+                    Packet newPacket = Cocoon.API.TRANSFORMER.transform(oldPacket, owner);
+                    if (newPacket != oldPacket) {
+                        msg = newPacket.getHandle();
+                    }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             super.channelRead(ctx, msg);
         }
 
         @Override
         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-            Player owner = ctx.channel().attr(OWNER_KEY).get();
-            if (owner != null) {
-                Packet oldPacket = Cocoon.API.NETWORK.convertTo(msg);
-                Packet newPacket = Cocoon.API.TRANSFORMER.transform(oldPacket, owner);
-                if (newPacket != oldPacket) {
-                    msg = expand(newPacket.getHandle(), it -> {
-                        // we need to ensure sequential.
-                        super.write(ctx, it, ctx.voidPromise());
-                    });
+            try {
+                Player owner = ctx.channel().attr(OWNER_KEY).get();
+                if (owner != null) {
+                    Packet oldPacket = Cocoon.API.NETWORK.convertTo(msg);
+                    Packet newPacket = Cocoon.API.TRANSFORMER.transform(oldPacket, owner);
+                    if (newPacket != oldPacket) {
+                        msg = expand(newPacket.getHandle(), it -> {
+                            // we need to ensure sequential.
+                            super.write(ctx, it, ctx.voidPromise());
+                        });
+                    }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             super.write(ctx, msg, promise);
         }

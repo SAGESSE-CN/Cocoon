@@ -211,8 +211,12 @@ public class Chunk {
         for (int i = 0; i < size; ++i) {
             BlockPos pos = buf.readBlockPos();
             Block block = Block.byKey(buf.readResourceLocation());
-            BlockState state = block.defaultBlockState().deserialize(buf.readNbt());
+            CompoundTag stateTag = buf.readNbt();
             CompoundTag entityTag = buf.readNbt();
+            if (block == null) {
+                continue;
+            }
+            BlockState state = block.defaultBlockState().deserialize(stateTag);
             allStates.put(pos, state);
             BlockEntity blockEntity = createBlockEntity(pos, state);
             if (blockEntity != null) {
