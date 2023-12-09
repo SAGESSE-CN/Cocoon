@@ -10,6 +10,7 @@ import net.cocoonmc.core.math.CollissionBox;
 import net.cocoonmc.core.math.VoxelShape;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.network.FriendlyByteBuf;
+import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.utils.ObjectHelper;
 import net.cocoonmc.core.utils.PersistentDataHelper;
@@ -36,7 +37,7 @@ public class Chunk {
     private final ConcurrentHashMap<BlockPos, BlockState> allStates = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<BlockPos, BlockEntity> allEntities = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<BlockPos, CompoundTag> allUpdateTags = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<BlockPos, VoxelShape> allCollissionShaps = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<BlockPos, VoxelShape> allCollissionShapes = new ConcurrentHashMap<>();
 
     private boolean isSaved = false;
     private boolean isLoaded = false;
@@ -108,7 +109,7 @@ public class Chunk {
     public void setBlockDirty(BlockPos pos, BlockState state, int flags) {
         setDirty();
         allUpdateTags.remove(pos);
-        allCollissionShaps.remove(pos);
+        allCollissionShapes.remove(pos);
         LevelData.updateStates(this, pos);
     }
 
@@ -210,9 +211,10 @@ public class Chunk {
         int size = buf.readInt();
         for (int i = 0; i < size; ++i) {
             BlockPos pos = buf.readBlockPos();
-            Block block = Block.byKey(buf.readResourceLocation());
+            ResourceLocation id = buf.readResourceLocation();
             CompoundTag stateTag = buf.readNbt();
             CompoundTag entityTag = buf.readNbt();
+            Block block = Block.byKey(id);
             if (block == null) {
                 continue;
             }
@@ -222,7 +224,7 @@ public class Chunk {
             if (blockEntity != null) {
                 allEntities.put(pos, blockEntity);
                 allUpdateTags.remove(pos);
-                allCollissionShaps.remove(pos);
+                allCollissionShapes.remove(pos);
                 blockEntity.setLevel(level);
                 if (entityTag != null) {
                     blockEntity.readFromNBT(entityTag);
@@ -292,16 +294,16 @@ public class Chunk {
                 //Logs.debug("{} generate block {} => {}", level.getName(), pos, tag);
                 allUpdateTags.put(pos, tag);
             }
-            if (!allCollissionShaps.containsKey(pos)) {
+            if (!allCollissionShapes.containsKey(pos)) {
                 VoxelShape shape = VoxelShape.EMPTY;;
                 if (!state.isLadder(level, pos, null)) {
                     shape = state.getCollisionShape(level, pos);
                 }
                 //Logs.debug("{} generate collission shape {} => {}", level.getName(), pos, shape);
-                allCollissionShaps.put(pos, shape);
+                allCollissionShapes.put(pos, shape);
             }
         });
-        LevelData.updateClientChunk(key, allUpdateTags, allCollissionShaps);
+        LevelData.updateClientChunk(key, allUpdateTags, allCollissionShapes);
     }
 
     private CompoundTag generateClientBlockTag(BlockPos pos, BlockState state) {

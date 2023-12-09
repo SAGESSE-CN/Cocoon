@@ -23,6 +23,7 @@ import net.minecraft.server.v1_16_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_16_R3.PacketPlayOutMultiBlockChange;
 import net.minecraft.server.v1_16_R3.PacketPlayOutPosition;
 import net.minecraft.server.v1_16_R3.PacketPlayOutSpawnEntity;
+import net.minecraft.server.v1_16_R3.PacketPlayOutSpawnEntityLiving;
 import net.minecraft.server.v1_16_R3.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_16_R3.CraftServer;
@@ -39,6 +40,9 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
     private static final ReflectHelper.Member<Integer> ENTITY_ADD_GET_ID = ReflectHelper.getMemberField(PacketPlayOutSpawnEntity.class, "a");
     private static final ReflectHelper.Member<UUID> ENTITY_ADD_GET_UUID = ReflectHelper.getMemberField(PacketPlayOutSpawnEntity.class, "b");
     private static final ReflectHelper.Member<Integer> ENTITY_SET_GET_ID = ReflectHelper.getMemberField(PacketPlayOutEntityMetadata.class, "a");
+
+    private static final ReflectHelper.Member<Integer> LIVING_ENTITY_ADD_GET_ID = ReflectHelper.getMemberField(PacketPlayOutSpawnEntityLiving.class, "a");
+    private static final ReflectHelper.Member<UUID> LIVING_ENTITY_ADD_GET_UUID = ReflectHelper.getMemberField(PacketPlayOutSpawnEntityLiving.class, "b");
 
     private static final ReflectHelper.Member<BlockPosition> CHANGE_GET_POS = ReflectHelper.getMemberField(PacketPlayOutBlockChange.class, "a");
 
@@ -63,6 +67,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         it.put(PacketPlayOutMultiBlockChange.class, NetworkFactory::wrap);
         it.put(PacketPlayOutCustomPayload.class, NetworkFactory::wrap);
         it.put(PacketPlayOutSpawnEntity.class, NetworkFactory::wrap);
+        it.put(PacketPlayOutSpawnEntityLiving.class, NetworkFactory::wrap);
         it.put(PacketPlayOutEntityMetadata.class, NetworkFactory::wrap);
         it.put(PacketPlayOutPosition.class, NetworkFactory::wrap);
         it.put(PacketPlayInFlying.PacketPlayInPosition.class, NetworkFactory::wrap);
@@ -215,6 +220,26 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
             @Override
             public int getId() {
                 return ENTITY_SET_GET_ID.get(packet);
+            }
+
+            @Override
+            public Object getHandle() {
+                return packet;
+            }
+        };
+    }
+
+    private static net.cocoonmc.core.network.protocol.ClientboundAddEntityPacket wrap(PacketPlayOutSpawnEntityLiving packet) {
+        return new net.cocoonmc.core.network.protocol.ClientboundAddEntityPacket() {
+
+            @Override
+            public int getId() {
+                return LIVING_ENTITY_ADD_GET_ID.get(packet);
+            }
+
+            @Override
+            public UUID getUUID() {
+                return LIVING_ENTITY_ADD_GET_UUID.get(packet);
             }
 
             @Override

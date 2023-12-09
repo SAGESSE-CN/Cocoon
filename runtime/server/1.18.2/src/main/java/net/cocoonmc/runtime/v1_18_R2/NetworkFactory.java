@@ -9,6 +9,7 @@ import net.cocoonmc.runtime.INetworkFactory;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundAddPlayerPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
@@ -40,6 +41,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         it.put(ClientboundCustomPayloadPacket.class, NetworkFactory::wrap);
         it.put(ClientboundAddEntityPacket.class, NetworkFactory::wrap);
         it.put(ClientboundSetEntityDataPacket.class, NetworkFactory::wrap);
+        it.put(ClientboundAddPlayerPacket.class, NetworkFactory::wrap);
         it.put(ClientboundPlayerPositionPacket.class, NetworkFactory::wrap);
         it.put(ServerboundMovePlayerPacket.Pos.class, NetworkFactory::wrap);
         it.put(ServerboundMovePlayerPacket.PosRot.class, NetworkFactory::wrap);
@@ -191,6 +193,26 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
             @Override
             public int getId() {
                 return packet.getId();
+            }
+
+            @Override
+            public Object getHandle() {
+                return packet;
+            }
+        };
+    }
+
+    private static net.cocoonmc.core.network.protocol.ClientboundAddEntityPacket wrap(ClientboundAddPlayerPacket packet) {
+        return new net.cocoonmc.core.network.protocol.ClientboundAddEntityPacket() {
+
+            @Override
+            public int getId() {
+                return packet.getEntityId();
+            }
+
+            @Override
+            public UUID getUUID() {
+                return packet.getPlayerId();
             }
 
             @Override
