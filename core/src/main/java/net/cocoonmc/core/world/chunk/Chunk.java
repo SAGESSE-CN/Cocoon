@@ -20,11 +20,13 @@ import net.cocoonmc.runtime.impl.ConstantKeys;
 import net.cocoonmc.runtime.impl.Constants;
 import net.cocoonmc.runtime.impl.LevelData;
 import net.cocoonmc.runtime.impl.Logs;
+import net.cocoonmc.runtime.impl.UnknownBlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class Chunk {
@@ -38,6 +40,7 @@ public class Chunk {
     private final ConcurrentHashMap<BlockPos, BlockEntity> allEntities = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<BlockPos, CompoundTag> allUpdateTags = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<BlockPos, VoxelShape> allCollissionShapes = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<BlockPos, UnknownBlockState> unknownStates = new ConcurrentHashMap<>();
 
     private boolean isSaved = false;
     private boolean isLoaded = false;
@@ -178,6 +181,7 @@ public class Chunk {
     }
 
     private void loadAllBlocks() {
+        unknownStates.clear();
         allStates.clear();
         allEntities.clear();
         allUpdateTags.clear();
@@ -186,7 +190,7 @@ public class Chunk {
         if (buf != null) {
             load(buf);
             isSaved = true;
-            Logs.debug("{} load blocks: {}", getName(), allStates.size());
+            Logs.debug("{} load blocks: {}, unknown blocks: {}", getName(), allStates.size(), unknownStates.size());
         }
     }
 
@@ -203,7 +207,7 @@ public class Chunk {
         FriendlyByteBuf buf = new FriendlyByteBuf();
         save(buf);
         container.set(ConstantKeys.CACHE_KEY, PersistentDataHelper.BYTE_BUFFER, buf);
-        Logs.debug("{} save blocks: {}", getName(), allStates.size());
+        Logs.debug("{} save blocks: {}, unknown blocks: {}", getName(), allStates.size(), unknownStates.size());
         isSaved = true;
     }
 
@@ -216,6 +220,7 @@ public class Chunk {
             CompoundTag entityTag = buf.readNbt();
             Block block = Block.byKey(id);
             if (block == null) {
+                unknownStates.put(pos, new UnknownBlockState(id, stateTag, entityTag));
                 continue;
             }
             BlockState state = block.defaultBlockState().deserialize(stateTag);
@@ -234,7 +239,7 @@ public class Chunk {
     }
 
     private void save(FriendlyByteBuf buf) {
-        buf.writeInt(allStates.size());
+        buf.writeInt(allStates.size() + unknownStates.size());
         allStates.forEach((pos, state) -> {
             Block block = state.getBlock();
             CompoundTag entityTag = generateEntityFullTag(pos);
@@ -242,6 +247,12 @@ public class Chunk {
             buf.writeResourceLocation(block.getRegistryName());
             buf.writeNbt(state.serialize());
             buf.writeNbt(entityTag);
+        });
+        unknownStates.forEach((pos, state) -> {
+            buf.writeBlockPos(pos);
+            buf.writeResourceLocation(state.getRegistryName());
+            buf.writeNbt(state.getState());
+            buf.writeNbt(state.getTag());
         });
     }
 
