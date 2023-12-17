@@ -20,6 +20,7 @@ public class ItemHelper {
 
     public static final String REDIRECT_KEY = "__redirected_id__";
 
+
     public static boolean isEnableRedirect() {
         // in single player mode never enable.
         if (Minecraft.getInstance().hasSingleplayerServer()) {
@@ -30,6 +31,7 @@ public class ItemHelper {
 
     public static void setEnableRedirect(boolean enableRedirect) {
         ENABLE_REDIRECT = enableRedirect;
+        LogHelper.log("setEnableRedirect: " + enableRedirect);
     }
 
     public static Item findItem(String id) {

@@ -55,6 +55,7 @@ public class PacketHelper {
         int id = payload.readVarInt();
         BiConsumer<Connection, FriendlyByteBuf> handler = HANDLERS.get(id);
         if (handler != null) {
+            LogHelper.log("receive packet: " + id);
             handler.accept(connection, payload);
         }
     }
