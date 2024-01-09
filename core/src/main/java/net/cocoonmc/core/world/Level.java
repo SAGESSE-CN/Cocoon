@@ -122,7 +122,14 @@ public class Level {
 
     public Chunk getChunk(int x, int z) {
         long index = (long) x << 32 | (long) z;
-        return chunks.computeIfAbsent(index, it -> new Chunk(this, world.getChunkAt(x, z)));
+        Chunk chunk = chunks.get(index);
+        if (chunk != null) {
+            return chunk;
+        }
+        // when calling getChunkAt the ChunkLoadEvent maybe fired,
+        // so we must to attention the reentrancy of the method.
+        org.bukkit.Chunk chunk1 = world.getChunkAt(x, z);
+        return chunks.computeIfAbsent(index, it -> new Chunk(this, chunk1));
     }
 
     public String getName() {
