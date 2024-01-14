@@ -212,9 +212,10 @@ tasks.register("parpreVariants") {
                 // replace the supported version
                 filesMatching("**/ConfigHelper.java") {
                     def nextVersion = ""
-                    for (String v2 : allVersions.values()) {
+                    for (String v2 : allVersions.values().toSorted()) {
                         if (v2 > version && nextVersion < v2) {
                             nextVersion = v2
+                            break
                         }
                     }
                     filter {
