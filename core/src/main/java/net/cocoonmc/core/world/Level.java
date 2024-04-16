@@ -121,7 +121,7 @@ public class Level {
     }
 
     public Chunk getChunk(int x, int z) {
-        long index = (long) x << 32 | (long) z;
+        long index = (long) z << 32 | ((long) x & 0xffffffffL);
         Chunk chunk = chunks.get(index);
         if (chunk != null) {
             return chunk;
