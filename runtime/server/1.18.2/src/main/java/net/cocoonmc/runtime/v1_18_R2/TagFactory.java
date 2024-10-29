@@ -119,6 +119,16 @@ public class TagFactory extends TagWrapper implements ITagFactory {
         }
     }
 
+    @Override
+    public Object convertTo(net.cocoonmc.core.nbt.Tag tag) {
+        return unwrap(tag);
+    }
+
+    @Override
+    public net.cocoonmc.core.nbt.Tag convertTo(Object tag) {
+        return wrap((Tag) tag);
+    }
+
     public static WrappedByteTag wrap(ByteTag tag) {
         return new WrappedByteTag(tag) {
 
