@@ -1,5 +1,7 @@
 package net.cocoonmc.runtime.impl;
 
+import net.cocoonmc.core.component.DataComponentMap;
+import net.cocoonmc.core.component.DataComponents;
 import net.cocoonmc.core.item.Item;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.item.Items;
@@ -12,13 +14,19 @@ public class ItemStackWrapper<BukkitItemStack extends org.bukkit.inventory.ItemS
     protected VanillaItemStack vanillaStack;
 
     public ItemStackWrapper(BukkitItemStack bukkitStack, VanillaItemStack vanillaStack) {
-        this(bukkitStack, vanillaStack, vanillaStack.getTag());
+        this(bukkitStack, vanillaStack, vanillaStack.getComponents());
     }
 
-    protected ItemStackWrapper(BukkitItemStack bukkitStack, VanillaItemStack vanillaStack, CompoundTag tag) {
-        super(getRealItem(bukkitStack.getType().getKey().toString(), tag), bukkitStack.getAmount(), tag);
+    protected ItemStackWrapper(BukkitItemStack bukkitStack, VanillaItemStack vanillaStack, DataComponentMap components) {
+        super(getRealItem(bukkitStack.getType().getKey().toString(), components), bukkitStack.getAmount(), components);
         this.bukkitStack = bukkitStack;
         this.vanillaStack = vanillaStack;
+        // when the value is changed, sync to the vanilla stack.
+        if (components instanceof DataComponentMapImpl) {
+            ((DataComponentMapImpl) components).addChangeListener(() -> {
+                vanillaStack.setComponents(components);
+            });
+        }
     }
 
     @Override
@@ -26,12 +34,6 @@ public class ItemStackWrapper<BukkitItemStack extends org.bukkit.inventory.ItemS
         super.setCount(count);
         bukkitStack.setAmount(count);
         vanillaStack.setCount(count);
-    }
-
-    @Override
-    public void setTag(CompoundTag tag) {
-        super.setTag(tag);
-        vanillaStack.setTag(tag);
     }
 
     @Override
@@ -45,8 +47,43 @@ public class ItemStackWrapper<BukkitItemStack extends org.bukkit.inventory.ItemS
     }
 
 
-    public static Item getRealItem(String id, CompoundTag tag) {
-        Item item = Items.byId(getReadId(id, tag));
+    public static CompoundTag unsafeSerialize(ItemStack itemStack, CompoundTag outputTag) {
+        DataComponentMap components = itemStack.getComponents();
+        String sourceId = itemStack.getItem().getRegistryName().toString();
+        String wrapperId = ItemStackWrapper.getWrapperId(sourceId, components, itemStack.getMaxStackSize());
+        outputTag.putString("id", wrapperId);
+        outputTag.putByte("Count", (byte) itemStack.getCount());
+        CompoundTag itemTag = ((DataComponentMapImpl) components).getTag();
+        if (itemTag != null) {
+            itemTag = itemTag.copy();
+        }
+        if (!wrapperId.equals(sourceId)) {
+            if (itemTag == null) {
+                itemTag = CompoundTag.newInstance();
+            }
+            itemTag.putString(Constants.ITEM_REDIRECTED_KEY, sourceId + "/" + wrapperId);
+        }
+        if (itemTag != null) {
+            outputTag.put("tag", itemTag);
+        }
+        return outputTag;
+    }
+
+    public static ItemStack unsafeDeserialize(CompoundTag tag) {
+        CompoundTag itemTag = null;
+        if (tag.contains("tag", 10)) {
+            itemTag = tag.getCompound("tag");
+        }
+        DataComponentMap components = new DataComponentMapImpl(itemTag);
+        String wrapperId = tag.getString("id");
+        String sourceId = ItemStackWrapper.getReadId(wrapperId, components);
+        Item item = Items.byId(sourceId);
+        int count = tag.getByte("Count");
+        return new ItemStack(item, count, components);
+    }
+
+    public static Item getRealItem(String id, DataComponentMap components) {
+        Item item = Items.byId(getReadId(id, components));
         if (item != null) {
             return item;
         }
@@ -54,25 +91,21 @@ public class ItemStackWrapper<BukkitItemStack extends org.bukkit.inventory.ItemS
     }
 
     @Nullable
-    public static String getReadId(String wrapperId, @Nullable CompoundTag tag) {
-        if (tag != null && tag.contains(Constants.ITEM_REDIRECTED_KEY, 8)) {
-            String sourceId = _splitId(tag.getString(Constants.ITEM_REDIRECTED_KEY), 0);
-            if (sourceId != null && !sourceId.isEmpty()) {
-                return sourceId;
-            }
+    public static String getReadId(String wrapperId, DataComponentMap components) {
+        String sourceId = _splitId(components.get(DataComponents.REDIRECTED_ITEM_ID), 0);
+        if (sourceId != null && !sourceId.isEmpty()) {
+            return sourceId;
         }
         return wrapperId;
     }
 
-    public static String getWrapperId(String sourceId, @Nullable CompoundTag tag, int maxStackSize) {
+    public static String getWrapperId(String sourceId, DataComponentMap components, int maxStackSize) {
         if (sourceId.startsWith("minecraft:")) {
             return sourceId;
         }
-        if (tag != null && tag.contains(Constants.ITEM_REDIRECTED_KEY, 8)) {
-            String wrapperId = _splitId(tag.getString(Constants.ITEM_REDIRECTED_KEY), 1);
-            if (wrapperId != null && !wrapperId.isEmpty()) {
-                return wrapperId;
-            }
+        String wrapperId = _splitId(components.get(DataComponents.REDIRECTED_ITEM_ID), 1);
+        if (wrapperId != null && !wrapperId.isEmpty()) {
+            return wrapperId;
         }
         return getWrapperIdBySize(maxStackSize);
     }

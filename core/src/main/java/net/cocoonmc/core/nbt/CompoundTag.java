@@ -1,5 +1,6 @@
 package net.cocoonmc.core.nbt;
 
+import com.mojang.serialization.Codec;
 import net.cocoonmc.Cocoon;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,8 @@ import java.util.function.Function;
 
 @SuppressWarnings("unused")
 public interface CompoundTag extends Tag {
+
+    Codec<CompoundTag> CODEC = Cocoon.API.CODEC.getCompoundTag();
 
     static CompoundTag newInstance() {
         return Cocoon.API.TAG.create((Map<String, Tag>) null);
@@ -96,6 +99,8 @@ public interface CompoundTag extends Tag {
     }
 
     void remove(String key);
+
+    void merge(CompoundTag tag);
 
     default void clear() {
         getAllKeys().forEach(this::remove);

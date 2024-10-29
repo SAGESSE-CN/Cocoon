@@ -90,6 +90,10 @@ public class Item implements IAssociatedContainerProvider {
         return properties.maxStackSize;
     }
 
+    public int getId() {
+        return properties.material.getId();
+    }
+
     public ResourceLocation getRegistryName() {
         return registryName;
     }

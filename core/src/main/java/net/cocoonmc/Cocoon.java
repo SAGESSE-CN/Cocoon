@@ -5,6 +5,7 @@ import net.cocoonmc.core.item.Items;
 import net.cocoonmc.core.network.PacketTransformer;
 import net.cocoonmc.runtime.IBlockFactory;
 import net.cocoonmc.runtime.ICacheFactory;
+import net.cocoonmc.runtime.ICodecFactory;
 import net.cocoonmc.runtime.IItemFactory;
 import net.cocoonmc.runtime.IMenuFactory;
 import net.cocoonmc.runtime.INetworkFactory;
@@ -64,6 +65,8 @@ public class Cocoon {
 
         public static final ICacheFactory CACHE = new CacheFactory();
         public static final INetworkFactory NETWORK = RUNTIME.getNetwork();
+
+        public static final ICodecFactory CODEC = RUNTIME.getCodec();
 
         public static final PacketTransformer TRANSFORMER = new PacketTransformer();
     }

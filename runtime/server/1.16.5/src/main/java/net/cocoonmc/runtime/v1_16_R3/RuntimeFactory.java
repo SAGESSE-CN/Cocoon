@@ -1,6 +1,7 @@
 package net.cocoonmc.runtime.v1_16_R3;
 
 import net.cocoonmc.runtime.IBlockFactory;
+import net.cocoonmc.runtime.ICodecFactory;
 import net.cocoonmc.runtime.IItemFactory;
 import net.cocoonmc.runtime.IMenuFactory;
 import net.cocoonmc.runtime.INetworkFactory;
@@ -15,6 +16,7 @@ public class RuntimeFactory implements IRuntime {
     public static final BlockFactory BLOCK = new BlockFactory();
     public static final MenuFactory MENU = new MenuFactory();
     public static final NetworkFactory NETWORK = new NetworkFactory();
+    public static final CodecFactory CODEC = new CodecFactory();
 
     @Override
     public ITagFactory getTag() {
@@ -39,5 +41,10 @@ public class RuntimeFactory implements IRuntime {
     @Override
     public INetworkFactory getNetwork() {
         return NETWORK;
+    }
+
+    @Override
+    public ICodecFactory getCodec() {
+        return CODEC;
     }
 }

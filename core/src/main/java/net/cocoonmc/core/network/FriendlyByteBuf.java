@@ -1,5 +1,6 @@
 package net.cocoonmc.core.network;
 
+import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufInputStream;
@@ -8,10 +9,18 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.ByteProcessor;
+import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
+import net.cocoonmc.core.component.DataComponentMap;
+import net.cocoonmc.core.item.Item;
+import net.cocoonmc.core.item.ItemStack;
+import net.cocoonmc.core.item.Items;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.NbtIo;
+import net.cocoonmc.core.nbt.Tag;
 import net.cocoonmc.core.resources.ResourceLocation;
+import net.cocoonmc.runtime.impl.DataComponentMapImpl;
+import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -24,6 +33,7 @@ import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.UUID;
 
 public class FriendlyByteBuf extends ByteBuf {
@@ -220,6 +230,51 @@ public class FriendlyByteBuf extends ByteBuf {
         }
     }
 
+    public <T> FriendlyByteBuf writeNbtWithCodec(Codec<T> codec, T value) {
+        Optional<Tag> result = Cocoon.API.CODEC.getTagOps().encode(codec, value).get().left();
+        if (result.isEmpty()) {
+            throw new EncoderException("Failed to encode: " + codec + " " + value);
+        }
+        writeNbt((CompoundTag) result.get());
+        return this;
+    }
+
+    public <T> T readNbtWithCodec(Codec<T> codec) {
+        Optional<T> result = Cocoon.API.CODEC.getTagOps().decode(codec, readNbt()).get().left();
+        if (result.isEmpty()) {
+            throw new DecoderException("Failed to decode json: " + codec);
+        }
+        return result.get();
+    }
+
+    public ItemStack readItem() {
+        if (!readBoolean()) {
+            return ItemStack.EMPTY;
+        }
+        int id = readVarInt();
+        int count = readByte();
+        CompoundTag tag = readNbt();
+        Item item = Items.byId(id);
+        return new ItemStack(item, count, new DataComponentMapImpl(tag));
+    }
+
+    public FriendlyByteBuf writeItem(ItemStack itemStack) {
+        if (itemStack.isEmpty() || itemStack.getItem() == null) {
+            writeBoolean(false);
+            return this;
+        }
+        writeBoolean(true);
+        Item item = itemStack.getItem();
+        DataComponentMap components = itemStack.getComponents();
+        int id = item.getId();
+        int count = itemStack.getCount();
+        writeVarInt(id);
+        writeByte(count);
+//        if (item.canBeDepleted() || item.shouldOverrideMultiplayerNbt()) {
+        writeNbt(((DataComponentMapImpl) components).getTag());
+//        }
+        return this;
+    }
 
     @Override
     public int capacity() {

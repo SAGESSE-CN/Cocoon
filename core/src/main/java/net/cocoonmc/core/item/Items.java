@@ -1271,6 +1271,15 @@ public class Items {
     public static void init() {
     }
 
+    public static Item byId(int id) {
+        for (Material material : Material.values()) {
+            if (material.isItem() && material.getId() == id) {
+                return register(material);
+            }
+        }
+        return AIR;
+    }
+
     public static Item byId(String id) {
         return NAMED_ITEMS.computeIfAbsent(id, id1 -> Item.byKey(new ResourceLocation(id1)));
     }
