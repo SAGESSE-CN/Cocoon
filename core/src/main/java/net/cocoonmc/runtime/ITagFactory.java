@@ -23,6 +23,10 @@ import java.util.Map;
 @SuppressWarnings("unused")
 public interface ITagFactory {
 
+    Tag convertTo(Object tag);
+
+    Object convertTo(Tag tag);
+
     ByteTag create(byte value);
 
     ShortTag create(short value);
@@ -46,7 +50,6 @@ public interface ITagFactory {
     IntArrayTag create(int[] values);
 
     LongArrayTag create(long[] values);
-
 
     void write(OutputStream outputStream, CompoundTag tag) throws IOException;
 

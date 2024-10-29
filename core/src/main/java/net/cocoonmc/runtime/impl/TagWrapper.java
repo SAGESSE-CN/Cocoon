@@ -16,7 +16,7 @@ import net.cocoonmc.core.nbt.Tag;
 
 public class TagWrapper {
 
-    protected abstract static class WrappedTag implements Tag {
+    public abstract static class WrappedTag implements Tag {
 
         private final Object handle;
 
@@ -48,75 +48,75 @@ public class TagWrapper {
         }
     }
 
-    protected abstract static class WrappedByteTag extends WrappedTag implements ByteTag {
+    public abstract static class WrappedByteTag extends WrappedTag implements ByteTag {
 
         protected WrappedByteTag(Object handle) {
             super(handle);
         }
     }
 
-    protected abstract static class WrappedShortTag extends WrappedTag implements ShortTag {
+    public abstract static class WrappedShortTag extends WrappedTag implements ShortTag {
         protected WrappedShortTag(Object handle) {
             super(handle);
         }
     }
 
-    protected abstract static class WrappedIntTag extends WrappedTag implements IntTag {
+    public abstract static class WrappedIntTag extends WrappedTag implements IntTag {
         protected WrappedIntTag(Object handle) {
             super(handle);
         }
     }
 
-    protected abstract static class WrappedLongTag extends WrappedTag implements LongTag {
+    public abstract static class WrappedLongTag extends WrappedTag implements LongTag {
         protected WrappedLongTag(Object handle) {
             super(handle);
         }
     }
 
 
-    protected abstract static class WrappedFloatTag extends WrappedTag implements FloatTag {
+    public abstract static class WrappedFloatTag extends WrappedTag implements FloatTag {
         protected WrappedFloatTag(Object handle) {
             super(handle);
         }
     }
 
-    protected abstract static class WrappedDoubleTag extends WrappedTag implements DoubleTag {
+    public abstract static class WrappedDoubleTag extends WrappedTag implements DoubleTag {
         protected WrappedDoubleTag(Object handle) {
             super(handle);
         }
     }
 
-    protected abstract static class WrappedStringTag extends WrappedTag implements StringTag {
+    public abstract static class WrappedStringTag extends WrappedTag implements StringTag {
         protected WrappedStringTag(Object handle) {
             super(handle);
         }
     }
 
-    protected abstract static class WrappedByteArrayTag extends WrappedTag implements ByteArrayTag {
+    public abstract static class WrappedByteArrayTag extends WrappedTag implements ByteArrayTag {
         protected WrappedByteArrayTag(Object handle) {
             super(handle);
         }
     }
 
-    protected abstract static class WrappedIntArrayTag extends WrappedTag implements IntArrayTag {
+    public abstract static class WrappedIntArrayTag extends WrappedTag implements IntArrayTag {
         protected WrappedIntArrayTag(Object handle) {
             super(handle);
         }
     }
 
-    protected abstract static class WrappedLongArrayTag extends WrappedTag implements LongArrayTag {
+    public abstract static class WrappedLongArrayTag extends WrappedTag implements LongArrayTag {
         protected WrappedLongArrayTag(Object handle) {
             super(handle);
         }
     }
 
-    protected abstract static class WrappedCompoundTag extends WrappedTag implements CompoundTag {
+    public abstract static class WrappedCompoundTag extends WrappedTag implements CompoundTag {
         protected WrappedCompoundTag(Object handle) {
             super(handle);
         }
     }
 
-    protected abstract static class WrappedListTag extends WrappedTag implements ListTag {
+    public abstract static class WrappedListTag extends WrappedTag implements ListTag {
         protected WrappedListTag(Object handle) {
             super(handle);
         }
