@@ -1,88 +1,52 @@
 package net.cocoonmc.core.item;
 
+import com.mojang.serialization.Codec;
 import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
-import net.cocoonmc.core.nbt.CompoundTag;
-import net.cocoonmc.core.nbt.Tag;
+import net.cocoonmc.core.component.DataComponentMap;
+import net.cocoonmc.core.component.DataComponentType;
 import net.cocoonmc.core.utils.ObjectHelper;
 import net.cocoonmc.core.utils.SimpleAssociatedStorage;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.Player;
 import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerProvider;
-import net.cocoonmc.runtime.impl.Constants;
-import net.cocoonmc.runtime.impl.ItemStackWrapper;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 public class ItemStack implements IAssociatedContainerProvider {
 
+    public static final Codec<ItemStack> CODEC = Cocoon.API.CODEC.getItemStack();
+
     public static final ItemStack EMPTY = new ItemStack(Items.AIR, 0);
 
     protected int count;
 
-    @Nullable
-    protected CompoundTag tag;
-
     protected final Item item;
+    protected final DataComponentMap components;
 
     private ItemStack delegate;
     private final SimpleAssociatedStorage storage = new SimpleAssociatedStorage();
 
     public ItemStack(Item item) {
-        this(item, 1, null);
+        this(item, 1, Cocoon.API.ITEM.createComponents());
     }
 
     public ItemStack(Item item, int count) {
-        this(item, count, null);
+        this(item, count, Cocoon.API.ITEM.createComponents());
     }
 
-    public ItemStack(Item item, int count, @Nullable CompoundTag tag) {
+    public ItemStack(Item item, int count, DataComponentMap components) {
         this.item = item;
         this.count = count;
-        this.tag = tag;
+        this.components = components;
     }
 
-    public ItemStack(CompoundTag tag) {
-        CompoundTag itemTag = null;
-        if (tag.contains("tag", 10)) {
-            itemTag = tag.getCompound("tag");
-        }
-        String wrapperId = tag.getString("id");
-        String sourceId = ItemStackWrapper.getReadId(wrapperId, itemTag);
-        this.item = Items.byId(sourceId);
-        this.count = tag.getByte("Count");
-        this.tag = itemTag;
-    }
-
-    public static ItemStack of(CompoundTag tag) {
-        return new ItemStack(tag);
-    }
 
     public static ItemStack of(org.bukkit.inventory.ItemStack itemStack) {
         return Cocoon.API.ITEM.convertTo(itemStack);
     }
 
-    public CompoundTag save(CompoundTag outputTag) {
-        String sourceId = item.getRegistryName().toString();
-        String wrapperId = ItemStackWrapper.getWrapperId(sourceId, tag, getMaxStackSize());
-        outputTag.putString("id", wrapperId);
-        outputTag.putByte("Count", (byte) count);
-        CompoundTag itemTag = null;
-        if (tag != null) {
-            itemTag = tag.copy();
-        }
-        if (!wrapperId.equals(sourceId)) {
-            if (itemTag == null) {
-                itemTag = CompoundTag.newInstance();
-            }
-            itemTag.putString(Constants.ITEM_REDIRECTED_KEY, sourceId + "/" + wrapperId);
-        }
-        if (itemTag != null) {
-            outputTag.put("tag", itemTag);
-        }
-        return outputTag;
-    }
 
     public Item getItem() {
         if (isEmpty()) {
@@ -91,80 +55,43 @@ public class ItemStack implements IAssociatedContainerProvider {
         return item;
     }
 
-    public boolean hasTag() {
-        return tag != null && !tag.isEmpty();
-    }
-
-    public boolean hasTagElement(String key) {
-        return tag != null && tag.contains(key);
-    }
-
-    public void setTag(@Nullable CompoundTag tag) {
-        this.tag = tag;
-        if (this.delegate != null) {
-            this.delegate.setTag(tag);
-        }
+    public boolean has(DataComponentType<?> componentType) {
+        return components.has(componentType);
     }
 
     @Nullable
-    public CompoundTag getTag() {
-        return tag;
+    public <T> T get(DataComponentType<? extends T> componentType) {
+        return components.get(componentType);
     }
 
-    public CompoundTag getOrCreateTag() {
-        if (tag != null) {
-            return tag;
-        }
-        CompoundTag tag = CompoundTag.newInstance();
-        setTag(tag);
-        return tag;
+    public <T> T getOrDefault(DataComponentType<? extends T> componentType, T object) {
+        return components.getOrDefault(componentType, object);
     }
 
-    public CompoundTag getOrCreateTagElement(String key) {
-        if (tag != null && tag.contains(key, 10)) {
-            return tag.getCompound(key);
-        }
-        CompoundTag tag = CompoundTag.newInstance();
-        addTagElement(key, tag);
-        return tag;
+    public <T> void set(DataComponentType<? super T> componentType, @Nullable T object) {
+        components.set(componentType, object);
     }
 
-    @Nullable
-    public CompoundTag getTagElement(String string) {
-        if (tag != null && tag.contains(string, 10)) {
-            return tag.getCompound(string);
-        }
-        return null;
-    }
-
-    public void addTagElement(String key, Tag value) {
-        getOrCreateTag().put(key, value);
-    }
-
-    public void removeTagKey(String string) {
-        if (tag != null && tag.contains(string)) {
-            tag.remove(string);
-            if (tag.isEmpty()) {
-                setTag(null);
-            }
-        }
+    public void remove(DataComponentType<?> componentType) {
+        components.remove(componentType);
     }
 
     public boolean isEmpty() {
         return this == EMPTY || item == Items.AIR || count <= 0;
     }
 
+    public void applyComponents(DataComponentMap components) {
+    }
+
+    public DataComponentMap getComponents() {
+        return components;
+    }
 
     public ItemStack copy() {
         if (isEmpty()) {
             return EMPTY;
         }
-        ItemStack itemStack = new ItemStack(getItem(), getCount());
-        CompoundTag tag = getTag();
-        if (tag != null) {
-            itemStack.tag = tag.copy();
-        }
-        return itemStack;
+        return new ItemStack(getItem(), getCount(), getComponents().copy());
     }
 
     public ItemStack copyWithCount(int i) {
@@ -246,15 +173,11 @@ public class ItemStack implements IAssociatedContainerProvider {
     public static boolean tagMatches(ItemStack itemStack, ItemStack itemStack2) {
         if (itemStack.isEmpty() && itemStack2.isEmpty()) {
             return true;
-        } else if (!itemStack.isEmpty() && !itemStack2.isEmpty()) {
-            if (itemStack.getTag() == null && itemStack2.getTag() != null) {
-                return false;
-            } else {
-                return itemStack.getTag() == null || itemStack.getTag().equals(itemStack2.getTag());
-            }
-        } else {
-            return false;
         }
+        if (!itemStack.isEmpty() && !itemStack2.isEmpty()) {
+            return itemStack.components.equals(itemStack2.components);
+        }
+        return false;
     }
 
     public boolean is(Item item) {

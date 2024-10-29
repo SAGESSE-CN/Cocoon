@@ -1,12 +1,12 @@
 package net.cocoonmc.runtime.impl;
 
-import net.cocoonmc.core.nbt.CompoundTag;
+import net.cocoonmc.core.component.DataComponentMap;
 
 public interface ItemStackAccessor {
 
     void setCount(int count);
 
-    CompoundTag getTag();
+    DataComponentMap getComponents();
 
-    void setTag(CompoundTag tag);
+    void setComponents(DataComponentMap components);
 }

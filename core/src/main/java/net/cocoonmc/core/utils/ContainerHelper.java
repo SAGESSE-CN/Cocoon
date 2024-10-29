@@ -1,13 +1,12 @@
 package net.cocoonmc.core.utils;
 
-import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.item.ItemStack;
 import net.cocoonmc.core.math.Vector3f;
 import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.ListTag;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.Player;
-import org.bukkit.Bukkit;
+import net.cocoonmc.runtime.impl.ItemStackWrapper;
 
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class ContainerHelper {
             if (!itemStack.isEmpty()) {
                 CompoundTag itemTag = CompoundTag.newInstance();
                 itemTag.putByte("Slot", (byte) i);
-                itemStack.save(itemTag);
+                ItemStackWrapper.unsafeSerialize(itemStack, itemTag);
                 var3.add(itemTag);
             }
         }
@@ -57,7 +56,7 @@ public class ContainerHelper {
             CompoundTag itemTag = var2.getCompound(i);
             int slot = itemTag.getByte("Slot") & 0xFF;
             if (slot < itemStacks.size()) {
-                itemStacks.set(slot, ItemStack.of(itemTag));
+                itemStacks.set(slot, ItemStackWrapper.unsafeDeserialize(itemTag));
             }
         }
     }
@@ -79,5 +78,4 @@ public class ContainerHelper {
     public static void dropItems(List<ItemStack> itemStacks, Level level, Vector3f location) {
         BukkitHelper.dropItems(itemStacks, level.asBukkit(), location.asBukkit());
     }
-
 }

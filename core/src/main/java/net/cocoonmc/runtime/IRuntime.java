@@ -11,4 +11,6 @@ public interface IRuntime {
     IMenuFactory getMenu();
 
     INetworkFactory getNetwork();
+
+    ICodecFactory getCodec();
 }

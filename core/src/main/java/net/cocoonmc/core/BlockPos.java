@@ -1,10 +1,14 @@
 package net.cocoonmc.core;
 
+import com.mojang.serialization.Codec;
+import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.utils.MathHelper;
 
 import java.util.Objects;
 
 public class BlockPos {
+
+    public static final Codec<BlockPos> CODEC = Cocoon.API.CODEC.getBlockPos();
 
     public static BlockPos ZERO = new BlockPos(0, 0, 0);
 
@@ -159,7 +163,7 @@ public class BlockPos {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof BlockPos)) return false;
-            BlockPos pos = (BlockPos)o;
+            BlockPos pos = (BlockPos) o;
             return x == pos.getX() && y == pos.getY() && z == pos.getZ();
         }
 

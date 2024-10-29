@@ -2,6 +2,7 @@ package net.cocoonmc.runtime.v1_16_R3;
 
 import net.cocoonmc.core.utils.ReflectHelper;
 import net.cocoonmc.runtime.IItemFactory;
+import net.cocoonmc.runtime.impl.DataComponentMapImpl;
 import net.cocoonmc.runtime.impl.ItemStackAccessor;
 import net.cocoonmc.runtime.impl.ItemStackTransformer;
 import net.cocoonmc.runtime.impl.ItemStackWrapper;
@@ -58,12 +59,12 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
 
             @Override
             public net.cocoonmc.core.nbt.CompoundTag serialize(net.cocoonmc.core.item.ItemStack itemStack) {
-                return itemStack.save(net.cocoonmc.core.nbt.CompoundTag.newInstance());
+                return ItemStackWrapper.unsafeSerialize(itemStack, net.cocoonmc.core.nbt.CompoundTag.newInstance());
             }
 
             @Override
             public net.cocoonmc.core.item.ItemStack deserialize(net.cocoonmc.core.nbt.CompoundTag tag) {
-                return net.cocoonmc.core.item.ItemStack.of(tag);
+                return ItemStackWrapper.unsafeDeserialize(tag);
             }
 
             @Override
@@ -78,15 +79,16 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
                     }
 
                     @Override
-                    public net.cocoonmc.core.nbt.CompoundTag getTag() {
+                    public net.cocoonmc.core.component.DataComponentMap getComponents() {
                         if (vanillaStack.getTag() != null) {
-                            return TagFactory.wrap(vanillaStack.getTag());
+                            return new DataComponentMapImpl(TagFactory.wrap(vanillaStack.getTag()));
                         }
-                        return null;
+                        return new DataComponentMapImpl(null);
                     }
 
                     @Override
-                    public void setTag(net.cocoonmc.core.nbt.CompoundTag tag) {
+                    public void setComponents(net.cocoonmc.core.component.DataComponentMap components) {
+                        net.cocoonmc.core.nbt.CompoundTag tag = ((DataComponentMapImpl) components).getTag();
                         if (tag != null) {
                             vanillaStack.setTag(TagFactory.unwrap(tag));
                         } else {

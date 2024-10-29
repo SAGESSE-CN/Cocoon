@@ -375,6 +375,11 @@ public class TagFactory extends TagWrapper implements ITagFactory {
             }
 
             @Override
+            public void merge(net.cocoonmc.core.nbt.CompoundTag tag) {
+                tag.merge(unwrap(tag));
+            }
+
+            @Override
             public Set<String> getAllKeys() {
                 return tag.getKeys();
             }
