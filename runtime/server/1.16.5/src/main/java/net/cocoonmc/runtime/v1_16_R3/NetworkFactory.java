@@ -25,8 +25,6 @@ import net.minecraft.server.v1_16_R3.PacketPlayOutPosition;
 import net.minecraft.server.v1_16_R3.PacketPlayOutSpawnEntity;
 import net.minecraft.server.v1_16_R3.PacketPlayOutSpawnEntityLiving;
 import net.minecraft.server.v1_16_R3.WorldServer;
-import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_16_R3.CraftServer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -93,7 +91,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
 
     @Override
     public void sendToAll(net.cocoonmc.core.network.protocol.Packet packet) {
-        MinecraftServer server = ((CraftServer) Bukkit.getServer()).getServer();
+        MinecraftServer server = getCurrentServer();
         server.getPlayerList().sendAll(unwrap(packet));
     }
 
@@ -118,11 +116,6 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
             @Override
             public net.cocoonmc.core.resources.ResourceLocation getName() {
                 return convertToCocoon(CUSTOM_GET_NAME.get(packet));
-            }
-
-            @Override
-            public net.cocoonmc.core.network.FriendlyByteBuf getPayload() {
-                return convertToCocoon(CUSTOM_GET_PAYLOAD.get(packet));
             }
 
             @Override
@@ -316,7 +309,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
             @Override
             public void applyTo(net.cocoonmc.core.world.entity.Player player) {
                 Vector3d pos = getPos();
-                MinecraftServer server = ((CraftServer) Bukkit.getServer()).getServer();
+                MinecraftServer server = getCurrentServer();
                 EntityPlayer serverPlayer = convertToVanilla(player);
                 server.b(() -> serverPlayer.setPosition(pos.getX(), pos.getY(), pos.getZ()));
             }

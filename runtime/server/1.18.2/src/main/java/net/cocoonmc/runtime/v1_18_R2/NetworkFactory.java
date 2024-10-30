@@ -66,7 +66,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
 
     @Override
     public void sendToAll(net.cocoonmc.core.network.protocol.Packet packet) {
-        MinecraftServer server = ((CraftServer) Bukkit.getServer()).getServer();
+        MinecraftServer server = getCurrentServer();
         server.getPlayerList().broadcastAll(unwrap(packet));
     }
 
@@ -91,11 +91,6 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
             @Override
             public net.cocoonmc.core.resources.ResourceLocation getName() {
                 return convertToCocoon(packet.getIdentifier());
-            }
-
-            @Override
-            public net.cocoonmc.core.network.FriendlyByteBuf getPayload() {
-                return convertToCocoon(packet.getData());
             }
 
             @Override
@@ -272,7 +267,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
             @Override
             public void applyTo(net.cocoonmc.core.world.entity.Player player) {
                 Vector3d pos = getPos();
-                MinecraftServer server = ((CraftServer) Bukkit.getServer()).getServer();
+                MinecraftServer server = getCurrentServer();
                 ServerPlayer serverPlayer = convertToVanilla(player);
                 server.submit(() -> serverPlayer.moveTo(pos.getX(), pos.getY(), pos.getZ()));
             }
@@ -286,7 +281,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
 
     @Nullable
     private static Connection findConnectionByPlayer(ServerPlayer player) {
-        ServerConnectionListener listener = ((CraftServer) Bukkit.getServer()).getServer().getConnection();
+        ServerConnectionListener listener = getCurrentServer().getConnection();
         if (listener == null) {
             return null;
         }

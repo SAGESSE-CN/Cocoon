@@ -1,4 +1,4 @@
-package net.cocoonmc.runtime.v1_20_R1;
+package net.cocoonmc.runtime.v1_21_R1;
 
 import net.cocoonmc.core.utils.ReflectHelper;
 import net.cocoonmc.runtime.IItemFactory;
@@ -6,26 +6,34 @@ import net.cocoonmc.runtime.impl.ItemStackAccessor;
 import net.cocoonmc.runtime.impl.ItemStackTransformer;
 import net.cocoonmc.runtime.impl.ItemStackWrapper;
 import net.cocoonmc.runtime.impl.TagComponentMap;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.component.PatchedDataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.phys.BlockHitResult;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_21_R1.inventory.CraftItemStack;
 import org.jetbrains.annotations.Nullable;
 
 public class ItemFactory extends TransformFactory implements IItemFactory {
 
     public static final org.bukkit.inventory.ItemStack EMPTY = new org.bukkit.inventory.ItemStack(Material.AIR, 0);
 
+
     public static final ItemStackTransformer<net.cocoonmc.core.item.ItemStack, org.bukkit.inventory.ItemStack, ItemStack> ITEM_TRANSFORMER = new ItemStackTransformer<>(_createCocoonLayer(), _createBukkitLayer(), _createVanillaLayer());
 
     @Override
     public net.cocoonmc.core.component.DataComponentMap createDataComponents(net.cocoonmc.core.item.Item item) {
-        return new TagComponentMap(null);
+        Item vanillaItem = convertToVanilla(item);
+        return new WrappedDataComponentMap(new PatchedDataComponentMap(vanillaItem.components()));
     }
 
     @Override
@@ -91,23 +99,13 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
 
                     @Override
                     public net.cocoonmc.core.component.DataComponentMap getComponents() {
-                        if (vanillaStack.getTag() != null) {
-                            return new WrappedComponentMap(TagFactory.wrap(vanillaStack.getTag()), vanillaStack);
-                        }
-                        return new WrappedComponentMap(null, vanillaStack);
+                        return new WrappedDataComponentMap(vanillaStack.getComponents());
                     }
 
                     @Override
                     public void setComponents(net.cocoonmc.core.component.DataComponentMap components) {
-                        if (components instanceof TagComponentMap) {
-                            net.cocoonmc.core.nbt.CompoundTag tag = ((TagComponentMap) components).getTag();
-                            if (tag != null) {
-                                vanillaStack.setTag(TagFactory.unwrap(tag));
-                            } else {
-                                vanillaStack.setTag(null);
-                            }
-                        } else {
-                            vanillaStack.setTag(null);
+                        if (components instanceof WrappedDataComponentMap components1) {
+                            components1.applyTo(vanillaStack.getComponents());
                         }
                     }
                 });
@@ -181,12 +179,14 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
 
             @Override
             public net.cocoonmc.core.nbt.CompoundTag serialize(ItemStack itemStack) {
-                return TagFactory.wrap(itemStack.save(new CompoundTag()));
+                HolderLookup.Provider provider = getCurrentServer().registryAccess();
+                return TagFactory.wrap((CompoundTag) itemStack.save(provider));
             }
 
             @Override
             public ItemStack deserialize(net.cocoonmc.core.nbt.CompoundTag tag) {
-                return ItemStack.of(TagFactory.unwrap(tag));
+                HolderLookup.Provider provider = getCurrentServer().registryAccess();
+                return ItemStack.parseOptional(provider, TagFactory.unwrap(tag));
             }
 
             @Override
@@ -212,26 +212,48 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
         };
     }
 
-    private static class WrappedComponentMap extends TagComponentMap {
+    private static class WrappedDataComponentMap extends TagComponentMap {
 
-        private final ItemStack owner;
-        private net.cocoonmc.core.nbt.CompoundTag checkTag;
+        private final DataComponentMap components;
 
-        public WrappedComponentMap(net.cocoonmc.core.nbt.CompoundTag tag, ItemStack owner) {
-            super(tag);
-            this.owner = owner;
+        public WrappedDataComponentMap(DataComponentMap components) {
+            super(null);
+            this.components = components;
+        }
+
+        public void applyTo(DataComponentMap otherComponents) {
+            // ignore when same object.
+            if (otherComponents != components && otherComponents instanceof PatchedDataComponentMap otherComponents1) {
+                otherComponents1.setAll(components);
+            }
         }
 
         @Override
-        public void tagDidChange() {
-            if (checkTag != tag) {
-                if (tag != null) {
-                    owner.setTag(TagFactory.unwrap(tag));
-                } else {
-                    owner.setTag(null);
-                }
-                checkTag = tag;
+        public net.cocoonmc.core.component.DataComponentMap copy() {
+            return new WrappedDataComponentMap(new PatchedDataComponentMap(components));
+        }
+
+        @Override
+        protected net.cocoonmc.core.nbt.CompoundTag getTag() {
+            if (tag == null && components.has(DataComponents.CUSTOM_DATA)) {
+                tag = TagFactory.wrap(components.get(DataComponents.CUSTOM_DATA).getUnsafe());
             }
+            return tag;
+        }
+
+        @Override
+        protected net.cocoonmc.core.nbt.CompoundTag getOrCreateTag() {
+            net.cocoonmc.core.nbt.CompoundTag tag1 = getTag();
+            if (tag1 != null) {
+                return tag1;
+            }
+            CustomData customData = CustomData.of(new CompoundTag());
+            if (components instanceof PatchedDataComponentMap components1) {
+                components1.set(DataComponents.CUSTOM_DATA, customData);
+            }
+            tag = TagFactory.wrap(customData.getUnsafe());
+            tagDidChange();
+            return tag;
         }
     }
 }

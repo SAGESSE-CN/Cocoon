@@ -19,8 +19,7 @@ import net.cocoonmc.core.nbt.CompoundTag;
 import net.cocoonmc.core.nbt.NbtIo;
 import net.cocoonmc.core.nbt.Tag;
 import net.cocoonmc.core.resources.ResourceLocation;
-import net.cocoonmc.runtime.impl.DataComponentMapImpl;
-import org.bukkit.Material;
+import net.cocoonmc.runtime.impl.TagComponentMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -248,31 +247,32 @@ public class FriendlyByteBuf extends ByteBuf {
     }
 
     public ItemStack readItem() {
-        if (!readBoolean()) {
-            return ItemStack.EMPTY;
-        }
-        int id = readVarInt();
-        int count = readByte();
-        CompoundTag tag = readNbt();
-        Item item = Items.byId(id);
-        return new ItemStack(item, count, new DataComponentMapImpl(tag));
+//        if (!readBoolean()) {
+//            return ItemStack.EMPTY;
+//        }
+//        int id = readVarInt();
+//        int count = readByte();
+//        CompoundTag tag = readNbt();
+//        Item item = Items.byId(id);
+//        return new ItemStack(item, count, new TagComponentMap(tag));
+        return ItemStack.EMPTY;
     }
 
     public FriendlyByteBuf writeItem(ItemStack itemStack) {
-        if (itemStack.isEmpty() || itemStack.getItem() == null) {
-            writeBoolean(false);
-            return this;
-        }
-        writeBoolean(true);
-        Item item = itemStack.getItem();
-        DataComponentMap components = itemStack.getComponents();
-        int id = item.getId();
-        int count = itemStack.getCount();
-        writeVarInt(id);
-        writeByte(count);
-//        if (item.canBeDepleted() || item.shouldOverrideMultiplayerNbt()) {
-        writeNbt(((DataComponentMapImpl) components).getTag());
+//        if (itemStack.isEmpty() || itemStack.getItem() == null) {
+//            writeBoolean(false);
+//            return this;
 //        }
+//        writeBoolean(true);
+//        Item item = itemStack.getItem();
+//        DataComponentMap components = itemStack.getComponents();
+//        int id = item.getId();
+//        int count = itemStack.getCount();
+//        writeVarInt(id);
+//        writeByte(count);
+////        if (item.canBeDepleted() || item.shouldOverrideMultiplayerNbt()) {
+//        writeNbt(((TagComponentMap) components).getTag());
+////        }
         return this;
     }
 
