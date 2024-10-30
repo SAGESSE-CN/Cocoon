@@ -48,8 +48,6 @@ public class PersistentDataHelper {
         }
     }
 
-    ;
-
     public static class BufferData implements PersistentDataType<byte[], FriendlyByteBuf> {
 
         @NotNull
