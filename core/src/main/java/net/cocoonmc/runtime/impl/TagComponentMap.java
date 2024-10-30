@@ -8,22 +8,22 @@ import net.cocoonmc.core.nbt.Tag;
 import net.cocoonmc.core.nbt.TagOps;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 
-public class DataComponentMapImpl implements DataComponentMap {
+public class TagComponentMap implements DataComponentMap {
 
-    private CompoundTag tag;
+    protected CompoundTag tag;
+
     private final TagOps<Tag> ops = Cocoon.API.CODEC.getTagOps();
-    private final ArrayList<Runnable> changeListeners = new ArrayList<>();
 
-    public DataComponentMapImpl(CompoundTag tag) {
+    public TagComponentMap(CompoundTag tag) {
         this.tag = tag;
     }
 
     @Override
     public boolean has(DataComponentType<?> componentType) {
+        CompoundTag tag = getTag();
         if (tag != null) {
             return tag.contains(componentType.getTagName());
         }
@@ -37,6 +37,7 @@ public class DataComponentMapImpl implements DataComponentMap {
             ops.encode(componentType.getCodec(), object).get().ifLeft(it -> {
                 // we need to merge new value into the item.
                 tag.put(componentType.getTagName(), it);
+                tagDidChange();
             });
         } else {
             remove(componentType);
@@ -46,6 +47,7 @@ public class DataComponentMapImpl implements DataComponentMap {
     @Nullable
     @Override
     public <T> T get(DataComponentType<? extends T> componentType) {
+        CompoundTag tag = getTag();
         if (tag != null && tag.contains(componentType.getTagName())) {
             Optional<? extends T> value = ops.decode(componentType.getCodec(), tag.get(componentType.getTagName())).get().left();
             if (value.isPresent()) {
@@ -57,34 +59,26 @@ public class DataComponentMapImpl implements DataComponentMap {
 
     @Override
     public void remove(DataComponentType<?> componentType) {
+        CompoundTag tag = getTag();
         if (tag != null) {
             tag.remove(componentType.getTagName());
-            changeListeners.forEach(Runnable::run);
+            tagDidChange();
         }
     }
 
     @Override
     public DataComponentMap copy() {
         if (tag != null) {
-            return new DataComponentMapImpl(tag.copy());
+            return new TagComponentMap(tag.copy());
         }
-        return new DataComponentMapImpl(null);
+        return new TagComponentMap(null);
     }
-
-    public void addChangeListener(Runnable listener) {
-        changeListeners.add(listener);
-    }
-
-    public void removeChangeListener(Runnable listener) {
-        changeListeners.remove(listener);
-    }
-
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof DataComponentMapImpl)) return false;
-        return Objects.equals(tag, ((DataComponentMapImpl) o).tag);
+        if (!(o instanceof TagComponentMap)) return false;
+        return Objects.equals(tag, ((TagComponentMap) o).tag);
     }
 
     @Override
@@ -92,16 +86,19 @@ public class DataComponentMapImpl implements DataComponentMap {
         return Objects.hash(tag);
     }
 
+    public void tagDidChange() {
+    }
+
     public CompoundTag getTag() {
         return tag;
     }
 
-    private CompoundTag getOrCreateTag() {
+    public CompoundTag getOrCreateTag() {
         if (tag != null) {
             return tag;
         }
         tag = CompoundTag.newInstance();
-        changeListeners.forEach(Runnable::run);
+        tagDidChange();
         return tag;
     }
 }

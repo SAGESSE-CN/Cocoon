@@ -29,11 +29,11 @@ public class ItemStack implements IAssociatedContainerProvider {
     private final SimpleAssociatedStorage storage = new SimpleAssociatedStorage();
 
     public ItemStack(Item item) {
-        this(item, 1, Cocoon.API.ITEM.createComponents());
+        this(item, 1, Cocoon.API.ITEM.createDataComponents(item));
     }
 
     public ItemStack(Item item, int count) {
-        this(item, count, Cocoon.API.ITEM.createComponents());
+        this(item, count, Cocoon.API.ITEM.createDataComponents(item));
     }
 
     public ItemStack(Item item, int count, DataComponentMap components) {

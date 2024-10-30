@@ -1,6 +1,7 @@
 package net.cocoonmc.core.component;
 
 import com.mojang.serialization.Codec;
+import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.resources.ResourceLocation;
 
 import java.util.HashMap;
@@ -34,6 +35,7 @@ public class DataComponentType<T> {
     public static <T> DataComponentType<T> register(ResourceLocation registryName, DataComponentType<T> componentType) {
         componentType.registryName = registryName;
         KEYED_COMPONENT_TYPES.put(registryName, componentType);
+        Cocoon.API.ITEM.registerDataComponentType(componentType);
         return componentType;
     }
 }

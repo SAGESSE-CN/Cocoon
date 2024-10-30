@@ -16,6 +16,4 @@ public interface ClientboundCustomPayloadPacket extends Packet {
     }
 
     ResourceLocation getName();
-
-    FriendlyByteBuf getPayload();
 }

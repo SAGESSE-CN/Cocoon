@@ -10,10 +10,13 @@ import net.minecraft.server.v1_16_R3.IInventory;
 import net.minecraft.server.v1_16_R3.ItemActionContext;
 import net.minecraft.server.v1_16_R3.ItemStack;
 import net.minecraft.server.v1_16_R3.MinecraftKey;
+import net.minecraft.server.v1_16_R3.MinecraftServer;
 import net.minecraft.server.v1_16_R3.MovingObjectPositionBlock;
 import net.minecraft.server.v1_16_R3.PacketDataSerializer;
 import net.minecraft.server.v1_16_R3.Vec3D;
 import net.minecraft.server.v1_16_R3.WorldServer;
+import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.v1_16_R3.CraftServer;
 import org.bukkit.craftbukkit.v1_16_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_16_R3.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_16_R3.entity.CraftPlayer;
@@ -119,5 +122,9 @@ public class TransformFactory {
 
     public static EnumDirection convertToVanilla(net.cocoonmc.core.Direction dir) {
         return DIRECTIONS_TO_VANILLA[dir.ordinal()];
+    }
+
+    public static MinecraftServer getCurrentServer() {
+        return ((CraftServer) Bukkit.getServer()).getServer();
     }
 }

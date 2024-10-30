@@ -18,15 +18,9 @@ public class ItemStackWrapper<BukkitItemStack extends org.bukkit.inventory.ItemS
     }
 
     protected ItemStackWrapper(BukkitItemStack bukkitStack, VanillaItemStack vanillaStack, DataComponentMap components) {
-        super(getRealItem(bukkitStack.getType().getKey().toString(), components), bukkitStack.getAmount(), components);
+        super(getRealItem(bukkitStack.getType().getKey().toString(), components), bukkitStack.getAmount(), getProxyComponents(components, vanillaStack.getComponents()));
         this.bukkitStack = bukkitStack;
         this.vanillaStack = vanillaStack;
-        // when the value is changed, sync to the vanilla stack.
-        if (components instanceof DataComponentMapImpl) {
-            ((DataComponentMapImpl) components).addChangeListener(() -> {
-                vanillaStack.setComponents(components);
-            });
-        }
     }
 
     @Override
@@ -53,7 +47,7 @@ public class ItemStackWrapper<BukkitItemStack extends org.bukkit.inventory.ItemS
         String wrapperId = ItemStackWrapper.getWrapperId(sourceId, components, itemStack.getMaxStackSize());
         outputTag.putString("id", wrapperId);
         outputTag.putByte("Count", (byte) itemStack.getCount());
-        CompoundTag itemTag = ((DataComponentMapImpl) components).getTag();
+        CompoundTag itemTag = ((TagComponentMap) components).getTag();
         if (itemTag != null) {
             itemTag = itemTag.copy();
         }
@@ -74,7 +68,7 @@ public class ItemStackWrapper<BukkitItemStack extends org.bukkit.inventory.ItemS
         if (tag.contains("tag", 10)) {
             itemTag = tag.getCompound("tag");
         }
-        DataComponentMap components = new DataComponentMapImpl(itemTag);
+        DataComponentMap components = new TagComponentMap(itemTag);
         String wrapperId = tag.getString("id");
         String sourceId = ItemStackWrapper.getReadId(wrapperId, components);
         Item item = Items.byId(sourceId);
@@ -122,6 +116,13 @@ public class ItemStackWrapper<BukkitItemStack extends org.bukkit.inventory.ItemS
                 return Items.PAPER.getRegistryName().toString();
             }
         }
+    }
+
+    private static DataComponentMap getProxyComponents(DataComponentMap first, DataComponentMap second) {
+        if (first != second) {
+            return new ProxyComponentMap(first, second);
+        }
+        return first;
     }
 
     private static String _splitId(String id, int index) {

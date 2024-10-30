@@ -1,6 +1,8 @@
-package net.cocoonmc.runtime.v1_19_R1;
+package net.cocoonmc.runtime.v1_21_R1;
 
+import com.google.common.collect.Lists;
 import io.netty.channel.Channel;
+import net.cocoonmc.Cocoon;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.math.Vector3d;
 import net.cocoonmc.core.nbt.CompoundTag;
@@ -8,10 +10,13 @@ import net.cocoonmc.core.utils.PacketMap;
 import net.cocoonmc.runtime.INetworkFactory;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.custom.DiscardedPayload;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
-import net.minecraft.network.protocol.game.ClientboundAddPlayerPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
-import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.game.ClientboundBundlePacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
 import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
@@ -26,9 +31,12 @@ import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class NetworkFactory extends TransformFactory implements INetworkFactory {
 
@@ -37,9 +45,10 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         it.put(ClientboundBlockUpdatePacket.class, NetworkFactory::wrap);
         it.put(ClientboundSectionBlocksUpdatePacket.class, NetworkFactory::wrap);
         it.put(ClientboundCustomPayloadPacket.class, NetworkFactory::wrap);
+        it.put(ClientboundBundlePacket.class, NetworkFactory::wrap);
         it.put(ClientboundAddEntityPacket.class, NetworkFactory::wrap);
         it.put(ClientboundSetEntityDataPacket.class, NetworkFactory::wrap);
-        it.put(ClientboundAddPlayerPacket.class, NetworkFactory::wrap);
+        //it.put(ClientboundAddPlayerPacket.class, NetworkFactory::wrap);
         it.put(ClientboundPlayerPositionPacket.class, NetworkFactory::wrap);
         it.put(ServerboundMovePlayerPacket.Pos.class, NetworkFactory::wrap);
         it.put(ServerboundMovePlayerPacket.PosRot.class, NetworkFactory::wrap);
@@ -76,7 +85,8 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
 
     @Override
     public net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket create(net.cocoonmc.core.resources.ResourceLocation identifier, net.cocoonmc.core.network.FriendlyByteBuf payload) {
-        return wrap(new ClientboundCustomPayloadPacket(convertToVanilla(identifier), convertToVanilla(payload)));
+        DiscardedPayload discardedPayload = new DiscardedPayload(convertToVanilla(identifier), convertToVanilla(payload));
+        return wrap(new ClientboundCustomPayloadPacket(discardedPayload));
     }
 
     @Override
@@ -88,7 +98,28 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         return new net.cocoonmc.core.network.protocol.ClientboundCustomPayloadPacket() {
             @Override
             public net.cocoonmc.core.resources.ResourceLocation getName() {
-                return convertToCocoon(packet.getIdentifier());
+                return convertToCocoon(packet.type().id());
+            }
+
+            @Override
+            public Object getHandle() {
+                return packet;
+            }
+        };
+    }
+
+    public static net.cocoonmc.core.network.protocol.ClientboundBundlePacket wrap(ClientboundBundlePacket packet) {
+        return new net.cocoonmc.core.network.protocol.ClientboundBundlePacket() {
+
+            @Override
+            public net.cocoonmc.core.network.protocol.ClientboundBundlePacket setPackets(List<net.cocoonmc.core.network.protocol.Packet> packets) {
+                Stream<Packet<ClientGamePacketListener>> stream = packets.stream().map(NetworkFactory::unwrap);
+                return wrap(new ClientboundBundlePacket(stream.collect(Collectors.toList())));
+            }
+
+            @Override
+            public List<net.cocoonmc.core.network.protocol.Packet> getPackets() {
+                return Lists.newArrayList(packet.subPackets()).stream().map(Cocoon.API.NETWORK::convertTo).collect(Collectors.toList());
             }
 
             @Override
@@ -185,7 +216,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
 
             @Override
             public int getId() {
-                return packet.getId();
+                return packet.id();
             }
 
             @Override
@@ -195,25 +226,25 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
         };
     }
 
-    private static net.cocoonmc.core.network.protocol.ClientboundAddEntityPacket wrap(ClientboundAddPlayerPacket packet) {
-        return new net.cocoonmc.core.network.protocol.ClientboundAddEntityPacket() {
-
-            @Override
-            public int getId() {
-                return packet.getEntityId();
-            }
-
-            @Override
-            public UUID getUUID() {
-                return packet.getPlayerId();
-            }
-
-            @Override
-            public Object getHandle() {
-                return packet;
-            }
-        };
-    }
+//    private static net.cocoonmc.core.network.protocol.ClientboundAddEntityPacket wrap(ClientboundAddPlayerPacket packet) {
+//        return new net.cocoonmc.core.network.protocol.ClientboundAddEntityPacket() {
+//
+//            @Override
+//            public int getId() {
+//                return packet.getEntityId();
+//            }
+//
+//            @Override
+//            public UUID getUUID() {
+//                return packet.getPlayerId();
+//            }
+//
+//            @Override
+//            public Object getHandle() {
+//                return packet;
+//            }
+//        };
+//    }
 
     private static net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket wrap(ClientboundPlayerPositionPacket packet) {
         return new net.cocoonmc.core.network.protocol.ClientboundPlayerPositionPacket() {
@@ -223,7 +254,7 @@ public class NetworkFactory extends TransformFactory implements INetworkFactory 
                 double x = pos.getX();
                 double y = pos.getY();
                 double z = pos.getZ();
-                return wrap(new ClientboundPlayerPositionPacket(x, y, z, packet.getYRot(), packet.getXRot(), packet.getRelativeArguments(), packet.getId(), packet.requestDismountVehicle()));
+                return wrap(new ClientboundPlayerPositionPacket(x, y, z, packet.getYRot(), packet.getXRot(), packet.getRelativeArguments(), packet.getId()));
             }
 
             @Override

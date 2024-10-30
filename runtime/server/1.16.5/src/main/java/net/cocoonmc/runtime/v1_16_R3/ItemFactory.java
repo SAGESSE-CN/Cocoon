@@ -2,10 +2,10 @@ package net.cocoonmc.runtime.v1_16_R3;
 
 import net.cocoonmc.core.utils.ReflectHelper;
 import net.cocoonmc.runtime.IItemFactory;
-import net.cocoonmc.runtime.impl.DataComponentMapImpl;
 import net.cocoonmc.runtime.impl.ItemStackAccessor;
 import net.cocoonmc.runtime.impl.ItemStackTransformer;
 import net.cocoonmc.runtime.impl.ItemStackWrapper;
+import net.cocoonmc.runtime.impl.TagComponentMap;
 import net.minecraft.server.v1_16_R3.EnumHand;
 import net.minecraft.server.v1_16_R3.EnumInteractionResult;
 import net.minecraft.server.v1_16_R3.ItemActionContext;
@@ -20,6 +20,15 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
     public static final org.bukkit.inventory.ItemStack EMPTY = new org.bukkit.inventory.ItemStack(Material.AIR, 0);
 
     public static final ItemStackTransformer<net.cocoonmc.core.item.ItemStack, org.bukkit.inventory.ItemStack, ItemStack> ITEM_TRANSFORMER = new ItemStackTransformer<>(_createCocoonLayer(), _createBukkitLayer(), _createVanillaLayer());
+
+    @Override
+    public net.cocoonmc.core.component.DataComponentMap createDataComponents(net.cocoonmc.core.item.Item item) {
+        return new TagComponentMap(null);
+    }
+
+    @Override
+    public void registerDataComponentType(net.cocoonmc.core.component.DataComponentType<?> type) {
+    }
 
     @Override
     public net.cocoonmc.core.item.ItemStack convertTo(org.bukkit.inventory.ItemStack itemStack) {
@@ -81,16 +90,20 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
                     @Override
                     public net.cocoonmc.core.component.DataComponentMap getComponents() {
                         if (vanillaStack.getTag() != null) {
-                            return new DataComponentMapImpl(TagFactory.wrap(vanillaStack.getTag()));
+                            return new WrappedComponentMap(TagFactory.wrap(vanillaStack.getTag()), vanillaStack);
                         }
-                        return new DataComponentMapImpl(null);
+                        return new WrappedComponentMap(null, vanillaStack);
                     }
 
                     @Override
                     public void setComponents(net.cocoonmc.core.component.DataComponentMap components) {
-                        net.cocoonmc.core.nbt.CompoundTag tag = ((DataComponentMapImpl) components).getTag();
-                        if (tag != null) {
-                            vanillaStack.setTag(TagFactory.unwrap(tag));
+                        if (components instanceof TagComponentMap) {
+                            net.cocoonmc.core.nbt.CompoundTag tag = ((TagComponentMap) components).getTag();
+                            if (tag != null) {
+                                vanillaStack.setTag(TagFactory.unwrap(tag));
+                            } else {
+                                vanillaStack.setTag(null);
+                            }
                         } else {
                             vanillaStack.setTag(null);
                         }
@@ -195,5 +208,28 @@ public class ItemFactory extends TransformFactory implements IItemFactory {
                 return null;
             }
         };
+    }
+
+    private static class WrappedComponentMap extends TagComponentMap {
+
+        private final ItemStack owner;
+        private net.cocoonmc.core.nbt.CompoundTag checkTag;
+
+        public WrappedComponentMap(net.cocoonmc.core.nbt.CompoundTag tag, ItemStack owner) {
+            super(tag);
+            this.owner = owner;
+        }
+
+        @Override
+        public void tagDidChange() {
+            if (checkTag != tag) {
+                if (tag != null) {
+                    owner.setTag(TagFactory.unwrap(tag));
+                } else {
+                    owner.setTag(null);
+                }
+                checkTag = tag;
+            }
+        }
     }
 }

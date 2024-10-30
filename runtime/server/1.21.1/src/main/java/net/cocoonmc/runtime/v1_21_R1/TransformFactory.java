@@ -1,4 +1,4 @@
-package net.cocoonmc.runtime.v1_19_R1;
+package net.cocoonmc.runtime.v1_21_R1;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -11,16 +11,19 @@ import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_19_R1.CraftServer;
-import org.bukkit.craftbukkit.v1_19_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_19_R1.entity.CraftEntity;
-import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_19_R1.inventory.CraftInventory;
+import org.bukkit.Material;
+import org.bukkit.craftbukkit.v1_21_R1.CraftServer;
+import org.bukkit.craftbukkit.v1_21_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_21_R1.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_21_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_21_R1.inventory.CraftInventory;
 
 public class TransformFactory {
 
@@ -33,6 +36,14 @@ public class TransformFactory {
 
     public static ItemStack convertToVanilla(net.cocoonmc.core.item.ItemStack itemStack) {
         return ItemFactory.ITEM_TRANSFORMER.convertToVanilla(itemStack);
+    }
+
+    public static Item convertToVanilla(net.cocoonmc.core.item.Item itemStack) {
+        Material material = itemStack.asBukkit();
+        if (material != null) {
+            Item.byId(material.getId());
+        }
+        return Items.AIR;
     }
 
 
@@ -82,7 +93,7 @@ public class TransformFactory {
     }
 
     public static ResourceLocation convertToVanilla(net.cocoonmc.core.resources.ResourceLocation rl) {
-        return new ResourceLocation(rl.getNamespace(), rl.getPath());
+        return ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), rl.getPath());
     }
 
     public static FriendlyByteBuf convertToVanilla(net.cocoonmc.core.network.FriendlyByteBuf buf) {
