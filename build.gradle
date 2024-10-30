@@ -15,18 +15,64 @@ group = 'net.cocoonmc'
 version = rootProject.plugin_version
 
 tasks.register("buildCore", Jar) {
-    def selected = gradle.rootProject.subprojects.findAll { it.hasProperty("spigot_version") }
-    dependsOn selected.collect {
-        it.tasks.findByName("remap") ?: it.jar
+    def subprojects = gradle.rootProject.subprojects as Set<Project>
+    def selected = subprojects.findAll { it.hasProperty("spigot_version") }
+    dependsOn compileCoreLoader
+    from {
+        compileCoreLoader.destinationDir
     }
     from {
         selected.collect { zipTree(it.jar.archivePath) }
     }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     with jar
 }
 
 tasks.register("buildRuntime") {
     dependsOn ":runtime:client:buildFatJar"
+}
+
+
+tasks.register("compileCoreLoader", JavaCompile) {
+    def subprojects = gradle.rootProject.subprojects as Set<Project>
+    def selected = subprojects.findAll { it.hasProperty("spigot_version") }
+
+    def sourceFile = layout.buildDirectory.file("generated/sources/java/main/IRuntimeLoader.java").get().asFile
+    def estinationFile = layout.buildDirectory.file("generated/classes/java/main").get().asFile
+
+    var template = ""
+    var generator = new StringJoiner("", "return switch (serverVersion) {", "default -> throw new ClassNotFoundException();};")
+    var compileClasspath = []
+
+    // make sure all sub projects compile complete.
+    it.dependsOn selected.collect { it.tasks.findByName("remap") ?: it.jar }
+
+    selected.each {
+        // add the compile dependencies.
+        compileClasspath.add(it.configurations.compileClasspath)
+        compileClasspath.add(it.layout.buildDirectory.files("classes/java/main"))
+
+        // add the runtime factory into generator.
+        it.sourceSets.main.allJava.files.each {
+            if (it.name.contains("IRuntimeLoader")) {
+                template = it.text
+            }
+            if (it.name.contains("RuntimeFactory")) {
+                def ver = it.parentFile.name
+                def factory = it.text.replaceAll(/(?ms)^.*package\s(.+?);.+(RuntimeFactory).*/, /$1.$2/)
+                generator.add("case \"$ver\" -> new $factory();")
+            }
+        }
+    }
+
+    // generate new loader code.
+    sourceFile.parentFile.mkdirs()
+    sourceFile.text = template.replaceAll(/(?ms)return\s+\(IRuntime\)[^;]+;/, generator.toString())
+
+    // compile new loader.
+    source = sourceFile
+    destinationDir = estinationFile
+    classpath = files(compileClasspath)
 }
 
 

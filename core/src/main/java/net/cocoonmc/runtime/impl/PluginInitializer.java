@@ -4,7 +4,7 @@ import net.cocoonmc.Cocoon;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @SuppressWarnings("unused")
-public class CocoonPluginImpl extends JavaPlugin {
+public class PluginInitializer extends JavaPlugin {
 
     @Override
     public void onEnable() {

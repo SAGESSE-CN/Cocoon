@@ -6,6 +6,7 @@ import net.cocoonmc.core.block.state.properties.BedPart;
 import net.cocoonmc.core.block.state.properties.BooleanProperty;
 import net.cocoonmc.core.block.state.properties.EnumProperty;
 
+@SuppressWarnings("unused")
 public class BlockStateProperties {
 
     public static final BooleanProperty LIT = BooleanProperty.create("lit");
