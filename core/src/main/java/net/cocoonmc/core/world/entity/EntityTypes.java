@@ -49,7 +49,7 @@ public class EntityTypes {
     public static final EntityType<LivingEntity> VINDICATOR = register(LivingEntity::new, "minecraft:vindicator");
     public static final EntityType<LivingEntity> ILLUSIONER = register(LivingEntity::new, "minecraft:illusioner");
     public static final EntityType<Entity> MINECART_COMMAND = register(Entity::new, "minecraft:command_block_minecart");
-    public static final EntityType<Entity> BOAT = register(Entity::new, "minecraft:boat");
+    public static final EntityType<Entity> BOAT = register(LivingEntity::new, "minecraft:boat");
     public static final EntityType<Entity> MINECART = register(Entity::new, "minecraft:minecart");
     public static final EntityType<Entity> MINECART_CHEST = register(Entity::new, "minecraft:chest_minecart");
     public static final EntityType<Entity> MINECART_FURNACE = register(Entity::new, "minecraft:furnace_minecart");
@@ -136,8 +136,8 @@ public class EntityTypes {
     public static final EntityType<Entity> LIGHTNING = register(Entity::new, "minecraft:lightning_bolt");
     public static final EntityType<Player> PLAYER = register(Player::new, "minecraft:player");
 
-    private static final EntityType<Entity> UNKNOWN1 = registerUnknown(Entity::new);
-    private static final EntityType<LivingEntity> UNKNOWN2 = registerUnknown(LivingEntity::new);
+    private static final EntityType<Entity> UNKNOWN_ENTITY_TYPE = registerUnknown(Entity::new);
+    private static final EntityType<LivingEntity> UNKNOWN_LIVING_ENTITY_TYPE = registerUnknown(LivingEntity::new);
 
 
     @SuppressWarnings("unchecked")
@@ -150,7 +150,7 @@ public class EntityTypes {
         if (entityType != null) {
             return (EntityType<Entity>) entityType;
         }
-        return UNKNOWN1;
+        return UNKNOWN_ENTITY_TYPE;
     }
 
     @SuppressWarnings("unchecked")
@@ -159,11 +159,14 @@ public class EntityTypes {
         if (entityType != null) {
             return (EntityType<LivingEntity>) entityType;
         }
+        // the custom entity always choose a vanilla entity type, but it won't always confirm class hierarchy.
         entityType = TYPE_TO_TYPES.get(entity.getType());
         if (entityType != null) {
-            return (EntityType<LivingEntity>) entityType;
+            if (entityType.asBukkit() == null || !BukkitHelper.isTwistedEntity(entity)) {
+                return (EntityType<LivingEntity>) entityType;
+            }
         }
-        return UNKNOWN2;
+        return UNKNOWN_LIVING_ENTITY_TYPE;
     }
 
     public static <T extends Entity> EntityType<T> register(EntityType.Factory<T> factory, String id) {

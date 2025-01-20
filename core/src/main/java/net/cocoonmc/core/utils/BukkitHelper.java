@@ -272,4 +272,10 @@ public class BukkitHelper {
         }
         return false;
     }
+
+    // case1(mypet): entity is CraftMob, but entity type is BlockDisplay
+    public static boolean isTwistedEntity(org.bukkit.entity.Entity entity) {
+        org.bukkit.entity.EntityType entityType = entity.getType();
+        return entityType.getEntityClass() != null && !entityType.getEntityClass().isInstance(entity);
+    }
 }
