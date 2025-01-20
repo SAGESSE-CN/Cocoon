@@ -13,7 +13,6 @@ def fabricMixinConfigs = ["${archivesBaseName}.mixin.json"]
 def allVersions = [:]
 
 sourceCompatibility = javaVersion
-sourceCompatibility = javaVersion
 
 
 // build fat jar only in command line.
@@ -310,7 +309,9 @@ java {
 }
 
 jar {
-    from "api"
+    from("api") {
+        include "**/*.class"
+    }
     manifest {
         attributes([
                 "Specification-Title"     : "Cocoon",
