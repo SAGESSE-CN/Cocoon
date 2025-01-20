@@ -32,13 +32,11 @@ jobs:
       uses: gradle/gradle-build-action@v2
       with:
         arguments: -Pversion=${{ steps.release-version.outputs.version }} buildCore
-        cache-disabled: true
 
     - name: Build Runtime
       uses: gradle/gradle-build-action@v2
       with:
         arguments: -Pversion=${{ steps.release-version.outputs.version }} buildRuntime
-        cache-disabled: true
 
     - name: Upload Core
       uses: Kir-Antipov/mc-publish@v3.3
@@ -71,7 +69,7 @@ jobs:
       uses: Kir-Antipov/mc-publish@v3.3
       with:
         name: cocoon-client-${{ steps.release-version.outputs.version }}
-        version: ${{ steps.release-version.outputs.version }}-rt
+        version: ${{ steps.release-version.outputs.version }}
         version-type: release
 
         files: build/libs/cocoon-rt-${{ steps.release-version.outputs.version }}.jar
