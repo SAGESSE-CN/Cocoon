@@ -23,30 +23,27 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class Cocoon {
 
-    private static final Cocoon INSTANCE = new Cocoon();
+    private static JavaPlugin PLUGIN;
+
     private static final IRuntime RUNTIME = IRuntimeLoader.load();
 
-    private final JavaPlugin plugin;
-    private final PluginManager manager;
-
-    private Cocoon() {
-        this.plugin = JavaPlugin.getProvidingPlugin(Cocoon.class);
-        this.manager = plugin.getServer().getPluginManager();
+    private static void registerEvents(PluginManager manager, JavaPlugin plugin) {
+        manager.registerEvents(new ItemDataListener(), plugin);
+        manager.registerEvents(new BlockDataListener(), plugin);
+        manager.registerEvents(new EntityDataListener(), plugin);
+        manager.registerEvents(new ChunkDataListener(), plugin);
+        manager.registerEvents(new PacketDataListener(), plugin);
     }
 
-    private void registerEvents() {
-        this.manager.registerEvents(new ItemDataListener(), plugin);
-        this.manager.registerEvents(new BlockDataListener(), plugin);
-        this.manager.registerEvents(new EntityDataListener(), plugin);
-        this.manager.registerEvents(new ChunkDataListener(), plugin);
-        this.manager.registerEvents(new PacketDataListener(), plugin);
+    public static void onLoad(JavaPlugin plugin) {
+        PLUGIN = plugin;
     }
 
     public static void onEnable() {
         Items.init();
         Blocks.init();
         LevelData.open();
-        INSTANCE.registerEvents();
+        registerEvents(PLUGIN.getServer().getPluginManager(), PLUGIN);
         API.TRANSFORMER.enable();
     }
 
@@ -55,7 +52,7 @@ public class Cocoon {
     }
 
     public static JavaPlugin getPlugin() {
-        return INSTANCE.plugin;
+        return PLUGIN;
     }
 
     public static class API {

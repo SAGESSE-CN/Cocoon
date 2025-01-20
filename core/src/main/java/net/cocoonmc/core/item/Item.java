@@ -1,6 +1,5 @@
 package net.cocoonmc.core.item;
 
-import com.google.common.collect.Maps;
 import net.cocoonmc.core.BlockPos;
 import net.cocoonmc.core.block.Block;
 import net.cocoonmc.core.item.context.UseOnContext;
@@ -20,14 +19,15 @@ import org.bukkit.Material;
 import org.bukkit.inventory.EquipmentSlot;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Item implements IAssociatedContainerProvider {
 
-    private static final Map<Block, Item> BY_BLOCK = Maps.newHashMap();
-    private static final HashMap<ResourceLocation, Item> KEYED_ITEMS = new HashMap<>();
+    private static final Map<Block, Item> BY_BLOCK = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, Item> KEYED_ITEMS = new ConcurrentHashMap<>();
 
     private ResourceLocation registryName;
 
@@ -131,6 +131,10 @@ public class Item implements IAssociatedContainerProvider {
     @Override
     public String toString() {
         return ObjectHelper.makeDescription(this, "id", getRegistryName());
+    }
+
+    public static Collection<Item> values() {
+        return KEYED_ITEMS.values();
     }
 
     public static Item byKey(ResourceLocation registryName) {

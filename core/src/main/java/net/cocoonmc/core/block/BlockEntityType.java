@@ -5,13 +5,15 @@ import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.utils.ObjectHelper;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BlockEntityType<T extends BlockEntity> {
 
-    private static final HashMap<ResourceLocation, BlockEntityType<?>> KEYED_BLOCK_ENTITY_TYPES = new HashMap<>();
+    private static final Map<ResourceLocation, BlockEntityType<?>> KEYED_BLOCK_ENTITY_TYPES = new ConcurrentHashMap<>();
 
     private ResourceLocation registryName;
     private final Set<Block> validBlocks;
@@ -51,6 +53,10 @@ public class BlockEntityType<T extends BlockEntity> {
     @Override
     public String toString() {
         return ObjectHelper.makeDescription(this, "id", getRegistryName());
+    }
+
+    public static Collection<BlockEntityType<?>> values() {
+        return KEYED_BLOCK_ENTITY_TYPES.values();
     }
 
     public static BlockEntityType<?> byKey(ResourceLocation registryName) {

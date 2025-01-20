@@ -219,7 +219,7 @@ public class PacketDataListener implements Listener {
                     if (newPacket != oldPacket) {
                         msg = expand(newPacket.getHandle(), it -> {
                             // we need to ensure sequential.
-                            super.write(ctx, it, ctx.voidPromise());
+                            super.write(ctx, it, ctx.newPromise());
                         });
                     }
                 }

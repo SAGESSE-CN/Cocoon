@@ -1,6 +1,5 @@
 package net.cocoonmc.runtime.impl;
 
-import net.cocoonmc.core.math.Vector3f;
 import net.cocoonmc.core.utils.BukkitHelper;
 import net.cocoonmc.core.world.Level;
 import net.cocoonmc.core.world.entity.Entity;

@@ -4,12 +4,13 @@ import net.cocoonmc.core.resources.ResourceLocation;
 import org.bukkit.Material;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
 public class Items {
 
-    private static final HashMap<String, Item> NAMED_ITEMS = new HashMap<>();
+    private static final Map<String, Item> NAMED_ITEMS = new ConcurrentHashMap<>();
 
     public static final Item AIR = register("minecraft:air");
     public static final Item STONE = register("minecraft:stone");

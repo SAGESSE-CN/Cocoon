@@ -1,6 +1,6 @@
 name: cocoon
 version: '${version}'
-main: net.cocoonmc.runtime.impl.CocoonPluginImpl
+main: net.cocoonmc.runtime.impl.PluginInitializer
 api-version: 1.16
 depend: [ ]
 authors: [ SAGESSE ]

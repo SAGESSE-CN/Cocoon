@@ -6,12 +6,14 @@ import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.world.Level;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class EntityType<T extends Entity> {
 
-    private static final HashMap<ResourceLocation, EntityType<?>> KEYED_ENTITY_TYPES = new HashMap<>();
+    private static final Map<ResourceLocation, EntityType<?>> KEYED_ENTITY_TYPES = new ConcurrentHashMap<>();
 
     private ResourceLocation registryName;
     private EntityType<?> delegate;
@@ -55,6 +57,10 @@ public class EntityType<T extends Entity> {
     @Override
     public int hashCode() {
         return Objects.hash(registryName);
+    }
+
+    public static Collection<EntityType<?>> values() {
+        return KEYED_ENTITY_TYPES.values();
     }
 
     public static EntityType<?> byKey(ResourceLocation registryName) {

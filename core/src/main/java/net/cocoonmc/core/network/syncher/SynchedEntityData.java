@@ -9,12 +9,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class SynchedEntityData {
 
-    private static final HashMap<Class<?>, Integer> ENTITY_ID_POOL = new HashMap<>();
+    private static final Map<Class<?>, Integer> ENTITY_ID_POOL = new ConcurrentHashMap<>();
 
     private final Entity entity;
     private final HashMap<Integer, DataItem<?>> itemsById = new HashMap<>();

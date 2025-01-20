@@ -5,11 +5,13 @@ import org.bukkit.Material;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
 public class Blocks {
 
-    private static final HashMap<String, Block> NAMED_BLOCKS = new HashMap<>();
+    private static final Map<String, Block> NAMED_BLOCKS = new ConcurrentHashMap<>();
 
     public static final Block AIR = register("minecraft:air");
     public static final Block STONE = register("minecraft:stone");

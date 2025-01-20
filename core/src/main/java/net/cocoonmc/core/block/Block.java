@@ -22,13 +22,15 @@ import net.cocoonmc.runtime.IAssociatedContainerProvider;
 import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Block implements IAssociatedContainerProvider {
 
-    private static final HashMap<ResourceLocation, Block> KEYED_BLOCKS = new HashMap<>();
+    private static final Map<ResourceLocation, Block> KEYED_BLOCKS = new ConcurrentHashMap<>();
 
     private ResourceLocation registryName;
 
@@ -150,8 +152,13 @@ public class Block implements IAssociatedContainerProvider {
         return Objects.hash(registryName);
     }
 
+    @Override
     public String toString() {
         return ObjectHelper.makeDescription(this, "id", getRegistryName());
+    }
+
+    public static Collection<Block> values() {
+        return KEYED_BLOCKS.values();
     }
 
     public static Block byKey(ResourceLocation key) {

@@ -9,14 +9,15 @@ import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ItemHelper {
 
     private static boolean ENABLE_REDIRECT = false;
 
-    private static final HashMap<String, Item> ID_TO_ITEMS = new HashMap<>();
-    private static final HashMap<Item, String> ITEM_TO_IDS = new HashMap<>();
+    private static final Map<String, Item> ID_TO_ITEMS = new ConcurrentHashMap<>();
+    private static final Map<Item, String> ITEM_TO_IDS = new ConcurrentHashMap<>();
 
     public static final String REDIRECT_KEY = "__redirected_id__";
 

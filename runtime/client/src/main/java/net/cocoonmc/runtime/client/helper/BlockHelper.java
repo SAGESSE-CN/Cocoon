@@ -10,11 +10,13 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.Property;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BlockHelper {
 
-    private static final HashMap<String, Block> ID_TO_BLOCKS = new HashMap<>();
+    private static final Map<String, Block> ID_TO_BLOCKS = new ConcurrentHashMap<>();
 
     public static BlockPos getBlockPos(CompoundTag arg) {
         return new BlockPos(arg.getInt("x"), arg.getInt("y"), arg.getInt("z"));

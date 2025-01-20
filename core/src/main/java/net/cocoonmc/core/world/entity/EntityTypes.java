@@ -3,12 +3,13 @@ package net.cocoonmc.core.world.entity;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.utils.BukkitHelper;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
 public class EntityTypes {
 
-    private static final HashMap<org.bukkit.entity.EntityType, EntityType<?>> TYPE_TO_TYPES = new HashMap<>();
+    private static final Map<org.bukkit.entity.EntityType, EntityType<?>> TYPE_TO_TYPES = new ConcurrentHashMap<>();
 
     public static final EntityType<Entity> DROPPED_ITEM = register(Entity::new, "minecraft:item");
     public static final EntityType<Entity> EXPERIENCE_ORB = register(Entity::new, "minecraft:experience_orb");

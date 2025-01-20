@@ -3,12 +3,14 @@ package net.cocoonmc.core.inventory;
 import net.cocoonmc.core.resources.ResourceLocation;
 import net.cocoonmc.core.world.entity.Player;
 
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MenuType<T extends Menu> {
 
-    private static final HashMap<ResourceLocation, MenuType<?>> KEYED_MENU_TYPES = new HashMap<>();
+    private static final Map<ResourceLocation, MenuType<?>> KEYED_MENU_TYPES = new ConcurrentHashMap<>();
 
     private ResourceLocation registryName;
     private final Factory<T, ?> factory;
@@ -38,6 +40,10 @@ public class MenuType<T extends Menu> {
     @Override
     public int hashCode() {
         return Objects.hash(registryName);
+    }
+
+    public static Collection<MenuType<?>> values() {
+        return KEYED_MENU_TYPES.values();
     }
 
     public static MenuType<?> byKey(ResourceLocation registryName) {

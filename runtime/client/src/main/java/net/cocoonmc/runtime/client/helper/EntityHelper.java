@@ -7,14 +7,16 @@ import net.minecraft.world.entity.Entity;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
 public class EntityHelper {
 
-    public static final HashMap<Integer, CompoundTag> PENDING_NEW_ENTITIES = new HashMap<>();
-    public static final HashMap<Class<?>, Layer> REGISTERED_ENTITY_ACCESSORS = new HashMap<>();
-    public static final HashMap<Class<?>, Hierarchy> REGISTERED_ENTITY_HIERARCHIES = new HashMap<>();
+    public static final Map<Integer, CompoundTag> PENDING_NEW_ENTITIES = new ConcurrentHashMap<>();
+    public static final Map<Class<?>, Layer> REGISTERED_ENTITY_ACCESSORS = new ConcurrentHashMap<>();
+    public static final Map<Class<?>, Hierarchy> REGISTERED_ENTITY_HIERARCHIES = new ConcurrentHashMap<>();
 
     public static void registerData(Class<?> clazz, IntSupplier id, IntSupplier serializerId) {
         REGISTERED_ENTITY_ACCESSORS.computeIfAbsent(clazz, Layer::new).add(new DataItem(id, serializerId));

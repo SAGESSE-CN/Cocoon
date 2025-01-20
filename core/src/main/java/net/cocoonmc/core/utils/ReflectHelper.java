@@ -4,11 +4,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ReflectHelper {
 
-    private static final HashMap<Class<?>, HashMap<String, UnsafeMember>> MEMBER_FIELDS = new HashMap<>();
+    private static final Map<Class<?>, Map<String, UnsafeMember>> MEMBER_FIELDS = new ConcurrentHashMap<>();
 
     @Nullable
     public static <T> T getMember(Object owner, String name) {
@@ -21,7 +22,7 @@ public class ReflectHelper {
     }
 
     public static UnsafeMember getMemberUnsafeField(Class<?> clazz, String name) {
-        return MEMBER_FIELDS.computeIfAbsent(clazz, it -> new HashMap<>()).computeIfAbsent(name, it -> new UnsafeMember(clazz, it));
+        return MEMBER_FIELDS.computeIfAbsent(clazz, it -> new ConcurrentHashMap<>()).computeIfAbsent(name, it -> new UnsafeMember(clazz, it));
     }
 
     public static class Member<T> {

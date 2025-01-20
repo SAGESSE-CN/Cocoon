@@ -5,26 +5,27 @@ import net.cocoonmc.runtime.IAssociatedContainer;
 import net.cocoonmc.runtime.IAssociatedContainerKey;
 import net.cocoonmc.runtime.ICacheFactory;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public class CacheFactory implements ICacheFactory {
 
-    private final HashMap<Class<?>, WeakHashMap<Object, SimpleAssociatedStorage>> allStorages = new HashMap<>();
+    private final Map<Class<?>, WeakHashMap<Object, SimpleAssociatedStorage>> allStorages = new ConcurrentHashMap<>();
 
     @Override
-    public  <T, V> V get(T obj, IAssociatedContainerKey<V> key) {
+    public <T, V> V get(T obj, IAssociatedContainerKey<V> key) {
         return _getContainer(obj).getAssociatedObject(key);
     }
 
     @Override
-    public  <T, V> void set(T obj, IAssociatedContainerKey<V> key, V value) {
+    public <T, V> void set(T obj, IAssociatedContainerKey<V> key, V value) {
         _getContainer(obj).setAssociatedObject(key, value);
     }
 
     @Override
-    public  <T, V> V computeIfAbsent(T obj, IAssociatedContainerKey<V> key, Function<T, V> getter) {
+    public <T, V> V computeIfAbsent(T obj, IAssociatedContainerKey<V> key, Function<T, V> getter) {
         IAssociatedContainer container = _getContainer(obj);
         V value = container.getAssociatedObject(key);
         if (value != null) {
